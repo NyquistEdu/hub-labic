@@ -43,7 +43,7 @@ select j->>'id' as id_antigo, j->>'title' as titulo, (j->>'year')::int as ano,
        case j->>'category' when 'ARTIGO' then 'ARTIGO' when 'TCC' then 'TCC' when 'INPI_SOFTWARE' then 'SOFTWARE'
             when 'PREMIACAO' then 'PREMIO' when 'EDITAL_APROVADO' then 'EDITAL' else 'EVENTO' end as tipo,
        coalesce(j->>'venue_or_agency', '') as veiculo,
-       coalesce(j->>'external_authors', '') as externos,
+       concat_ws(', ', nullif(j->>'primary_author_external', ''), nullif(j->>'external_authors', '')) as externos,
        j->>'primary_author_id' as principal,
        case when jsonb_typeof(j->'author_ids') = 'array' then j->'author_ids' else '[]'::jsonb end as autores_ids,
        case when coalesce(j->>'doi_or_url', '') ~ '^https?://' then j->>'doi_or_url' else '' end as url,
