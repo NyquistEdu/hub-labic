@@ -8,7 +8,7 @@ import inicial from '@/data/acervo-inicial.json';
 import { lerAcervoDoBanco } from '@/lib/acervo';
 import { getSupabase } from '@/lib/supabase';
 import {
-  AREAS, ESTAGIO_ROTULO, STATUS_ROTULO, TIPO_ROTULO, VINCULO_ROTULO, gerarSlug, type Acervo,
+  AREAS, ESTAGIO_ROTULO, STATUS_ROTULO, TIPO_ROTULO, VINCULO_ROTULO, gerarSlug, type Acervo, type Pessoa,
 } from '@/lib/tipos';
 
 /* ----------------------------------------------------------------------------
@@ -313,6 +313,34 @@ export default function Gestao() {
     });
   }
 
+  /** Junta um cadastro de egresso a uma pessoa que já está no acervo, mantendo os vínculos dela. */
+  async function atualizarPerfil(c: Cadastro, pessoaId: string, substituir: string[]) {
+    if (!sb || !acervo) return;
+    const atual = acervo.pessoas.find((p) => p.id === pessoaId) as unknown as Record<string, unknown> | undefined;
+    if (!atual) return;
+    await executar(async () => {
+      const mudancas: Record<string, unknown> = {};
+      for (const campo of camposDoCadastro(c)) {
+        const vazio = atual[campo.chave] === '' || atual[campo.chave] === null || atual[campo.chave] === undefined;
+        if (vazio || substituir.includes(campo.chave)) mudancas[campo.chave] = campo.valor;
+      }
+      if (c.foto_path && (!atual.foto_url || substituir.includes('foto_url'))) {
+        const baixa = await sb.storage.from('cadastros').download(c.foto_path);
+        if (baixa.data) mudancas.foto_url = await enviarImagem(sb, new File([baixa.data], c.foto_path, { type: baixa.data.type }));
+      }
+      if (c.dados.autoriza_publicacao) mudancas.publicado = true;
+      if (Object.keys(mudancas).length) {
+        const { error } = await sb.from('pessoas').update(mudancas).eq('id', pessoaId);
+        if (error) throw new Error(error.message);
+      }
+      const email = String(c.dados.email ?? '');
+      if (email) await sb.from('pessoas_contato').upsert({ pessoa_id: pessoaId, email });
+      const up = await sb.from('cadastros_egressos').update({ status: 'APROVADO', pessoa_id: pessoaId }).eq('id', c.id);
+      if (up.error) throw new Error(up.error.message);
+      return `Perfil de ${String(mudancas.nome ?? atual.nome)} atualizado com os dados do formulário. Projetos e conquistas ligados a ele foram mantidos.`;
+    });
+  }
+
   async function recusarCadastro(c: Cadastro) {
     if (!sb) return;
     await executar(async () => {
@@ -452,7 +480,7 @@ export default function Gestao() {
             <div>
               <h1 className="text-5xl">Cadastros de egressos</h1>
               <p className="mt-2 text-grafite max-w-[60ch]">
-                Respostas do formulário público. Ao aprovar, a pessoa entra em Pessoas como egressa e aparece no site (se autorizou a publicação).
+                Respostas do formulário público. Se a pessoa já está no acervo, junte o cadastro ao perfil dela para não duplicar; se não, crie um perfil novo. Ela aparece no site se autorizou a publicação.
               </p>
               {cadastros.length === 0 && <p className="mt-6 text-lg">Nenhum cadastro recebido ainda. Envie o link /egressos para quem já passou pelo LABIC.</p>}
               <ul className="mt-6 space-y-4">
@@ -475,11 +503,15 @@ export default function Gestao() {
                           <div key={k} className="min-w-0"><dt className="inline font-semibold">{k}: </dt><dd className="inline whitespace-pre-wrap break-words">{String(v)}</dd></div>
                         ))}
                       </dl>
-                      {c.status === 'PENDENTE' && (
-                        <div className="mt-3 flex gap-2">
-                          <button className="botao botao-pequeno" disabled={ocupado} onClick={() => aprovarCadastro(c)}>Aprovar e criar perfil</button>
-                          <button className="botao botao-vazado botao-pequeno" disabled={ocupado} onClick={() => recusarCadastro(c)}>Recusar</button>
-                        </div>
+                      {c.status === 'PENDENTE' && acervo && (
+                        <AcoesCadastro
+                          cadastro={c}
+                          pessoas={acervo.pessoas}
+                          ocupado={ocupado}
+                          aoCriar={() => aprovarCadastro(c)}
+                          aoAtualizar={(pessoaId, substituir) => atualizarPerfil(c, pessoaId, substituir)}
+                          aoRecusar={() => recusarCadastro(c)}
+                        />
                       )}
                     </li>
                   );
@@ -513,6 +545,139 @@ export default function Gestao() {
             />
           )}
         </section>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Cadastro de egresso x pessoa que já existe no acervo
+ * -------------------------------------------------------------------------- */
+const LIGACOES = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+function palavrasDoNome(nome: string): string[] {
+  return nome.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z]+/).filter((t) => t.length > 1 && !LIGACOES.has(t));
+}
+
+/** Pessoas do acervo cujo nome parece ser o mesmo do cadastro, da mais parecida para a menos. */
+function pessoasParecidas(nome: string, pessoas: Pessoa[]): Pessoa[] {
+  const a = palavrasDoNome(nome);
+  if (a.length === 0) return [];
+  return pessoas
+    .map((p) => {
+      const b = palavrasDoNome(p.nome);
+      const comuns = a.filter((t) => b.includes(t)).length;
+      const mesmoPrimeiro = a[0] === b[0];
+      const contido = comuns === Math.min(a.length, b.length);
+      const parece = (mesmoPrimeiro && comuns >= 2) || comuns >= 3 || (contido && comuns >= 2);
+      return { p, pontos: parece ? comuns + (mesmoPrimeiro ? 1 : 0) : 0 };
+    })
+    .filter((x) => x.pontos > 0)
+    .sort((x, y) => y.pontos - x.pontos)
+    .map((x) => x.p);
+}
+
+const ROTULO_CAMPO: Record<string, string> = {
+  nome: 'Nome', vinculo: 'Vínculo', papel: 'Papel', curso: 'Curso', ano_entrada: 'Ano de entrada', ano_saida: 'Ano de saída',
+  onde_esta: 'Onde está hoje', cidade: 'Cidade', pais: 'País', bio: 'Minibiografia ou depoimento',
+  lattes_url: 'Lattes', linkedin_url: 'LinkedIn', foto_url: 'Foto',
+};
+
+/** O que o formulário informa, já no formato das colunas de "pessoas" (só campos preenchidos). */
+function camposDoCadastro(c: Cadastro): { chave: string; valor: string | number }[] {
+  const d = c.dados as Record<string, string | number | null>;
+  const lista: [string, string | number | null | undefined][] = [
+    ['nome', typeof d.nome === 'string' ? d.nome.trim() : ''], ['vinculo', 'EGRESSO'], ['papel', 'Egresso'], ['curso', d.curso],
+    ['ano_entrada', d.ano_entrada], ['ano_saida', d.ano_saida], ['onde_esta', d.onde_esta], ['cidade', d.cidade], ['pais', d.pais],
+    ['bio', d.depoimento], ['lattes_url', d.lattes_url], ['linkedin_url', d.linkedin_url],
+  ];
+  return lista.filter(([, v]) => v !== '' && v !== null && v !== undefined).map(([chave, valor]) => ({ chave, valor: valor as string | number }));
+}
+
+function AcoesCadastro({ cadastro, pessoas, ocupado, aoCriar, aoAtualizar, aoRecusar }: {
+  cadastro: Cadastro; pessoas: Pessoa[]; ocupado: boolean;
+  aoCriar: () => void; aoAtualizar: (pessoaId: string, substituir: string[]) => void; aoRecusar: () => void;
+}) {
+  const nome = String(cadastro.dados.nome ?? '');
+  const parecidas = useMemo(() => pessoasParecidas(nome, pessoas), [nome, pessoas]);
+  const [escolhida, setEscolhida] = useState(parecidas[0]?.id ?? '');
+  const [revisando, setRevisando] = useState(false);
+  const [substituir, setSubstituir] = useState<string[]>([]);
+  const pessoa = pessoas.find((p) => p.id === escolhida) as (Pessoa & Record<string, unknown>) | undefined;
+
+  // Campos em que o formulário diz uma coisa e o perfil já diz outra
+  const conflitos = useMemo(() => {
+    if (!pessoa) return [];
+    const lista = camposDoCadastro(cadastro)
+      .filter((c) => pessoa[c.chave] !== '' && pessoa[c.chave] !== null && pessoa[c.chave] !== undefined && String(pessoa[c.chave]) !== String(c.valor))
+      .filter((c) => !(c.chave === 'vinculo' && pessoa.vinculo !== 'ESTUDANTE') && !(c.chave === 'papel' && pessoa.vinculo !== 'ESTUDANTE'))
+      .map((c) => ({ chave: c.chave, atual: String(pessoa[c.chave]), novo: String(c.valor) }));
+    if (cadastro.foto_path && pessoa.foto_url) lista.push({ chave: 'foto_url', atual: 'foto atual', novo: 'foto enviada no formulário' });
+    return lista;
+  }, [cadastro, pessoa]);
+
+  function comecarAtualizacao() {
+    if (!pessoa) return;
+    if (conflitos.length === 0) return aoAtualizar(pessoa.id, []);
+    // Por padrão, troca o que o formulário tende a saber melhor: situação atual e nome mais completo
+    setSubstituir(conflitos.filter((c) => ['onde_esta', 'cidade', 'pais', 'vinculo', 'papel'].includes(c.chave) || (c.chave === 'nome' && c.novo.length > c.atual.length)).map((c) => c.chave));
+    setRevisando(true);
+  }
+
+  const rotuloVinculo = (v: string) => VINCULO_ROTULO[v as keyof typeof VINCULO_ROTULO] ?? v;
+
+  return (
+    <div className="mt-4 border-t-2 border-linha pt-3">
+      {parecidas.length > 0 ? (
+        <p className="font-semibold">Parece ser alguém que já está no acervo.</p>
+      ) : (
+        <p className="text-grafite text-sm">Não encontrei ninguém com nome parecido no acervo.</p>
+      )}
+      <label className="campo mt-2 max-w-md">
+        <span>Juntar ao perfil</span>
+        <select className="entrada" value={escolhida} onChange={(e) => { setEscolhida(e.target.value); setRevisando(false); }}>
+          <option value="">Nenhum (é uma pessoa nova)</option>
+          {parecidas.length > 0 && (
+            <optgroup label="Nomes parecidos">
+              {parecidas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </optgroup>
+          )}
+          <optgroup label="Todas as pessoas">
+            {pessoas.filter((p) => !parecidas.includes(p)).map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+          </optgroup>
+        </select>
+      </label>
+
+      {revisando && pessoa && (
+        <fieldset className="mt-3 border-2 border-tinta rounded-xl p-3">
+          <legend className="font-semibold px-1">O perfil de {pessoa.nome} já tem estes dados. Marque o que o formulário deve substituir.</legend>
+          <ul className="space-y-2">
+            {conflitos.map((c) => (
+              <li key={c.chave}>
+                <label className="flex gap-2 items-start">
+                  <input type="checkbox" className="mt-1 w-4 h-4 accent-black" checked={substituir.includes(c.chave)}
+                    onChange={(e) => setSubstituir(e.target.checked ? [...substituir, c.chave] : substituir.filter((x) => x !== c.chave))} />
+                  <span className="min-w-0 break-words">
+                    <strong>{ROTULO_CAMPO[c.chave] ?? c.chave}:</strong>{' '}
+                    {c.chave === 'vinculo' ? rotuloVinculo(c.atual) : c.atual} passa a ser {c.chave === 'vinculo' ? rotuloVinculo(c.novo) : c.novo}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-grafite mt-2">Os campos que estavam vazios no perfil são preenchidos de qualquer forma.</p>
+        </fieldset>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {pessoa ? (
+          revisando ? (
+            <button className="botao botao-pequeno" disabled={ocupado} onClick={() => aoAtualizar(pessoa.id, substituir)}>Confirmar atualização do perfil</button>
+          ) : (
+            <button className="botao botao-pequeno" disabled={ocupado} onClick={comecarAtualizacao}>Atualizar o perfil existente</button>
+          )
+        ) : null}
+        <button className={`botao botao-pequeno ${pessoa ? 'botao-vazado' : ''}`} disabled={ocupado} onClick={aoCriar}>Criar perfil novo</button>
+        <button className="botao botao-vazado botao-pequeno" disabled={ocupado} onClick={aoRecusar}>Recusar</button>
       </div>
     </div>
   );
