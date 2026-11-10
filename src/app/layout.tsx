@@ -1,23 +1,16 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { LabicProvider } from '@/context/LabicContext';
 
 export const metadata: Metadata = {
-  title: 'HUB-LABIC | Gestão Científica, Operacional e Vitrine — IFS Campus Lagarto',
+  title: { default: 'LABIC — Laboratório de Inovação e Criatividade do IFS', template: '%s | LABIC' },
   description:
-    'Sistema integrado de produções científicas, projetos, bolsas, congressos (CROS), startups, coordenações e vitrine internacional do Laboratório de Pesquisa LABIC (IFS Campus Lagarto).',
+    'Projetos, pessoas, startups e conquistas do LABIC, o Laboratório de Inovação e Criatividade do Instituto Federal de Sergipe, Campus Lagarto. Desde 2017.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark">
-      <body className="antialiased selection:bg-emerald-500 selection:text-zinc-950">
-        <LabicProvider>{children}</LabicProvider>
-      </body>
+    <html lang="pt-BR">
+      <body>{children}</body>
     </html>
   );
 }
