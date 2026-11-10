@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
 import {
   calculateInstallmentsBetween,
-  DELIVERABLE_STATUS_LABELS,
-  formatDateBR,
   formatMonthYearBR,
   getScholarshipVigenciaStatus,
-  LabicAttachment,
   LabicProject,
+  parseProjectNotes,
   PROJECT_STATUS_LABELS,
-  ProjectDeliverable,
 } from "@/types/labic";
-import { AttachmentManager } from "@/components/AttachmentManager";
+import { PaginationControls } from "@/components/PaginationControls";
+import { DiscreetSearchBar } from "@/components/DiscreetSearchBar";
 
 export default function ProjetosPage() {
   const {
@@ -25,11 +24,17 @@ export default function ProjetosPage() {
     addProject,
     updateProject,
     deleteProject,
-    updateProjectNotes,
-    addProjectDeliverable,
-    updateProjectDeliverable,
-    deleteProjectDeliverable,
   } = useLabic();
+
+  // Filtros de Visualização
+  const [scopeFilter, setScopeFilter] = useState<"MEUS" | "TODOS">("MEUS");
+  const [statusFilter, setStatusFilter] = useState<string>("EM_ANDAMENTO"); // Padrão: Em andamento
+  const [sortOrder, setSortOrder] = useState<"RECENTES" | "ANTIGOS" | "TITULO_AZ">("RECENTES");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(15);
 
   // Modal de Projeto (Criar / Editar)
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -52,19 +57,71 @@ export default function ProjetosPage() {
     }[]
   >([]);
 
-  // Modal de Entrega / Arquivo do Projeto (Criar / Editar)
-  const [activeDelivProjId, setActiveDelivProjId] = useState<string | null>(null);
-  const [editingDeliverableId, setEditingDeliverableId] = useState<string | null>(null);
-  const [delTitle, setDelTitle] = useState("");
-  const [delDesc, setDelDesc] = useState("");
-  const [delDueDate, setDelDueDate] = useState("");
-  const [delStatus, setDelStatus] = useState<ProjectDeliverable["status"]>("PENDENTE");
-  const [delAttachments, setDelAttachments] = useState<LabicAttachment[]>([]);
+  // Filtragem e Ordenação
+  const filteredAndSortedProjects = useMemo(() => {
+    let result = [...projects];
 
-  // Bloco de Notas por projeto
-  const [notesDraftByProj, setNotesDraftByProj] = useState<Record<string, string>>({});
-  const [notesSavedBanner, setNotesSavedBanner] = useState<string | null>(null);
+    // 1. Filtro de Escopo: "Meus Projetos" vs "Todos os Projetos"
+    if (scopeFilter === "MEUS" && currentUser) {
+      result = result.filter(
+        (p) =>
+          p.advisorId === currentUser.id ||
+          p.coAdvisorId === currentUser.id ||
+          p.members.some((m) => m.profileId === currentUser.id)
+      );
+    }
 
+    // 2. Filtro de Status: Padrão "EM_ANDAMENTO", ou específico, ou "TODOS"
+    if (statusFilter !== "TODOS") {
+      result = result.filter((p) => p.status === statusFilter);
+    }
+
+    // 3. Pesquisa Discreta por texto (título, agência, código, resumo, membros)
+    const term = searchTerm.trim().toLowerCase();
+    if (term) {
+      result = result.filter((p) => {
+        const matchesTitle = p.title.toLowerCase().includes(term);
+        const matchesAgency = p.fundingAgency.toLowerCase().includes(term);
+        const matchesCode = p.code.toLowerCase().includes(term);
+        const matchesSummary = (p.summary || "").toLowerCase().includes(term);
+        const matchesMembers = p.members.some((pm) => {
+          const mObj = members.find((m) => m.id === pm.profileId);
+          return mObj?.name.toLowerCase().includes(term);
+        });
+        return (
+          matchesTitle ||
+          matchesAgency ||
+          matchesCode ||
+          matchesSummary ||
+          matchesMembers
+        );
+      });
+    }
+
+    // 4. Ordenação
+    result.sort((a, b) => {
+      if (sortOrder === "RECENTES") {
+        return b.year - a.year || b.code.localeCompare(a.code);
+      }
+      if (sortOrder === "ANTIGOS") {
+        return a.year - b.year || a.code.localeCompare(b.code);
+      }
+      if (sortOrder === "TITULO_AZ") {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [projects, scopeFilter, statusFilter, searchTerm, sortOrder, currentUser, members]);
+
+  // Paginação aplicada
+  const paginatedProjects = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAndSortedProjects.slice(start, start + pageSize);
+  }, [filteredAndSortedProjects, currentPage, pageSize]);
+
+  // Handlers para Criar / Editar Projeto
   const openCreateProject = () => {
     setEditingProjectId(null);
     setTitle("");
@@ -203,72 +260,14 @@ export default function ProjetosPage() {
     setShowProjectModal(false);
   };
 
-  const openCreateDeliverable = (projectId: string) => {
-    setActiveDelivProjId(projectId);
-    setEditingDeliverableId(null);
-    setDelTitle("");
-    setDelDesc("");
-    setDelDueDate("");
-    setDelStatus("PENDENTE");
-    setDelAttachments([]);
-  };
-
-  const openEditDeliverable = (projectId: string, del: ProjectDeliverable) => {
-    setActiveDelivProjId(projectId);
-    setEditingDeliverableId(del.id);
-    setDelTitle(del.title);
-    setDelDesc(del.description || "");
-    setDelDueDate(del.dueDate);
-    setDelStatus(del.status);
-    setDelAttachments(del.attachments || []);
-  };
-
-  const handleSaveDeliverable = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeDelivProjId || !delTitle.trim()) return;
-
-    const finalStatus =
-      delAttachments.length > 0 && delStatus === "PENDENTE" ? "ENTREGUE" : delStatus;
-
-    if (editingDeliverableId) {
-      await updateProjectDeliverable(activeDelivProjId, editingDeliverableId, {
-        title: delTitle.trim(),
-        description: delDesc.trim(),
-        dueDate: delDueDate,
-        status: finalStatus,
-        attachments: delAttachments,
-        fileName: delAttachments[0]?.url || undefined,
-      });
-    } else {
-      await addProjectDeliverable(activeDelivProjId, {
-        title: delTitle.trim(),
-        description: delDesc.trim(),
-        type: "DOCUMENTO_OPCIONAL",
-        dueDate: delDueDate,
-        status: finalStatus,
-        attachments: delAttachments,
-        fileName: delAttachments[0]?.url || undefined,
-      });
-    }
-
-    setActiveDelivProjId(null);
-    setEditingDeliverableId(null);
-  };
-
-  const handleSaveNotes = async (projectId: string, currentNotes: string) => {
-    const val = notesDraftByProj[projectId] ?? currentNotes;
-    await updateProjectNotes(projectId, val);
-    setNotesSavedBanner(projectId);
-    setTimeout(() => setNotesSavedBanner(null), 2500);
-  };
-
   return (
     <div className="space-y-6">
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
         <div>
           <h1 className="text-lg font-semibold text-zinc-100">Projetos</h1>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Gestão de projetos de pesquisa, coorientações, bolsas, entregas de arquivos e bloco de notas colaborativo.
+            Gestão de projetos de pesquisa, integrantes, entregas de relatórios e diário de notas. Selecione um projeto para acessar sua página exclusiva.
           </p>
         </div>
         <button
@@ -279,282 +278,243 @@ export default function ProjetosPage() {
         </button>
       </div>
 
-      {projects.length === 0 ? (
+      {/* Barra de Filtros, Ordenação, Escopo e Pesquisa Discreta */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Toggle de Escopo: Meus Projetos (Padrão) vs Todos */}
+          <div className="inline-flex rounded bg-[#111318] border border-zinc-800 p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setScopeFilter("MEUS");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded text-xs transition-colors ${
+                scopeFilter === "MEUS"
+                  ? "bg-zinc-800 text-emerald-400 font-medium"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Meus Projetos
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setScopeFilter("TODOS");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded text-xs transition-colors ${
+                scopeFilter === "TODOS"
+                  ? "bg-zinc-800 text-emerald-400 font-medium"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              Todos os Projetos
+            </button>
+          </div>
+
+          {/* Filtro de Status: Padrão Em andamento */}
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer focus:outline-none focus:border-zinc-700"
+          >
+            <option value="EM_ANDAMENTO">Status: Em andamento</option>
+            <option value="CONCLUIDO">Status: Concluídos</option>
+            <option value="PAUSADO">Status: Pausados</option>
+            <option value="TODOS">Todos os Status</option>
+          </select>
+
+          {/* Filtro de Ordenação */}
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as "RECENTES" | "ANTIGOS" | "TITULO_AZ");
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer focus:outline-none focus:border-zinc-700"
+          >
+            <option value="RECENTES">Mais recentes</option>
+            <option value="ANTIGOS">Mais antigos</option>
+            <option value="TITULO_AZ">Título (A-Z)</option>
+          </select>
+        </div>
+
+        {/* Pesquisa Discreta */}
+        <div className="flex items-center gap-2">
+          <DiscreetSearchBar
+            value={searchTerm}
+            onChange={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar por título, agência, membro..."
+          />
+        </div>
+      </div>
+
+      {/* Lista de Projetos (Cartões Despoluídos) */}
+      {filteredAndSortedProjects.length === 0 ? (
         <div className="bg-[#111318] border border-zinc-800/80 rounded-lg p-6 text-xs text-zinc-500">
-          Nenhum projeto cadastrado. Clique em &ldquo;+ Novo Projeto&rdquo; para registrar o primeiro projeto do laboratório.
+          {searchTerm.trim()
+            ? "Nenhum projeto encontrado para os termos da busca."
+            : scopeFilter === "MEUS"
+            ? 'Nenhum projeto seu encontrado para este status. Alterne para "Todos os Projetos" ou clique em "+ Novo Projeto".'
+            : "Nenhum projeto encontrado com estes filtros."}
         </div>
       ) : (
-        <div className="space-y-6">
-          {projects.map((proj) => {
+        <div className="space-y-3.5">
+          {paginatedProjects.map((proj) => {
             const hasAccess = canAccessProject(proj.id);
+            const advisorName =
+              members.find((m) => m.id === proj.advisorId)?.name || "Diretoria";
             const coAdvisorName = proj.coAdvisorId
               ? members.find((m) => m.id === proj.coAdvisorId)?.name
               : undefined;
-            const currentNotes = notesDraftByProj[proj.id] ?? proj.notes ?? "";
+            const projectNotesList = parseProjectNotes(proj.notes);
+
+            // Verifica se o usuário atual é bolsista neste projeto
+            const myLink = currentUser
+              ? proj.members.find((pm) => pm.profileId === currentUser.id)
+              : undefined;
+            const isMyScholar =
+              myLink?.roleInProject === "BOLSISTA" &&
+              canSeeScholarshipValue(myLink.profileId);
+            const myVigencia = isMyScholar
+              ? getScholarshipVigenciaStatus(
+                  myLink?.scholarshipStartMonth,
+                  myLink?.scholarshipEndMonth,
+                  proj.status
+                )
+              : null;
 
             return (
               <div
                 key={proj.id}
-                className="bg-[#111318] border border-zinc-800/80 rounded-lg p-5 space-y-5"
+                className="bg-[#111318] border border-zinc-800/80 rounded-lg p-4 sm:p-5 flex flex-col justify-between gap-3 text-xs hover:border-zinc-700/70 transition-colors"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-zinc-800/60 pb-3">
-                  <div>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/50 pb-2.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-medium text-emerald-400">
+                      <span className="text-xs font-semibold text-emerald-400">
                         {proj.fundingAgency}
                       </span>
-                      <span className="text-xs text-zinc-600">·</span>
-                      <span className="text-xs text-zinc-400">Ano: {proj.year}</span>
-                      <span className="text-xs text-zinc-600">·</span>
-                      <span className="text-[11px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-200 font-medium">
+                      <span className="text-zinc-600">·</span>
+                      <span className="text-zinc-400">Ano: {proj.year}</span>
+                      <span className="text-zinc-600">·</span>
+                      <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-200 font-medium">
                         {PROJECT_STATUS_LABELS[proj.status] || proj.status}
                       </span>
+                      {proj.code && (
+                        <>
+                          <span className="text-zinc-600">·</span>
+                          <span className="text-[11px] text-zinc-500 font-mono">
+                            {proj.code}
+                          </span>
+                        </>
+                      )}
                       {proj.showOnPublicShowcase && (
                         <>
-                          <span className="text-xs text-zinc-600">·</span>
-                          <span className="text-[11px] text-zinc-500">Visível na Vitrine</span>
+                          <span className="text-zinc-600">·</span>
+                          <span className="text-[11px] text-zinc-500">Vitrine Pública</span>
                         </>
                       )}
                     </div>
-                    <h2 className="text-base font-semibold text-zinc-100 mt-0.5">{proj.title}</h2>
-                    {proj.summary && (
-                      <p className="text-xs text-zinc-400 mt-1">{proj.summary}</p>
+
+                    {isMyScholar && (
+                      <span
+                        className={`px-2 py-0.5 rounded border text-[11px] font-medium ${
+                          myVigencia?.isActiveNow
+                            ? "bg-emerald-950/60 border-emerald-800/60 text-emerald-300"
+                            : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                        }`}
+                      >
+                        Sua Bolsa: R$ {myLink?.monthlyScholarshipBRL?.toLocaleString("pt-BR")}/mês (
+                        {myVigencia?.label})
+                      </span>
                     )}
                   </div>
 
+                  <div>
+                    <h2 className="text-sm sm:text-base font-semibold text-zinc-100">
+                      {proj.title}
+                    </h2>
+                    {proj.summary && (
+                      <p className="text-zinc-400 text-xs mt-1 line-clamp-2 leading-relaxed">
+                        {proj.summary}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-400 pt-1">
+                    <span>
+                      Orientação: <strong className="text-zinc-300">{advisorName}</strong>
+                      {coAdvisorName ? ` · Coorientador: ${coAdvisorName}` : ""}
+                    </span>
+                    <span>
+                      Equipe:{" "}
+                      <strong className="text-zinc-300">{proj.members.length}</strong>{" "}
+                      pesquisador(es)
+                    </span>
+                    <span>
+                      Entregas/Relatórios:{" "}
+                      <strong className="text-zinc-300">{proj.deliverables.length}</strong>
+                    </span>
+                    <span>
+                      Diário de Notas:{" "}
+                      <strong className="text-zinc-300">{projectNotesList.length}</strong>{" "}
+                      anotação(ões)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800/70 flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    href={`/app/projetos/${proj.id}`}
+                    className="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors shrink-0"
+                  >
+                    Abrir Projeto (Entregas, Integrantes e Notas) →
+                  </Link>
+
                   {hasAccess && (
-                    <div className="flex items-center gap-2 shrink-0 text-xs">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => openEditProject(proj)}
-                        className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200"
+                        className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs transition-colors"
                       >
-                        Editar Projeto
+                        Editar
                       </button>
                       <button
-                        onClick={() => deleteProject(proj.id)}
-                        className="px-2.5 py-1 rounded bg-red-950/50 hover:bg-red-900/60 border border-red-900/50 text-red-300"
+                        onClick={() => {
+                          if (
+                            confirm(`Tem certeza que deseja excluir o projeto "${proj.title}"?`)
+                          ) {
+                            deleteProject(proj.id);
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-300 text-xs transition-colors"
                       >
                         Excluir
                       </button>
                     </div>
                   )}
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
-                  {/* Coluna 1: Equipe (Sigilo Absoluto de Bolsa) */}
-                  <div className="space-y-2.5">
-                    <div className="text-zinc-400 font-medium">
-                      Coorientador:{" "}
-                      <span className="text-zinc-200 font-normal">
-                        {coAdvisorName || "Nenhum coorientador designado"}
-                      </span>
-                    </div>
-
-                    <div className="text-zinc-400 font-medium pt-1">
-                      Pesquisadores Integrantes ({proj.members.length}):
-                    </div>
-                    {proj.members.length === 0 ? (
-                      <p className="text-zinc-500">Nenhum pesquisador vinculado.</p>
-                    ) : (
-                      <div className="divide-y divide-zinc-800/60 bg-zinc-900/40 border border-zinc-800/80 rounded px-3">
-                        {proj.members.map((pm) => {
-                          const memberObj = members.find((m) => m.id === pm.profileId);
-                          // Sigilo estrito: somente Diretora, Coord. Geral e o próprio bolsista sabem que há bolsa e o valor!
-                          const showScholarship =
-                            canSeeScholarshipValue(pm.profileId) &&
-                            pm.roleInProject === "BOLSISTA";
-                          const vigencia = showScholarship
-                            ? getScholarshipVigenciaStatus(
-                                pm.scholarshipStartMonth,
-                                pm.scholarshipEndMonth,
-                                proj.status
-                              )
-                            : null;
-
-                          return (
-                            <div
-                              key={pm.profileId}
-                              className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                            >
-                              <div>
-                                <span className="text-zinc-200 font-medium">
-                                  {memberObj?.name || pm.profileId}
-                                </span>
-                                {memberObj?.course && (
-                                  <span className="text-[11px] text-zinc-500 ml-2">
-                                    ({memberObj.course})
-                                  </span>
-                                )}
-                              </div>
-                              {showScholarship && (
-                                <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-                                  <span
-                                    className={`px-1.5 py-0.5 rounded border text-[10px] font-medium ${
-                                      vigencia?.isActiveNow
-                                        ? "bg-emerald-950/60 border-emerald-800/50 text-emerald-300"
-                                        : "bg-zinc-900 border-zinc-700 text-zinc-400"
-                                    }`}
-                                  >
-                                    Bolsista · {vigencia?.label}
-                                  </span>
-                                  {pm.monthlyScholarshipBRL && (
-                                    <span
-                                      className={`font-semibold ${
-                                        vigencia?.isActiveNow
-                                          ? "text-emerald-400"
-                                          : "text-zinc-400 line-through"
-                                      }`}
-                                    >
-                                      R$ {pm.monthlyScholarshipBRL.toLocaleString("pt-BR")}/mês
-                                    </span>
-                                  )}
-                                  {(pm.scholarshipStartMonth ||
-                                    pm.scholarshipEndMonth ||
-                                    pm.scholarshipInstallments) && (
-                                    <span className="text-[11px] text-zinc-400">
-                                      (
-                                      {pm.scholarshipStartMonth
-                                        ? formatMonthYearBR(pm.scholarshipStartMonth)
-                                        : "—"}{" "}
-                                      até{" "}
-                                      {pm.scholarshipEndMonth
-                                        ? formatMonthYearBR(pm.scholarshipEndMonth)
-                                        : "—"}
-                                      {pm.scholarshipInstallments
-                                        ? ` · ${pm.scholarshipInstallments} parcelas`
-                                        : ""}
-                                      )
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Coluna 2: Entregas e Arquivos Dinâmicos do Projeto */}
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-zinc-400 font-medium">
-                        Entregas, Relatórios e Arquivos ({proj.deliverables.length})
-                      </span>
-                      {hasAccess && (
-                        <button
-                          onClick={() => openCreateDeliverable(proj.id)}
-                          className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-emerald-400 font-medium"
-                        >
-                          + Cadastrar Entrega / Arquivo
-                        </button>
-                      )}
-                    </div>
-
-                    {proj.deliverables.length === 0 ? (
-                      <p className="text-zinc-500 bg-zinc-900/30 border border-zinc-800/60 rounded p-3">
-                        Nenhuma entrega ou arquivo cadastrado neste projeto.
-                      </p>
-                    ) : (
-                      <div className="divide-y divide-zinc-800/60 bg-zinc-900/40 border border-zinc-800/80 rounded px-3">
-                        {proj.deliverables.map((del) => (
-                          <div key={del.id} className="py-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="text-zinc-100 font-medium">{del.title}</div>
-                                {del.description && (
-                                  <p className="text-[11px] text-zinc-400">{del.description}</p>
-                                )}
-                                <div className="text-[11px] text-zinc-500 mt-0.5">
-                                  {del.dueDate ? `Prazo: ${formatDateBR(del.dueDate)} · ` : ""}Status:{" "}
-                                  <span className="text-emerald-400">
-                                    {DELIVERABLE_STATUS_LABELS[del.status] || del.status}
-                                  </span>
-                                </div>
-                              </div>
-                              {hasAccess && (
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <button
-                                    onClick={() => openEditDeliverable(proj.id, del)}
-                                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px]"
-                                  >
-                                    Editar / Anexar PDF
-                                  </button>
-                                  <button
-                                    onClick={() => deleteProjectDeliverable(proj.id, del.id)}
-                                    className="px-2 py-1 rounded bg-red-950/50 text-red-300 text-[11px]"
-                                  >
-                                    Excluir
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-
-                            {del.attachments && del.attachments.length > 0 && (
-                              <div className="flex flex-wrap gap-2 pt-1">
-                                {del.attachments.map((att) => (
-                                  <a
-                                    key={att.id}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-2 py-1 rounded bg-zinc-950 border border-zinc-800 text-[11px] text-emerald-400 hover:underline"
-                                  >
-                                    [{att.fileType === "PDF_UPLOAD" ? "PDF" : "Link"}] {att.label} ↗
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bloco de Notas Compartilhado do Projeto (Visível apenas para membros do projeto / Admin) */}
-                {hasAccess && (
-                  <div className="pt-4 border-t border-zinc-800/80 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-zinc-200">
-                          Bloco de Notas e Observações do Projeto
-                        </h3>
-                        <p className="text-[11px] text-zinc-500">
-                          Espaço compartilhado entre os integrantes deste projeto para registrar anotações de reuniões, parâmetros técnicos, pendências e links úteis.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {notesSavedBanner === proj.id && (
-                          <span className="text-emerald-400 font-medium">
-                            Anotações salvas!
-                          </span>
-                        )}
-                        <button
-                          onClick={() => handleSaveNotes(proj.id, proj.notes || "")}
-                          className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
-                        >
-                          Salvar Bloco de Notas
-                        </button>
-                      </div>
-                    </div>
-                    <textarea
-                      rows={6}
-                      value={currentNotes}
-                      onChange={(e) =>
-                        setNotesDraftByProj((prev) => ({
-                          ...prev,
-                          [proj.id]: e.target.value,
-                        }))
-                      }
-                      placeholder="Escreva aqui anotações de reuniões, decisões de projeto, configurações de bancada ou lembretes..."
-                      className="w-full bg-zinc-950/80 border border-zinc-800 rounded-lg p-3 text-xs text-zinc-100 leading-relaxed focus:outline-none focus:border-zinc-600"
-                    />
-                  </div>
-                )}
               </div>
             );
           })}
+
+          {/* Paginação */}
+          <PaginationControls
+            currentPage={currentPage}
+            totalItems={filteredAndSortedProjects.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[15, 20, 50]}
+          />
         </div>
       )}
 
@@ -588,9 +548,7 @@ export default function ProjetosPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">
-                    Edital / Agência *
-                  </label>
+                  <label className="block text-zinc-400 mb-1">Edital / Agência *</label>
                   <input
                     type="text"
                     required
@@ -809,104 +767,6 @@ export default function ProjetosPage() {
                   className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
                 >
                   {editingProjectId ? "Salvar Alterações" : "Criar Projeto"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Cadastrar / Editar Entrega ou Arquivo do Projeto */}
-      {activeDelivProjId && (
-        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="bg-[#111318] border border-zinc-800 rounded-lg max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h2 className="text-sm font-semibold text-zinc-100">
-                {editingDeliverableId
-                  ? "Editar Entrega / Anexar Arquivos"
-                  : "Cadastrar Entrega ou Arquivo do Projeto"}
-              </h2>
-              <button
-                onClick={() => setActiveDelivProjId(null)}
-                className="text-zinc-400 hover:text-zinc-200"
-              >
-                Fechar
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveDeliverable} className="space-y-3.5">
-              <div>
-                <label className="block text-zinc-400 mb-1">
-                  Título da Entrega / Documento *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={delTitle}
-                  onChange={(e) => setDelTitle(e.target.value)}
-                  placeholder="Ex.: Relatório Parcial, Esquema Elétrico, Dataset, Artigo..."
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-400 mb-1">Prazo / Data (Opcional)</label>
-                  <input
-                    type="date"
-                    value={delDueDate}
-                    onChange={(e) => setDelDueDate(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-400 mb-1">Status</label>
-                  <select
-                    value={delStatus}
-                    onChange={(e) =>
-                      setDelStatus(e.target.value as ProjectDeliverable["status"])
-                    }
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
-                  >
-                    <option value="PENDENTE">Pendente</option>
-                    <option value="ENTREGUE">Entregue</option>
-                    <option value="VALIDADO">Validado pela Orientação</option>
-                    <option value="ATRASADO">Em Atraso</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 mb-1">Observações / Descrição</label>
-                <input
-                  type="text"
-                  value={delDesc}
-                  onChange={(e) => setDelDesc(e.target.value)}
-                  placeholder="Detalhes sobre esta entrega..."
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
-                />
-              </div>
-
-              <AttachmentManager
-                attachments={delAttachments}
-                onChange={setDelAttachments}
-                bucket="relatorios-projetos"
-                label="Arquivos PDF ou Links desta Entrega"
-              />
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setActiveDelivProjId(null)}
-                  className="px-3 py-1.5 rounded bg-zinc-800 text-zinc-300"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
-                >
-                  Salvar Entrega
                 </button>
               </div>
             </form>

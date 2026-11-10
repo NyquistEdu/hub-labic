@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
 import { CONFERENCE_STATUS_LABELS, formatDateBR, LabicConference } from "@/types/labic";
+import { PaginationControls } from "@/components/PaginationControls";
+import { DiscreetSearchBar } from "@/components/DiscreetSearchBar";
 
 export default function CongressosPage() {
   const {
@@ -23,6 +25,31 @@ export default function CongressosPage() {
   const [officialSubmissionDeadline, setOfficialSubmissionDeadline] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [status, setStatus] = useState<LabicConference["status"]>("ABERTO");
+
+  // Filtros, Busca Discreta e Paginação
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("TODOS");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  const filteredConferences = useMemo(() => {
+    return conferences.filter((c) => {
+      if (statusFilter !== "TODOS" && c.status !== statusFilter) return false;
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const matchesName = c.name.toLowerCase().includes(term);
+        const matchesAcronym = c.acronym.toLowerCase().includes(term);
+        const matchesLoc = (c.location || "").toLowerCase().includes(term);
+        if (!matchesName && !matchesAcronym && !matchesLoc) return false;
+      }
+      return true;
+    });
+  }, [conferences, statusFilter, searchTerm]);
+
+  const paginatedConferences = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredConferences.slice(start, start + pageSize);
+  }, [filteredConferences, currentPage, pageSize]);
 
   const openCreateModal = () => {
     setEditingConfId(null);
@@ -95,13 +122,42 @@ export default function CongressosPage() {
         </button>
       </div>
 
-      {conferences.length === 0 ? (
+      {/* Barra de Filtros e Busca Discreta */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer"
+          >
+            <option value="TODOS">Todos os Status</option>
+            <option value="ABERTO">Abertos</option>
+            <option value="EM_REVISAO">Em Revisão Interna</option>
+            <option value="ENCERRADO">Encerrados</option>
+          </select>
+        </div>
+
+        <DiscreetSearchBar
+          value={searchTerm}
+          onChange={(val) => {
+            setSearchTerm(val);
+            setCurrentPage(1);
+          }}
+          placeholder="Buscar por nome, sigla, local..."
+        />
+      </div>
+
+      {filteredConferences.length === 0 ? (
         <div className="bg-[#111318] border border-zinc-800/80 rounded-lg p-6 text-xs text-zinc-500">
-          Nenhum congresso cadastrado. Clique em &ldquo;+ Cadastrar Congresso&rdquo; para criar um evento e gerenciar suas metas e artigos.
+          Nenhum congresso encontrado para os filtros selecionados.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {conferences.map((conf) => {
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {paginatedConferences.map((conf) => {
             const confSubs = submissions.filter((s) => s.conferenceId === conf.id);
             const completedMilestones = (conf.milestones || []).filter(
               (m) => m.completed
@@ -183,6 +239,16 @@ export default function CongressosPage() {
             );
           })}
         </div>
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalItems={filteredConferences.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 20, 50]}
+        />
+      </div>
       )}
 
       {showModal && (

@@ -213,6 +213,49 @@ export interface LabicMilestone {
   completedAt?: string;
 }
 
+export interface ProjectNoteItem {
+  id: string;
+  text: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string; // Data e hora da nota
+}
+
+/**
+ * Converte notas salvas no projeto (seja texto antigo legado ou JSON array)
+ * em um array estruturado de ProjectNoteItem[].
+ */
+export function parseProjectNotes(notesRaw?: string): ProjectNoteItem[] {
+  if (!notesRaw || !notesRaw.trim()) return [];
+  try {
+    const parsed = JSON.parse(notesRaw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (item) => item && typeof item.text === 'string' && item.text.trim().length > 0
+      );
+    }
+  } catch {
+    // Se for texto legado anterior ao formato JSON, exibe como anotação histórica inicial
+    return [
+      {
+        id: 'legacy-note',
+        text: notesRaw.trim(),
+        authorId: '',
+        authorName: 'Registro Histórico',
+        createdAt: 'Anotação anterior',
+      },
+    ];
+  }
+  return [];
+}
+
+/**
+ * Serializa o array de ProjectNoteItem para string a ser salva no banco
+ */
+export function serializeProjectNotes(notes: ProjectNoteItem[]): string {
+  return JSON.stringify(notes);
+}
+
 export interface AcademicStep {
   id: string;
   degreeLevel: string;

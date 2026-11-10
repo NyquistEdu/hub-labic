@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useLabic } from "@/context/LabicContext";
 import {
   DOCUMENT_CATEGORY_LABELS,
@@ -9,6 +9,8 @@ import {
   LabicAttachment,
 } from "@/types/labic";
 import { AttachmentManager } from "@/components/AttachmentManager";
+import { PaginationControls } from "@/components/PaginationControls";
+import { DiscreetSearchBar } from "@/components/DiscreetSearchBar";
 
 export default function DocumentosPage() {
   const {
@@ -27,6 +29,36 @@ export default function DocumentosPage() {
     "TEMPLATE_ARTIGO" | "MANUAL_BANCADA" | "OFICIO_EDITAL" | "OUTRO_DOCUMENTO"
   >("TEMPLATE_ARTIGO");
   const [attachments, setAttachments] = useState<LabicAttachment[]>([]);
+
+  // Filtros, Busca Discreta e Paginação
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCatFilter, setSelectedCatFilter] = useState("TODAS");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  const filteredDocuments = useMemo(() => {
+    return generalDocuments.filter((doc) => {
+      if (selectedCatFilter !== "TODAS" && doc.category !== selectedCatFilter) {
+        return false;
+      }
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const matchesTitle = doc.title.toLowerCase().includes(term);
+        const matchesCat = (DOCUMENT_CATEGORY_LABELS[doc.category] || "").toLowerCase().includes(term);
+        const uploaderName = members.find((m) => m.id === doc.uploadedByProfileId)?.name || "";
+        const matchesUploader = uploaderName.toLowerCase().includes(term);
+        if (!matchesTitle && !matchesCat && !matchesUploader) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [generalDocuments, selectedCatFilter, searchTerm, members]);
+
+  const paginatedDocuments = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredDocuments.slice(start, start + pageSize);
+  }, [filteredDocuments, currentPage, pageSize]);
 
   const openCreateModal = () => {
     setEditingDoc(null);
@@ -100,9 +132,38 @@ export default function DocumentosPage() {
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedCatFilter}
+            onChange={(e) => {
+              setSelectedCatFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer"
+          >
+            <option value="TODAS">Todas as Categorias</option>
+            {Object.entries(DOCUMENT_CATEGORY_LABELS).map(([k, label]) => (
+              <option key={k} value={k}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <DiscreetSearchBar
+          value={searchTerm}
+          onChange={(val) => {
+            setSearchTerm(val);
+            setCurrentPage(1);
+          }}
+          placeholder="Buscar por título, categoria..."
+        />
+      </div>
+
       <div className="bg-[#111318] border border-zinc-800/80 rounded-lg overflow-hidden">
-        {generalDocuments.length === 0 ? (
-          <p className="text-xs text-zinc-500 p-6">Nenhum documento geral cadastrado.</p>
+        {filteredDocuments.length === 0 ? (
+          <p className="text-xs text-zinc-500 p-6">Nenhum documento geral encontrado para este filtro.</p>
         ) : (
           <table className="w-full text-left text-xs">
             <thead>
@@ -116,7 +177,7 @@ export default function DocumentosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              {generalDocuments.map((doc) => {
+              {paginatedDocuments.map((doc) => {
                 const uploader =
                   members.find((m) => m.id === doc.uploadedByProfileId)?.name || "Membro";
                 const list =
@@ -176,6 +237,16 @@ export default function DocumentosPage() {
             </tbody>
           </table>
         )}
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalItems={filteredDocuments.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 20, 50]}
+          className="p-3"
+        />
       </div>
 
       {showModal && (

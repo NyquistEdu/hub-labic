@@ -9,6 +9,8 @@ import {
   ProductionItem,
 } from "@/types/labic";
 import { AttachmentManager } from "@/components/AttachmentManager";
+import { PaginationControls } from "@/components/PaginationControls";
+import { DiscreetSearchBar } from "@/components/DiscreetSearchBar";
 
 export default function ProducoesPage() {
   const {
@@ -23,6 +25,11 @@ export default function ProducoesPage() {
 
   const [yearFilter, setYearFilter] = useState<string>("TODOS");
   const [catFilter, setCatFilter] = useState<string>("TODAS");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"RECENTES" | "ANTIGOS" | "TITULO_AZ">("RECENTES");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(15);
+
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingItem, setViewingItem] = useState<ProductionItem | null>(null);
@@ -47,12 +54,47 @@ export default function ProducoesPage() {
   }, [productions]);
 
   const filtered = useMemo(() => {
-    return productions.filter((p) => {
+    let result = productions.filter((p) => {
       if (yearFilter !== "TODOS" && String(p.year) !== yearFilter) return false;
       if (catFilter !== "TODAS" && p.category !== catFilter) return false;
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const matchesTitle = p.title.toLowerCase().includes(term);
+        const matchesAgency = (p.venueOrAgency || "").toLowerCase().includes(term);
+        const matchesExternal = (p.externalAuthors || "").toLowerCase().includes(term);
+        const matchesAuthors = p.authorIds.some((id) => {
+          const m = members.find((mem) => mem.id === id);
+          return m?.name.toLowerCase().includes(term);
+        });
+        if (!matchesTitle && !matchesAgency && !matchesExternal && !matchesAuthors) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [productions, yearFilter, catFilter]);
+
+    result.sort((a, b) => {
+      if (sortOrder === "RECENTES") {
+        return b.year - a.year || a.title.localeCompare(b.title);
+      }
+      if (sortOrder === "ANTIGOS") {
+        return a.year - b.year || a.title.localeCompare(b.title);
+      }
+      if (sortOrder === "TITULO_AZ") {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [productions, yearFilter, catFilter, searchTerm, sortOrder, members]);
+
+  const paginatedProductions = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const openCreateModal = () => {
     setEditingId(null);
@@ -164,11 +206,14 @@ export default function ProducoesPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="bg-[#111318] border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200"
+            onChange={(e) => {
+              setYearFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200 cursor-pointer"
           >
             <option value="TODOS">Todos os anos</option>
             {availableYears.map((y) => (
@@ -180,8 +225,11 @@ export default function ProducoesPage() {
 
           <select
             value={catFilter}
-            onChange={(e) => setCatFilter(e.target.value)}
-            className="bg-[#111318] border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200"
+            onChange={(e) => {
+              setCatFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200 cursor-pointer"
           >
             <option value="TODAS">Todas as categorias</option>
             {Object.entries(PRODUCTION_CATEGORY_LABELS).map(([k, label]) => (
@@ -190,11 +238,31 @@ export default function ProducoesPage() {
               </option>
             ))}
           </select>
+
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as "RECENTES" | "ANTIGOS" | "TITULO_AZ");
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-200 cursor-pointer"
+          >
+            <option value="RECENTES">Mais recentes</option>
+            <option value="ANTIGOS">Mais antigos</option>
+            <option value="TITULO_AZ">Título (A-Z)</option>
+          </select>
         </div>
 
-        <span className="text-xs text-zinc-400">
-          Exibindo <strong className="text-zinc-200">{filtered.length}</strong> registro(s)
-        </span>
+        <div className="flex items-center gap-2">
+          <DiscreetSearchBar
+            value={searchTerm}
+            onChange={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar por título, autor, órgão..."
+          />
+        </div>
       </div>
 
       <div className="bg-[#111318] border border-zinc-800/80 rounded-lg overflow-hidden">
@@ -213,7 +281,7 @@ export default function ProducoesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              {filtered.map((prod) => {
+              {paginatedProductions.map((prod) => {
                 const primaryId = prod.primaryAuthorId || prod.authorIds[0];
                 const primaryMember = members.find((m) => m.id === primaryId);
                 const coauthorNames = prod.authorIds
@@ -308,6 +376,16 @@ export default function ProducoesPage() {
             </tbody>
           </table>
         )}
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 20, 50]}
+          className="p-3"
+        />
       </div>
 
       {/* Modal de Visualização Detalhada */}

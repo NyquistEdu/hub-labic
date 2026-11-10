@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useLabic } from "@/context/LabicContext";
 import {
   CoordinationType,
@@ -12,6 +12,8 @@ import {
   LabicMember,
   WorkMode,
 } from "@/types/labic";
+import { PaginationControls } from "@/components/PaginationControls";
+import { DiscreetSearchBar } from "@/components/DiscreetSearchBar";
 
 const ALL_COORDINATIONS: CoordinationType[] = [
   "FINANCAS",
@@ -49,6 +51,13 @@ export default function MembrosPage() {
   const [currentStateOrProvince, setCurrentStateOrProvince] = useState("SE");
   const [currentCountry, setCurrentCountry] = useState("Brasil");
 
+  // Filtros, Busca Discreta e Paginação
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("TODOS");
+  const [statusFilter, setStatusFilter] = useState("TODOS");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   // Modal exclusivo para Trocar Senha (nunca exibe a senha atual)
   const [passwordTargetMember, setPasswordTargetMember] = useState<LabicMember | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -68,6 +77,30 @@ export default function MembrosPage() {
     setFeedbackBanner(msg);
     setTimeout(() => setFeedbackBanner(""), 3500);
   };
+
+  const filteredMembers = useMemo(() => {
+    return members.filter((m) => {
+      if (roleFilter !== "TODOS" && m.globalRole !== roleFilter) return false;
+      if (statusFilter !== "TODOS" && m.status !== statusFilter) return false;
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const matchesName = m.name.toLowerCase().includes(term);
+        const matchesEmail = m.email.toLowerCase().includes(term);
+        const matchesCourse = (m.course || "").toLowerCase().includes(term);
+        const matchesInst = (m.institution || "").toLowerCase().includes(term);
+        const matchesCity = (m.currentCity || "").toLowerCase().includes(term);
+        if (!matchesName && !matchesEmail && !matchesCourse && !matchesInst && !matchesCity) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [members, roleFilter, statusFilter, searchTerm]);
+
+  const paginatedMembers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredMembers.slice(start, start + pageSize);
+  }, [filteredMembers, currentPage, pageSize]);
 
   const openCreateModal = () => {
     setEditingMember(null);
@@ -209,8 +242,54 @@ export default function MembrosPage() {
         </div>
       )}
 
+      {/* Barra de Filtros e Busca Discreta */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer"
+          >
+            <option value="TODOS">Todos os Cargos</option>
+            <option value="PESQUISADOR">Pesquisadores</option>
+            <option value="COORD_GERAL">Coordenação Geral</option>
+            <option value="DIRETORA">Diretoria</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-[#111318] border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 cursor-pointer"
+          >
+            <option value="TODOS">Todos os Status</option>
+            <option value="ATIVO">Apenas Ativos</option>
+            <option value="INATIVO">Apenas Inativos</option>
+          </select>
+        </div>
+
+        <DiscreetSearchBar
+          value={searchTerm}
+          onChange={(val) => {
+            setSearchTerm(val);
+            setCurrentPage(1);
+          }}
+          placeholder="Buscar por nome, e-mail, curso..."
+        />
+      </div>
+
       <div className="space-y-3">
-        {members.map((m) => {
+        {filteredMembers.length === 0 ? (
+          <div className="bg-[#111318] border border-zinc-800/80 rounded-lg p-6 text-xs text-zinc-500">
+            Nenhum membro encontrado para os filtros selecionados.
+          </div>
+        ) : (
+          paginatedMembers.map((m) => {
           // Filtra SOMENTE os projetos em que este membro recebe bolsa
           const memberScholarships = projects
             .map((proj) => {
@@ -428,7 +507,17 @@ export default function MembrosPage() {
               </div>
             </div>
           );
-        })}
+        })
+      )}
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalItems={filteredMembers.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[15, 20, 50]}
+        />
       </div>
 
       {/* Modal de Trocar Senha (sem exibir a senha atual) */}

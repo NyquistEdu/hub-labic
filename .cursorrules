@@ -16,3 +16,5 @@ Sempre leia o arquivo AGENTS.md na raiz antes de propor ou implementar alteraç�
    - Congressos (/app/congressos/[id]): metas internas (milestones[]), histórico de revisões em PDF (versions[]) e sem trava de conflito de interesse.
    - Limpeza: seleção de múltiplos dias da semana (Segunda a Domingo).
    - Serviços (/app/servicos): 3 formulários em linhas horizontais de largura total + solicitação de autorização para uso da impressora 3D.
+   - Projetos dedicados (/app/projetos/[id]): listagem principal com "Meus Projetos" e "Em andamento" por padrão; página dedicada para equipe, entregas e diário de notas cronológico (ProjectNoteItem[]).
+   - Paginação e Busca Discreta: paginação inteligente (15, 20, 50 itens via PaginationControls.tsx) e botão discreto de busca (DiscreetSearchBar.tsx) sem barras de pesquisa poluídas fixas.

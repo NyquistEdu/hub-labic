@@ -87,3 +87,9 @@
 6. **Solicitações e Escalas (`/app/servicos`):**
    - Os 3 formulários superiores ocupam **1 linha horizontal inteira cada** (1. Solicitar Insumo; 2. Solicitar Autorização para Impressão 3D; 3. Reportar Defeito), mantendo os cartões inferiores de acompanhamento e escalas em blocos de 2 colunas.
    - Na Impressão 3D, o pesquisador solicita autorização de uso da impressora; a Coordenação de Impressão 3D aprova (`APROVADO_PARA_IMPRIMIR`) e depois dá baixa como concluída (`CONCLUIDO`).
+7. **Página Exclusiva de Projetos (`/app/projetos/[id]`) e Bloco de Notas Cronológico:**
+   - A listagem principal (`/app/projetos`) é leve e despoluída, tendo por padrão o escopo **"Meus Projetos"** e status **"Em andamento"**, com botão `Abrir Projeto (Entregas, Integrantes e Notas) →`.
+   - Cada projeto possui sua página dedicada (`/app/projetos/[id]`) contendo os integrantes e bolsas com sigilo absoluto, entregas de relatórios/arquivos em PDF e o **Bloco de Notas Cronológico do Projeto** (`ProjectNoteItem[]`), onde cada anotação é registrada separadamente com autor, data/hora e texto, sem acumular tudo em um único bloco de texto.
+8. **Paginação Inteligente e Pesquisa Discreta em Todo o Sistema:**
+   - **Paginação (`PaginationControls.tsx`):** Aplicada em Projetos, Produções, Membros, Documentos e Congressos, permitindo ao usuário selecionar **15, 20 ou 50 itens por página**, exibindo totalizador e navegação limpa.
+   - **Pesquisa Discreta (`DiscreetSearchBar.tsx`):** Proibido fixar barras de busca gigantes e poluídas na tela. Utiliza-se um botão discreto `[ 🔍 Pesquisar ]` que expande suavemente um campo de texto ao ser clicado, com botão de limpar/fechar `✕`.
