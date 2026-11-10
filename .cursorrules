@@ -1,9 +1,17 @@
 # Regras de IA para o Projeto HUB-LABIC (IFS Campus Lagarto)
-Sempre leia o arquivo AGENTS.md na raiz antes de propor alterações.
+Sempre leia o arquivo AGENTS.md na raiz antes de propor ou implementar alterações.
 
-1. Interface estilo Supabase Studio (Variante A) com Engenharia Semiótica (ícones sempre acompanhados de rótulos claros, badges semânticos e zero ambiguidade).
-2. Visibilidade progressiva na Sidebar: só mostre na seção "Minhas Coordenações" os departamentos que o usuário logado coordena. Oculte completamente "Finanças" de quem não é DIRETORA, COORD_GERAL ou COORD_FINANCAS.
-3. Sigilo de Bolsa: O valor monetário (R$) de bolsas de projetos só é visível para DIRETORA, COORD_GERAL e o próprio bolsista (nunca para o coorientador ou terceiros).
-4. Trajetória Multi-Institucional: Pesquisadores formados no IFS que avançam para Mestrado/Doutorado (USP, Canadá, Itália, etc.) continuam ATIVOS no LABIC e aparecem no Mapa Mundial "LABIC pelo Mundo".
-5. Congressos (CROS 2027): Permita que qualquer membro (incluindo o próprio autor ou coorientador) seja designado como revisor interno.
-6. Toda página deve conter o botão de tutorial contextual (`PageTutorialButton`) explicando o propósito da tela e como operá-la.
+1. Estética sóbria e minimalista estilo Supabase Studio (#0c0d10 / #111318, border-zinc-800, emerald-600), sem poluição visual e com botão '?' (PageTutorialButton) no topo direito.
+2. CRUD completo (Criar, Visualizar, Editar, Excluir) obrigatório em todos os módulos, sincronizado com o Supabase.
+3. Múltiplos anexos via AttachmentManager: upload direto para arquivos PDF e links externos (https://...) para quaisquer outros formatos.
+4. Segurança e Sigilo:
+   - Sessão expira em 24 horas (localStorage 'labic_auth_session' + cookie max-age=86400).
+   - Nunca exiba senhas na tela de login nem em /app/membros (use apenas o modal "Trocar Senha").
+   - DIRETORA e COORD_GERAL podem promover/rebaixar o Papel Global (PESQUISADOR, COORD_GERAL, DIRETORA) de qualquer conta.
+   - Sigilo de Bolsa: nunca mostre "Valor restrito" nem revele quem é bolsista para quem não é DIRETORA, COORD_GERAL ou o próprio bolsista (mostre apenas "Pesquisador Integrante").
+   - Projetos e Editais de Startups só podem ser abertos/editados pelos membros vinculados a eles (ou DIRETORA / COORD_GERAL).
+5. Fluxos específicos:
+   - Produções: Autor Principal (primaryAuthorId, incluindo egressos/inativos) + Coautores (authorIds[]).
+   - Congressos (/app/congressos/[id]): metas internas (milestones[]), histórico de revisões em PDF (versions[]) e sem trava de conflito de interesse.
+   - Limpeza: seleção de múltiplos dias da semana (Segunda a Domingo).
+   - Serviços (/app/servicos): 3 formulários em linhas horizontais de largura total + solicitação de autorização para uso da impressora 3D.

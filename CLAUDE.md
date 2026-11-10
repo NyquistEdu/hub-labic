@@ -3,11 +3,17 @@
 Consulte e siga integralmente as especificações definidas em [`AGENTS.md`](./AGENTS.md).
 
 ## Resumo Rápido de Regras Inegociáveis (Não perguntar novamente)
-1. **Stack:** Next.js (App Router) + TypeScript + Tailwind CSS + Supabase (PostgreSQL/Auth/Storage), pronto para Vercel.
-2. **UI/UX:** Variante A inspirada no **Supabase Studio** + Engenharia Semiótica. Barra lateral com **Visibilidade Progressiva** (só exibe na seção `Minhas Coordenações` os departamentos que o usuário logado coordena).
-3. **Sigilo Financeiro e de Bolsas:**
-   - Aba `Finanças` (Caixinhas) só aparece para `DIRETORA`, `COORD_GERAL` e `COORD_FINANCAS`.
-   - Valor em R$ de bolsa em projetos só aparece para `DIRETORA`, `COORD_GERAL` e o **próprio bolsista** (o Coorientador NÃO vê o valor em R$).
-4. **Trajetória Acadêmica Multi-Institucional:** Alunos formados no IFS que vão para o Mestrado/Doutorado (ex.: USP, Canadá, Itália) permanecem `ATIVOS` no LABIC com a nova formação e localização no **Mapa Mundial "LABIC pelo Mundo"**.
-5. **Congressos (ex.: CROS 2027):** NÃO há bloqueio de conflito de interesse na revisão interna — o próprio autor, coorientador ou coordenador geral pode ser revisor do próprio artigo.
-6. **Autoexplicação:** Toda página interna deve ter o botão `❓ Como usar esta tela` (`PageTutorialButton`) e documentação correspondente na Central de Ajuda (`/app/ajuda`).
+1. **Stack & Deploy:** Next.js 15 (App Router) + TypeScript + Tailwind CSS + Supabase (PostgreSQL + Storage), hospedado na Vercel (`https://github.com/NyquistEdu/hub-labic.git`, branch `main`).
+2. **UI/UX Minimalista e Sóbria:** Fundo `#0c0d10` / `#111318`, bordas `border-zinc-800`, destaque `emerald-600`. Zero poluição visual, sem simuladores falsos de cargo e com botão compacto `?` (`PageTutorialButton`) no cabeçalho superior direito.
+3. **CRUD Completo e Múltiplos Anexos (`AttachmentManager`):**
+   - Todas as entidades possuem Criar, Ler, Editar e Excluir (CRUD) sincronizados com o Supabase.
+   - Em todos os módulos documentais, **PDFs são enviados via upload direto** e **demais formatos são anexados como links externos (`https://...`)**, suportando múltiplos arquivos por registro.
+4. **Autenticação, Sessão 24h e Sigilo de Senhas:**
+   - Sessão local (`labic_auth_session` + cookie) expira em **24 horas**.
+   - Na página `/login`, nunca exiba credenciais de admin.
+   - Em `/app/membros`, **nunca exiba a senha atual** de nenhum usuário; disponibilize apenas o botão **"Trocar Senha"** (modal seguro). Tanto `DIRETORA` quanto `COORD_GERAL` podem alterar o `globalRole` (`PESQUISADOR` ⇄ `COORD_GERAL` ⇄ `DIRETORA`).
+5. **Sigilo de Bolsas, Projetos e Editais de Startups:**
+   - **Bolsas:** Apenas `DIRETORA`, `COORD_GERAL` e o próprio bolsista veem o status de bolsista e o valor em R$. Nunca mostre `"Valor restrito"` para terceiros (exiba apenas `"Pesquisador Integrante"`).
+   - **Projetos (`canAccessProject`):** Apenas integrantes do projeto (ou Admin) acessam entregas, notas compartilhadas (`notes`) e edição do projeto.
+   - **Editais de Startups (`canAccessStartupEdital`):** Membros são vinculados ao Edital específico (`memberIds[]`). Apenas integrantes daquele edital (ou Admin) podem abrir `/app/startups/[startupId]/editais/[editalId]` ou editá-lo.
+6. **Congressos (`/app/congressos/[id]`):** Página dedicada com cronograma interno de metas (`milestones[]`), histórico real de versões em PDF (`versions[]` entre Autor e Revisor) e sem trava de conflito de interesse para revisores.
