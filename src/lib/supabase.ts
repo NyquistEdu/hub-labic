@@ -1,14 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const chave =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-    supabaseAnonKey &&
-    !supabaseUrl.includes('seu-projeto.supabase.co')
-);
+export const supabaseConfigurado = Boolean(url && chave && !url.includes('seu-projeto'));
 
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+let cliente: SupabaseClient | null = null;
+
+/** Cliente único (navegador ou servidor). Devolve null se as variáveis de ambiente não existem. */
+export function getSupabase(): SupabaseClient | null {
+  if (!supabaseConfigurado) return null;
+  if (!cliente) cliente = createClient(url, chave);
+  return cliente;
+}

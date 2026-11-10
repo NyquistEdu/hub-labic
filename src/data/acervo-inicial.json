@@ -1,0 +1,1324 @@
+{
+ "pessoas": [
+  {
+   "slug": "stephanie-kamarry-alves-de-sousa",
+   "nome": "Stephanie Kamarry Alves de Sousa",
+   "vinculo": "COORDENACAO",
+   "papel": "Fundadora e coordenadora",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "",
+   "ano_entrada": 2017,
+   "ano_saida": null,
+   "bio": "Doutora pela UFCG, com pesquisa em robótica. Criou o LABIC em agosto de 2017 como um espaço para estudantes de perfis diferentes aprenderem em comunidade.",
+   "onde_esta": "",
+   "cidade": "Lagarto",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": true,
+   "publicado": true
+  },
+  {
+   "slug": "fabio-luiz-sa-prudente",
+   "nome": "Fábio Luiz Sá Prudente",
+   "vinculo": "PESQUISADOR",
+   "papel": "Pesquisador",
+   "instituicao": "IFS Campus Aracaju",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Aracaju",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "catuxe-varjao-de-santana-oliveira",
+   "nome": "Catuxe Varjão de Santana Oliveira",
+   "vinculo": "PESQUISADOR",
+   "papel": "Pesquisadora",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Lagarto",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "phillipe-cardoso-santos",
+   "nome": "Phillipe Cardoso Santos",
+   "vinculo": "PESQUISADOR",
+   "papel": "Pesquisador",
+   "instituicao": "IFS Campus Estância",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Estância",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "jose-augusto-de-andrade-filho",
+   "nome": "José Augusto de Andrade Filho",
+   "vinculo": "PESQUISADOR",
+   "papel": "Pesquisador",
+   "instituicao": "IFS Campus Socorro",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Nossa Senhora do Socorro",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "benicio-barbosa-cruz",
+   "nome": "Benício Barbosa Cruz",
+   "vinculo": "EGRESSO",
+   "papel": "Egresso",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "Engenharia Elétrica",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "Aprovado no mestrado do ITA em 2023",
+   "cidade": "São José dos Campos",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": true,
+   "publicado": true
+  },
+  {
+   "slug": "danilo-oliveira",
+   "nome": "Danilo Oliveira",
+   "vinculo": "EGRESSO",
+   "papel": "Egresso",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "Engenharia Elétrica",
+   "ano_entrada": 2021,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "Aprovado no mestrado em Robótica da Queen's University em 2025",
+   "cidade": "Kingston",
+   "pais": "Canadá",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": true,
+   "publicado": true
+  },
+  {
+   "slug": "leonardo-aprigio-nascimento",
+   "nome": "Leonardo Aprigio Nascimento",
+   "vinculo": "EGRESSO",
+   "papel": "Egresso",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "Parceiro nos projetos aprovados no Catalisa ICT (2025)",
+   "cidade": "Lagarto",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "franciele-da-silva-mota",
+   "nome": "Franciele da Silva Mota",
+   "vinculo": "EGRESSO",
+   "papel": "Integrante da Protótipo Maker",
+   "instituicao": "IFS Campus Lagarto",
+   "curso": "Engenharia Elétrica",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Lagarto",
+   "pais": "Brasil",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  },
+  {
+   "slug": "sidney-givigi",
+   "nome": "Sidney Givigi",
+   "vinculo": "PARCEIRO",
+   "papel": "Professor parceiro",
+   "instituicao": "Queen's University",
+   "curso": "",
+   "ano_entrada": null,
+   "ano_saida": null,
+   "bio": "",
+   "onde_esta": "",
+   "cidade": "Kingston",
+   "pais": "Canadá",
+   "foto_url": "",
+   "lattes_url": "",
+   "linkedin_url": "",
+   "github_url": "",
+   "destaque": false,
+   "publicado": true
+  }
+ ],
+ "projetos": [
+  {
+   "slug": "sistema-para-cadeiras-de-rodas",
+   "titulo": "Sistema para Cadeiras de Rodas",
+   "resumo": "Sistema embarcado para dar mais autonomia a usuários de cadeiras de rodas.",
+   "descricao": "",
+   "areas": [
+    "robotica",
+    "ia"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/13tV5-d85rt-grOSOBQ2bMFCIkmFcFwZ3=w1400",
+   "galeria": [
+    "https://lh3.googleusercontent.com/d/1HEr7MWvzJxm6jkvtJnt9u1ge3_DQHgps=w1400"
+   ],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "rov",
+   "titulo": "ROV",
+   "resumo": "Veículo subaquático operado remotamente para inspeção e ensino.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1_jmzE5cm_910TKtxaDrVChzqVZZsbEPv=w1400",
+   "galeria": [
+    "https://lh3.googleusercontent.com/d/1auFngfU3PBEJCpLhfJafkf-eGi66hYFc=w1400",
+    "https://lh3.googleusercontent.com/d/1hYkb_t3wVME8CDZN21C-6Usk0Wisx52c=w1400",
+    "https://lh3.googleusercontent.com/d/1v9a8RN82Xls71NjB82XY5p49DUY09Ge_=w1400"
+   ],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "submarino",
+   "titulo": "Submarino",
+   "resumo": "Minissubmarino controlado remotamente, da estrutura mecânica à programação.",
+   "descricao": "O projeto foi apresentado na Mostra Nacional de Robótica e na Semana Nacional de Ciência e Tecnologia, em Brasília, e rendeu uma publicação no Congresso Brasileiro de Automática.",
+   "areas": [
+    "robotica",
+    "fabricacao"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1ExHbO59TmT4yRYalvczemPOzemkSngAt=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "danilo-oliveira",
+     "papel": "Estudante"
+    }
+   ]
+  },
+  {
+   "slug": "peixe-robo",
+   "titulo": "Peixe Robô",
+   "resumo": "Robô submarino em miniatura com formato e nado de peixe.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": 2023,
+   "ano_fim": null,
+   "fomento": "FAPITEC/SE (PBITI, chamada 06/2022)",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "phillipe-cardoso-santos",
+     "papel": "Coordenador"
+    }
+   ]
+  },
+  {
+   "slug": "automacao-de-ugvs-no-chassi-rover",
+   "titulo": "Automação de UGVs no Chassi Rover",
+   "resumo": "Automação de veículos terrestres não tripulados montados sobre um chassi do tipo rover.",
+   "descricao": "",
+   "areas": [
+    "autonomos",
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1MWOKBtS6yfi6mvN12UnyelbXDzOi-1Tu=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "manipulador-robotico-3dof-de-baixo-custo-para-escrita-autonoma",
+   "titulo": "Manipulador Robótico 3DOF de Baixo Custo para Escrita Autônoma",
+   "resumo": "Braço robótico de três graus de liberdade, de baixo custo, capaz de escrever sozinho.",
+   "descricao": "",
+   "areas": [
+    "manipuladores"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/14Bs3SEAUfO3lMb7ZcI8ZOgJaduUcTrsP=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "gemeo-mecanico",
+   "titulo": "Gêmeo Mecânico",
+   "resumo": "Mecanismo que reproduz, em tempo real, os movimentos de um operador.",
+   "descricao": "",
+   "areas": [
+    "manipuladores"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1JaBUOCiegm2kE2hp8Fmqr6yqYHlYs-yR=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "mao-mecanica",
+   "titulo": "Mão Mecânica",
+   "resumo": "Mão robótica articulada construída no laboratório.",
+   "descricao": "",
+   "areas": [
+    "manipuladores",
+    "fabricacao"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "robo-educacional",
+   "titulo": "Robô Educacional",
+   "resumo": "Robô para ensinar programação e robótica a crianças e jovens.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/16bZ-pZ4h1iL4y3DQGTtyYwV4LdOwbMRn=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": true,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "robo-equilibrista",
+   "titulo": "Robô Equilibrista",
+   "resumo": "Robô de duas rodas que se mantém em pé com controle em malha fechada.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1vxEGfr6FNabqG2COP1lUWg2mHOQHXRf1=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "seguidor-de-linha",
+   "titulo": "Seguidor de Linha",
+   "resumo": "Robô autônomo que percorre um trajeto guiado por uma linha no chão.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "seguidor-de-pisos-tateis",
+   "titulo": "Seguidor de Pisos Táteis",
+   "resumo": "Robô que se orienta por pisos táteis, pensado para acessibilidade.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "carro-operado-remotamente-via-bluetooth",
+   "titulo": "Carro Operado Remotamente Via Bluetooth",
+   "resumo": "Carro robótico controlado pelo celular por Bluetooth.",
+   "descricao": "",
+   "areas": [
+    "robotica",
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "ball-and-beam",
+   "titulo": "Ball and Beam",
+   "resumo": "Bancada de controle em que uma barra se inclina para manter uma bola em equilíbrio.",
+   "descricao": "",
+   "areas": [
+    "manipuladores"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "bancada-de-ensino",
+   "titulo": "Bancada de Ensino",
+   "resumo": "Bancada didática para aulas práticas de eletrônica e automação.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1BlbvXdQNUWWzH-xS272S62CCC-ElBzSb=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "estimacao-de-pose",
+   "titulo": "Estimação de Pose",
+   "resumo": "Visão computacional para estimar a posição e a orientação de objetos e pessoas.",
+   "descricao": "",
+   "areas": [
+    "ia"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1Wyso4LEbvgmvP9qeJNatnYte-VkUA4GB=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "detector-de-fome-em-peixes",
+   "titulo": "Detector de Fome em Peixes",
+   "resumo": "Sistema que identifica quando os peixes precisam ser alimentados.",
+   "descricao": "",
+   "areas": [
+    "ia",
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1wuR5iODE5fqNyJKHibICyounwQuokogC=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "nariz-eletronico",
+   "titulo": "Nariz Eletrônico",
+   "resumo": "Conjunto de sensores de gás que reconhece odores.",
+   "descricao": "",
+   "areas": [
+    "eletronica",
+    "ia"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/14hYyJBx-u_tQFTdUI_JbKCAmamf9Bu6u=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "detector-de-incendio",
+   "titulo": "Detector de Incêndio",
+   "resumo": "Dispositivo para detectar princípios de incêndio.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1USP1greGvPvERnOBrGyd_8n8-ARo0YU9=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "detector-de-gas-glp",
+   "titulo": "Detector de Gás GLP",
+   "resumo": "Dispositivo que alerta para vazamentos de gás de cozinha.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1_Zpk9cmfLBZkSb40XzxrPDffq_esd2Mz=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "dispositivo-de-sensores-ambientais",
+   "titulo": "Dispositivo de Sensores Ambientais",
+   "resumo": "Estação compacta para medir variáveis do ambiente.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/12boRvECkdEj3Cv2tAM5DA2_cfuYqgNiQ=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "dispositivo-de-controle-energetico",
+   "titulo": "Dispositivo de Controle Energético",
+   "resumo": "Dispositivo para acompanhar e controlar o consumo de energia.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/14ddsKrfWx3IKPsafw7YUHbhfXL0MAiVA=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "monitoramento-de-gado-leiteiro",
+   "titulo": "Monitoramento de Gado Leiteiro",
+   "resumo": "Monitoramento de rebanho leiteiro voltado ao bem-estar animal e à produtividade.",
+   "descricao": "",
+   "areas": [
+    "eletronica",
+    "ia"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "monitoramento-de-saturacao",
+   "titulo": "Monitoramento de Saturação",
+   "resumo": "Dispositivo para acompanhar a saturação de oxigênio.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "monitoramento-de-sinais-vitais",
+   "titulo": "Monitoramento de Sinais Vitais",
+   "resumo": "Dispositivo para acompanhar sinais vitais.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1060iavAAnasFucGlwUtS5xefRyzfZOih=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "estimulador-de-fala",
+   "titulo": "Estimulador de Fala",
+   "resumo": "Dispositivo de apoio ao estímulo da fala.",
+   "descricao": "",
+   "areas": [
+    "eletronica",
+    "software"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1JNsokgJz-zwqNJVIoT2XeJ3XL2FVc-tc=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "controlador-vestivel",
+   "titulo": "Controlador Vestível",
+   "resumo": "Controle que se veste no corpo para comandar dispositivos por movimento.",
+   "descricao": "",
+   "areas": [
+    "interacao",
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1_Xh04349Ac2tt_ZtPmePOQ86fbALoumY=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "theremin-digital",
+   "titulo": "Theremin Digital",
+   "resumo": "Mini theremin digital para explorar a interatividade musical.",
+   "descricao": "",
+   "areas": [
+    "interacao",
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1e9I5_D3Wo8-wNeZ2Xw9GsGTaL37YHcAg=w1400",
+   "galeria": [
+    "https://lh3.googleusercontent.com/d/13Wk0Vckt6umlqskoOhnyuN_hkcxnQDkX=w1400"
+   ],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "harpalaser",
+   "titulo": "HarpaLaser",
+   "resumo": "Harpa em que feixes de laser fazem o papel das cordas.",
+   "descricao": "",
+   "areas": [
+    "interacao",
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "vlc",
+   "titulo": "VLC",
+   "resumo": "Comunicação por luz visível: dados transmitidos pela iluminação.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "EM_ANDAMENTO",
+   "ano_inicio": null,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "https://lh3.googleusercontent.com/d/1smcNACv4cIVFr-vBEcV2dtN1kmZEJan_=w1400",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": []
+  },
+  {
+   "slug": "sensor-de-nivel-por-luz-modulada",
+   "titulo": "Sensor de nível por luz modulada",
+   "resumo": "Medição de nível de líquidos usando luz modulada.",
+   "descricao": "",
+   "areas": [
+    "eletronica"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2023,
+   "ano_fim": null,
+   "fomento": "FAPITEC/SE (PBIC, chamada 06/2022)",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Coordenadora"
+    }
+   ]
+  },
+  {
+   "slug": "kit-de-robotica-educacional-sem-o-uso-de-telas",
+   "titulo": "Kit de robótica educacional sem o uso de telas",
+   "resumo": "Kit para ensinar programação e robótica a jovens sem depender de telas.",
+   "descricao": "A ideia deu origem à startup Protótipo Maker, aprovada no Programa Centelha.",
+   "areas": [
+    "robotica"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2023,
+   "ano_fim": null,
+   "fomento": "FAPITEC/SE (PBITI, chamada 06/2022)",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Coordenadora"
+    }
+   ]
+  },
+  {
+   "slug": "foguete-experimental-para-fins-didaticos",
+   "titulo": "Foguete experimental para fins didáticos",
+   "resumo": "Construção e teste de um foguete experimental usado no ensino.",
+   "descricao": "",
+   "areas": [
+    "fabricacao"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2023,
+   "ano_fim": null,
+   "fomento": "FAPITEC/SE (PBIC, chamada 06/2022)",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "phillipe-cardoso-santos",
+     "papel": "Coordenador"
+    }
+   ]
+  },
+  {
+   "slug": "veiculo-aereo-nao-tripulado-do-tipo-quadrotor",
+   "titulo": "Veículo aéreo não tripulado do tipo quadrotor",
+   "resumo": "Projeto e construção de um drone quadrotor.",
+   "descricao": "",
+   "areas": [
+    "autonomos"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2023,
+   "ano_fim": null,
+   "fomento": "FAPITEC/SE (PBITI, chamada 06/2022)",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "jose-augusto-de-andrade-filho",
+     "papel": "Coordenador"
+    }
+   ]
+  },
+  {
+   "slug": "protetores-faciais-para-profissionais-de-saude",
+   "titulo": "Protetores faciais para profissionais de saúde",
+   "resumo": "Produção de protetores faciais em impressoras 3D, doados a hospitais e unidades de saúde de Sergipe durante a pandemia.",
+   "descricao": "",
+   "areas": [
+    "fabricacao"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2020,
+   "ano_fim": 2020,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Coordenadora"
+    }
+   ]
+  },
+  {
+   "slug": "labic-itinerante",
+   "titulo": "LABIC Itinerante",
+   "resumo": "Extensão que leva oficinas, minicursos, mostras e palestras de tecnologia e empreendedorismo à comunidade de Lagarto.",
+   "descricao": "Na pandemia, o projeto ganhou uma edição on-line e a fanzine Labic Digital.",
+   "areas": [
+    "software"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2019,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Coordenadora"
+    }
+   ]
+  },
+  {
+   "slug": "modelagem-e-controle-de-um-quadricoptero",
+   "titulo": "Modelagem e controle de um quadricóptero",
+   "resumo": "Modelagem matemática e controle em duas dimensões de um quadricóptero.",
+   "descricao": "",
+   "areas": [
+    "autonomos"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2020,
+   "ano_fim": null,
+   "fomento": "Iniciação científica",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Orientadora"
+    }
+   ]
+  },
+  {
+   "slug": "navegacao-em-formacao-de-multiplos-robos",
+   "titulo": "Navegação em formação de múltiplos robôs",
+   "resumo": "Estratégias para vários robôs se deslocarem juntos, em formação.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2018,
+   "ano_fim": null,
+   "fomento": "Iniciação científica",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Orientadora"
+    }
+   ]
+  },
+  {
+   "slug": "robotica-para-ensinar-matematica-em-ongs",
+   "titulo": "Robótica para ensinar matemática em ONGs",
+   "resumo": "Oficinas mão na massa que usam robótica para ensinar matemática a crianças e jovens atendidos por organizações não governamentais.",
+   "descricao": "",
+   "areas": [
+    "robotica"
+   ],
+   "status": "CONCLUIDO",
+   "ano_inicio": 2018,
+   "ano_fim": null,
+   "fomento": "",
+   "capa_url": "",
+   "galeria": [],
+   "video_url": "",
+   "destaque": false,
+   "publicado": true,
+   "pessoas": [
+    {
+     "slug": "stephanie-kamarry-alves-de-sousa",
+     "papel": "Coordenadora"
+    }
+   ]
+  }
+ ],
+ "conquistas": [
+  {
+   "tipo": "EDITAL",
+   "titulo": "Cinco projetos aprovados na 2ª fase do Catalisa ICT",
+   "ano": 2025,
+   "veiculo": "Sebrae, Catalisa ICT Ciclo 02, Etapa 2 (Validar)",
+   "autores": "",
+   "descricao": "CleanBoiler, EasyRide, Nyquist, AquaFeed e AccessSim seguiram para a fase de aceleração. Sergipe teve oito projetos aprovados na etapa.",
+   "url": "https://www.ifs.edu.br/ultimas-noticias/279-destaque/12283-ifs-conquista-seis-dos-oito-projetos-aprovados-em-se-na-2-fase-do-catalisa-ict.html",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa",
+    "fabio-luiz-sa-prudente",
+    "phillipe-cardoso-santos",
+    "leonardo-aprigio-nascimento",
+    "benicio-barbosa-cruz"
+   ]
+  },
+  {
+   "tipo": "TRAJETORIA",
+   "titulo": "Danilo Oliveira é aprovado no mestrado em Robótica da Queen's University, no Canadá",
+   "ano": 2025,
+   "veiculo": "Queen's University",
+   "autores": "",
+   "descricao": "Danilo entrou no LABIC em 2021, depois de fazer os cursos de programação do laboratório.",
+   "url": "https://www.ifs.edu.br/noticias-lagarto/12045-aluno-do-ifs-campus-lagarto-e-aprovado-em-mestrado-em-robotica-no-canada.html",
+   "publicado": true,
+   "pessoas": [
+    "danilo-oliveira",
+    "sidney-givigi"
+   ]
+  },
+  {
+   "tipo": "TRAJETORIA",
+   "titulo": "Benício Barbosa Cruz é aprovado no mestrado do ITA",
+   "ano": 2023,
+   "veiculo": "Instituto Tecnológico de Aeronáutica",
+   "autores": "",
+   "descricao": "",
+   "url": "http://www.ifs.edu.br/noticias-lagarto/10943-aluno-do-ifs-lagarto-e-aprovado-em-concorrido-mestrado-do-ita.html",
+   "publicado": true,
+   "pessoas": [
+    "benicio-barbosa-cruz"
+   ]
+  },
+  {
+   "tipo": "EDITAL",
+   "titulo": "Startup Protótipo Maker é aprovada no Programa Centelha",
+   "ano": 2023,
+   "veiculo": "Programa Centelha",
+   "autores": "",
+   "descricao": "Subvenção de R$ 56 mil para desenvolver um kit de ensino de programação e robótica sem telas.",
+   "url": "http://www.ifs.edu.br/noticias-lagarto/10757-startup-de-alunos-do-ifs-campus-lagarto-e-aprovada-no-programa-centelha.html",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa",
+    "franciele-da-silva-mota"
+   ]
+  },
+  {
+   "tipo": "EDITAL",
+   "titulo": "Cinco projetos aprovados na chamada FAPITEC/SE/FUNTEC nº 06/2022",
+   "ano": 2023,
+   "veiculo": "FAPITEC/SE",
+   "autores": "",
+   "descricao": "Três projetos de iniciação tecnológica (PBITI) e dois de iniciação científica (PBIC), em eletrônica, aeroespacial, robótica e robótica subaquática.",
+   "url": "https://ifs.edu.br/ultimas-noticias/200-lagarto/10732-estudantes-do-ifs-campus-lagarto-aprovam-projetos-de-pesquisa-da-fapitec",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa",
+    "phillipe-cardoso-santos",
+    "jose-augusto-de-andrade-filho"
+   ]
+  },
+  {
+   "tipo": "ARTIGO",
+   "titulo": "Acesso a formação em Inteligência Artificial para pessoas de baixa renda: um estudo de caso em Sergipe",
+   "ano": 2023,
+   "veiculo": "X Encontro Nacional de Computação dos Institutos Federais (ENCompIF), no CSBC 2023",
+   "autores": "",
+   "descricao": "",
+   "url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  },
+  {
+   "tipo": "EVENTO",
+   "titulo": "Estudantes do LABIC no Robótica 2023",
+   "ano": 2023,
+   "veiculo": "Robótica 2023",
+   "autores": "",
+   "descricao": "Participação no maior evento de robótica da América Latina.",
+   "url": "",
+   "publicado": true,
+   "pessoas": []
+  }
+ ],
+ "iniciativas": [
+  {
+   "slug": "prototipo-maker",
+   "nome": "Protótipo Maker",
+   "tagline": "Kit de robótica e programação para jovens, sem telas.",
+   "descricao": "Nasceu dentro do LABIC para democratizar o ensino de robótica, programação e eletrônica e espalhar a cultura maker pelo interior de Sergipe. Aprovada no Programa Centelha, com subvenção de R$ 56 mil.",
+   "estagio": "MVP",
+   "ano": 2023,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa",
+    "franciele-da-silva-mota"
+   ]
+  },
+  {
+   "slug": "nyquist",
+   "nome": "Nyquist",
+   "tagline": "Jogos educacionais para ensinar robótica e programação.",
+   "descricao": "Aprovada na Etapa 2 do Catalisa ICT, Ciclo 02.",
+   "estagio": "VALIDACAO",
+   "ano": 2025,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  },
+  {
+   "slug": "cleanboiler",
+   "nome": "CleanBoiler",
+   "tagline": "Sensores inteligentes e IA para caldeiras mais eficientes.",
+   "descricao": "Solução deeptech que otimiza o desempenho de caldeiras, reduzindo custos de operação e emissões de poluentes. Aprovada na Etapa 2 do Catalisa ICT, Ciclo 02.",
+   "estagio": "VALIDACAO",
+   "ano": 2025,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  },
+  {
+   "slug": "easyride",
+   "nome": "EasyRide",
+   "tagline": "Navegação por voz para cadeiras de rodas.",
+   "descricao": "Amplia a autonomia de pessoas com mobilidade reduzida. Aprovada na Etapa 2 do Catalisa ICT, Ciclo 02.",
+   "estagio": "VALIDACAO",
+   "ano": 2025,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  },
+  {
+   "slug": "aquafeed",
+   "nome": "AquaFeed",
+   "tagline": "A quantidade certa de ração na piscicultura, em tempo real.",
+   "descricao": "Plataforma com sensores e algoritmos de IA que calcula a ração ideal e reduz o desperdício. Aprovada na Etapa 2 do Catalisa ICT, Ciclo 02.",
+   "estagio": "VALIDACAO",
+   "ano": 2025,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  },
+  {
+   "slug": "accesssim",
+   "nome": "AccessSim",
+   "tagline": "Simulação para avaliar a acessibilidade de espaços.",
+   "descricao": "Ferramenta que avalia a acessibilidade de espaços urbanos e arquitetônicos e propõe soluções. Aprovada na Etapa 2 do Catalisa ICT, Ciclo 02.",
+   "estagio": "VALIDACAO",
+   "ano": 2025,
+   "logo_url": "",
+   "site_url": "",
+   "publicado": true,
+   "pessoas": [
+    "stephanie-kamarry-alves-de-sousa"
+   ]
+  }
+ ],
+ "parceiros": [
+  {
+   "nome": "Instituto Federal de Sergipe",
+   "tipo": "Instituição",
+   "descricao": "Casa do LABIC, com pesquisadores nos campi Lagarto, Aracaju, Estância e Socorro.",
+   "url": "https://www.ifs.edu.br",
+   "logo_url": "",
+   "publicado": true
+  },
+  {
+   "nome": "FAPITEC/SE",
+   "tipo": "Fomento",
+   "descricao": "Fundação de Apoio à Pesquisa e à Inovação Tecnológica do Estado de Sergipe.",
+   "url": "",
+   "logo_url": "",
+   "publicado": true
+  },
+  {
+   "nome": "Sebrae",
+   "tipo": "Fomento",
+   "descricao": "Programa Catalisa ICT.",
+   "url": "",
+   "logo_url": "",
+   "publicado": true
+  },
+  {
+   "nome": "Programa Centelha",
+   "tipo": "Fomento",
+   "descricao": "Programa nacional de apoio à criação de empreendimentos inovadores.",
+   "url": "",
+   "logo_url": "",
+   "publicado": true
+  },
+  {
+   "nome": "Queen's University",
+   "tipo": "Universidade",
+   "descricao": "Parceria de pesquisa com o professor Sidney Givigi, no Canadá.",
+   "url": "",
+   "logo_url": "",
+   "publicado": true
+  }
+ ],
+ "marcos": [
+  {
+   "ano": 2017,
+   "mes": 8,
+   "titulo": "Nasce o LABIC",
+   "descricao": "Seis estudantes e uma professora montam, no IFS Campus Lagarto, um laboratório para aprender em comunidade.",
+   "url": "",
+   "publicado": true
+  },
+  {
+   "ano": 2018,
+   "mes": null,
+   "titulo": "Primeiros projetos de pesquisa",
+   "descricao": "Iniciações científicas em robótica móvel e oficinas de robótica para ensinar matemática em ONGs.",
+   "url": "",
+   "publicado": true
+  },
+  {
+   "ano": 2019,
+   "mes": null,
+   "titulo": "O laboratório sai do campus",
+   "descricao": "Com o LABIC Itinerante, oficinas, mostras e palestras chegam à comunidade de Lagarto.",
+   "url": "https://periodicos.ifs.edu.br/periodicos/SNCT/article/download/946/891/3213",
+   "publicado": true
+  },
+  {
+   "ano": 2020,
+   "mes": null,
+   "titulo": "Impressoras 3D contra a pandemia",
+   "descricao": "O laboratório produz protetores faciais e doa a hospitais e unidades de saúde de Sergipe.",
+   "url": "https://lagartense.com.br/70693",
+   "publicado": true
+  },
+  {
+   "ano": 2023,
+   "mes": 3,
+   "titulo": "Cinco projetos aprovados na FAPITEC",
+   "descricao": "Eletrônica, foguetes, drones e robótica subaquática ganham bolsas de iniciação científica e tecnológica.",
+   "url": "https://ifs.edu.br/ultimas-noticias/200-lagarto/10732-estudantes-do-ifs-campus-lagarto-aprovam-projetos-de-pesquisa-da-fapitec",
+   "publicado": true
+  },
+  {
+   "ano": 2023,
+   "mes": null,
+   "titulo": "A primeira startup aprovada no Centelha",
+   "descricao": "A Protótipo Maker recebe R$ 56 mil para desenvolver um kit de robótica sem telas.",
+   "url": "http://www.ifs.edu.br/noticias-lagarto/10757-startup-de-alunos-do-ifs-campus-lagarto-e-aprovada-no-programa-centelha.html",
+   "publicado": true
+  },
+  {
+   "ano": 2023,
+   "mes": 7,
+   "titulo": "Do LABIC para o ITA",
+   "descricao": "Benício Barbosa Cruz é aprovado no mestrado do Instituto Tecnológico de Aeronáutica.",
+   "url": "http://www.ifs.edu.br/noticias-lagarto/10943-aluno-do-ifs-lagarto-e-aprovado-em-concorrido-mestrado-do-ita.html",
+   "publicado": true
+  },
+  {
+   "ano": 2025,
+   "mes": 5,
+   "titulo": "Do LABIC para o Canadá",
+   "descricao": "Danilo Oliveira é aprovado no mestrado em Robótica da Queen's University.",
+   "url": "https://www.ifs.edu.br/noticias-lagarto/12045-aluno-do-ifs-campus-lagarto-e-aprovado-em-mestrado-em-robotica-no-canada.html",
+   "publicado": true
+  },
+  {
+   "ano": 2025,
+   "mes": 8,
+   "titulo": "Cinco projetos avançam no Catalisa ICT",
+   "descricao": "CleanBoiler, EasyRide, Nyquist, AquaFeed e AccessSim seguem para a aceleração do Sebrae.",
+   "url": "https://www.ifs.edu.br/ultimas-noticias/279-destaque/12283-ifs-conquista-seis-dos-oito-projetos-aprovados-em-se-na-2-fase-do-catalisa-ict.html",
+   "publicado": true
+  }
+ ]
+}

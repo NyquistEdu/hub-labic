@@ -1,11 +1,96 @@
 @import "tailwindcss";
+@import "@fontsource-variable/big-shoulders-display";
+@import "@fontsource-variable/instrument-sans";
 
-:root {
-  color-scheme: dark;
+@theme {
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
+  --color-tinta: #000000;
+  --color-papel: #ffffff;
+  --color-nevoa: #f3f3f1;
+  --color-linha: #dcdcd8;
+  --color-grafite: #5c5c58;
+  --color-azul: #2f6fe0;
+  --color-laranja: #f59a0c;
+  --color-verde: #22c93a;
+  --color-turquesa: #17b8a6;
+  --color-amarelo: #e5c100;
+  --color-roxo: #9b4dea;
+  --color-vermelho: #ee3b2b;
+  --color-rosa: #e45ad2;
 }
+
+:root { color-scheme: light; }
+
+html { scroll-behavior: smooth; }
 
 body {
-  background-color: #0b0f17;
-  color: #f4f4f5;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+:focus-visible { outline: 3px solid var(--color-azul); outline-offset: 3px; border-radius: 4px; }
+
+.contorno { max-width: 76rem; margin-inline: auto; padding-inline: 1.25rem; }
+@media (min-width: 768px) { .contorno { padding-inline: 2.5rem; } }
+
+/* Botões: cápsulas, como as pontas arredondadas das trilhas do logo */
+.botao {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  border: 2.5px solid var(--color-tinta); border-radius: 999px;
+  padding: .7rem 1.4rem; font-weight: 600; font-size: 1rem; line-height: 1.2;
+  background: var(--color-tinta); color: var(--color-papel);
+  transition: background .15s, color .15s; cursor: pointer;
+}
+.botao:hover { background: var(--color-papel); color: var(--color-tinta); }
+.botao-vazado { background: var(--color-papel); color: var(--color-tinta); }
+.botao-vazado:hover { background: var(--color-tinta); color: var(--color-papel); }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+.botao-pequeno { padding: .4rem .9rem; font-size: .9rem; border-width: 2px; }
+
+/* Nó de circuito: bolinha cheia ou vazada */
+.no { width: 14px; height: 14px; border-radius: 999px; border: 3px solid var(--color-tinta); background: var(--color-tinta); flex: none; display: inline-block; }
+.no-vazado { background: var(--color-papel); }
+
+.etiqueta {
+  display: inline-flex; align-items: center; gap: .4rem;
+  border: 2px solid var(--color-tinta); border-radius: 999px;
+  padding: .15rem .7rem; font-size: .85rem; font-weight: 600; background: var(--color-papel);
+}
+.etiqueta > i { width: 10px; height: 10px; border-radius: 999px; background: var(--cor, #000); display: inline-block; }
+
+/* Trilhas do herói se desenham uma única vez, ao carregar a página */
+.trilha { stroke-dasharray: 1; stroke-dashoffset: 1; animation: desenhar 1.4s cubic-bezier(.6,0,.2,1) forwards; }
+.trilha-ponto { opacity: 0; animation: surgir .3s ease-out forwards; }
+@keyframes desenhar { to { stroke-dashoffset: 0; } }
+@keyframes surgir { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .trilha, .trilha-ponto { animation: none; stroke-dashoffset: 0; opacity: 1; }
+  html { scroll-behavior: auto; }
+}
+
+/* Formulários */
+.campo { display: block; }
+.campo > span { display: block; font-weight: 600; font-size: .95rem; margin-bottom: .3rem; }
+.campo > small { display: block; color: var(--color-grafite); font-size: .85rem; margin-top: .25rem; }
+.entrada {
+  width: 100%; border: 2px solid var(--color-tinta); border-radius: 12px;
+  padding: .6rem .8rem; background: var(--color-papel); font: inherit; color: inherit;
+}
+.entrada:focus { outline: 3px solid var(--color-azul); outline-offset: 1px; }
+textarea.entrada { min-height: 6rem; resize: vertical; }
+
+.prosa p + p { margin-top: 1em; }
+.prosa { max-width: 62ch; }
