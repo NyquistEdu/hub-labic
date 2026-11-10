@@ -12,7 +12,7 @@ Sempre leia o arquivo AGENTS.md na raiz antes de propor ou implementar alteraç�
    - Projetos e Editais de Startups só podem ser abertos/editados pelos membros vinculados a eles (ou DIRETORA / COORD_GERAL).
 5. Fluxos específicos e Formatação:
    - Nunca renderize enums brutos (EM_ANDAMENTO, etc.) nem timestamps ISO; use os mapas de tradução e formatDateBR / formatMeetingDateTime em src/types/labic.ts.
-   - Produções e Congressos: Autor Principal (primaryAuthorId) + Coautores do LABIC (authorIds[]) + Autores Externos separados por vírgula (externalAuthors).
+   - Produções e Congressos: Autor Principal (membro via primaryAuthorId ou autor externo via primaryAuthorExternal) + Coautores do LABIC (authorIds[]) + Coautores Externos separados por vírgula (externalAuthors).
    - Congressos (/app/congressos/[id]): metas internas (milestones[]), histórico de revisões em PDF (versions[]) e sem trava de conflito de interesse.
    - Limpeza: seleção de múltiplos dias da semana (Segunda a Domingo).
    - Serviços (/app/servicos): 3 formulários em linhas horizontais de largura total + solicitação de autorização para uso da impressora 3D.

@@ -39,6 +39,8 @@ export default function ProducoesPage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [venueOrAgency, setVenueOrAgency] = useState("");
   const [primaryAuthorId, setPrimaryAuthorId] = useState<string>(currentUser?.id || "");
+  const [primaryAuthorType, setPrimaryAuthorType] = useState<"LABIC" | "EXTERNAL">("LABIC");
+  const [primaryAuthorExternal, setPrimaryAuthorExternal] = useState<string>("");
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>(
     currentUser ? [currentUser.id] : []
   );
@@ -63,11 +65,18 @@ export default function ProducoesPage() {
         const matchesTitle = p.title.toLowerCase().includes(term);
         const matchesAgency = (p.venueOrAgency || "").toLowerCase().includes(term);
         const matchesExternal = (p.externalAuthors || "").toLowerCase().includes(term);
+        const matchesPrimaryExternal = (p.primaryAuthorExternal || "").toLowerCase().includes(term);
         const matchesAuthors = p.authorIds.some((id) => {
           const m = members.find((mem) => mem.id === id);
           return m?.name.toLowerCase().includes(term);
         });
-        if (!matchesTitle && !matchesAgency && !matchesExternal && !matchesAuthors) {
+        if (
+          !matchesTitle &&
+          !matchesAgency &&
+          !matchesExternal &&
+          !matchesPrimaryExternal &&
+          !matchesAuthors
+        ) {
           return false;
         }
       }
@@ -102,6 +111,8 @@ export default function ProducoesPage() {
     setCategory("ARTIGO");
     setYear(new Date().getFullYear());
     setVenueOrAgency("");
+    setPrimaryAuthorType("LABIC");
+    setPrimaryAuthorExternal("");
     const defAuthor = currentUser?.id || members[0]?.id || "";
     setPrimaryAuthorId(defAuthor);
     setSelectedAuthors(defAuthor ? [defAuthor] : []);
@@ -118,8 +129,16 @@ export default function ProducoesPage() {
     setCategory(prod.category);
     setYear(prod.year);
     setVenueOrAgency(prod.venueOrAgency);
-    const prim = prod.primaryAuthorId || prod.authorIds[0] || "";
-    setPrimaryAuthorId(prim);
+    if (prod.primaryAuthorExternal && !prod.primaryAuthorId) {
+      setPrimaryAuthorType("EXTERNAL");
+      setPrimaryAuthorExternal(prod.primaryAuthorExternal);
+      setPrimaryAuthorId("");
+    } else {
+      setPrimaryAuthorType("LABIC");
+      setPrimaryAuthorExternal("");
+      const prim = prod.primaryAuthorId || prod.authorIds[0] || "";
+      setPrimaryAuthorId(prim);
+    }
     setSelectedAuthors(prod.authorIds);
     setExternalAuthors(prod.externalAuthors || "");
     setProjectId(prod.projectId || "");
@@ -143,16 +162,37 @@ export default function ProducoesPage() {
 
   const selectAllAuthors = () => setSelectedAuthors(members.map((m) => m.id));
   const clearAllAuthors = () =>
-    setSelectedAuthors(primaryAuthorId ? [primaryAuthorId] : []);
+    setSelectedAuthors(
+      primaryAuthorType === "LABIC" && primaryAuthorId ? [primaryAuthorId] : []
+    );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const finalAuthors = primaryAuthorId
-      ? Array.from(new Set([primaryAuthorId, ...selectedAuthors]))
+
+    if (primaryAuthorType === "EXTERNAL" && !primaryAuthorExternal.trim()) {
+      alert("Por favor, informe o nome do Autor Principal Externo.");
+      return;
+    }
+
+    const finalPrimaryId =
+      primaryAuthorType === "LABIC"
+        ? primaryAuthorId || members[0]?.id
+        : undefined;
+
+    const finalPrimaryExternal =
+      primaryAuthorType === "EXTERNAL"
+        ? primaryAuthorExternal.trim()
+        : undefined;
+
+    const finalAuthors = finalPrimaryId
+      ? Array.from(new Set([finalPrimaryId, ...selectedAuthors]))
       : selectedAuthors;
 
-    if (finalAuthors.length === 0 && !externalAuthors.trim()) return;
+    if (finalAuthors.length === 0 && !externalAuthors.trim() && !finalPrimaryExternal) {
+      alert("Selecione ao menos um membro do LABIC ou autor externo vinculado.");
+      return;
+    }
 
     if (editingId) {
       await updateProduction(editingId, {
@@ -160,7 +200,8 @@ export default function ProducoesPage() {
         category,
         year: Number(year) || new Date().getFullYear(),
         venueOrAgency: venueOrAgency.trim(),
-        primaryAuthorId: primaryAuthorId || finalAuthors[0],
+        primaryAuthorId: finalPrimaryId,
+        primaryAuthorExternal: finalPrimaryExternal,
         authorIds: finalAuthors,
         externalAuthors: externalAuthors.trim() || undefined,
         projectId: projectId || undefined,
@@ -174,7 +215,8 @@ export default function ProducoesPage() {
         category,
         year: Number(year) || new Date().getFullYear(),
         venueOrAgency: venueOrAgency.trim(),
-        primaryAuthorId: primaryAuthorId || finalAuthors[0],
+        primaryAuthorId: finalPrimaryId,
+        primaryAuthorExternal: finalPrimaryExternal,
         authorIds: finalAuthors,
         externalAuthors: externalAuthors.trim() || undefined,
         projectId: projectId || undefined,
@@ -282,8 +324,8 @@ export default function ProducoesPage() {
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
               {paginatedProductions.map((prod) => {
-                const primaryId = prod.primaryAuthorId || prod.authorIds[0];
-                const primaryMember = members.find((m) => m.id === primaryId);
+                const primaryId = prod.primaryAuthorId;
+                const primaryMember = primaryId ? members.find((m) => m.id === primaryId) : undefined;
                 const coauthorNames = prod.authorIds
                   .filter((id) => id !== primaryId)
                   .map((id) => members.find((m) => m.id === id)?.name)
@@ -310,14 +352,21 @@ export default function ProducoesPage() {
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      {primaryMember && (
+                      {prod.primaryAuthorExternal ? (
+                        <div className="text-zinc-200 font-medium">
+                          {prod.primaryAuthorExternal}{" "}
+                          <span className="text-[10px] text-amber-400 font-normal">
+                            (Autor Principal Externo)
+                          </span>
+                        </div>
+                      ) : primaryMember ? (
                         <div className="text-zinc-200 font-medium">
                           {primaryMember.name}{" "}
                           <span className="text-[10px] text-emerald-400 font-normal">
                             (Autor Principal)
                           </span>
                         </div>
-                      )}
+                      ) : null}
                       {coauthorNames && (
                         <div className="text-[11px] text-zinc-500">
                           Coautores (LABIC): {coauthorNames}
@@ -325,7 +374,7 @@ export default function ProducoesPage() {
                       )}
                       {prod.externalAuthors && (
                         <div className="text-[11px] text-zinc-400 mt-0.5">
-                          Autores Externos: {prod.externalAuthors}
+                          {prod.primaryAuthorExternal ? "Demais Autores Externos:" : "Autores Externos:"} {prod.externalAuthors}
                         </div>
                       )}
                     </td>
@@ -416,20 +465,32 @@ export default function ProducoesPage() {
               </p>
               <p>
                 <strong className="text-zinc-400">Autor Principal:</strong>{" "}
-                {members.find(
-                  (m) => m.id === (viewingItem.primaryAuthorId || viewingItem.authorIds[0])
-                )?.name || "—"}
+                {viewingItem.primaryAuthorExternal ? (
+                  <span>
+                    {viewingItem.primaryAuthorExternal}{" "}
+                    <span className="text-[10px] text-amber-400 font-normal">
+                      (Autor Principal Externo)
+                    </span>
+                  </span>
+                ) : (
+                  members.find(
+                    (m) => m.id === (viewingItem.primaryAuthorId || viewingItem.authorIds[0])
+                  )?.name || "—"
+                )}
               </p>
               <p>
-                <strong className="text-zinc-400">Autores do LABIC:</strong>{" "}
+                <strong className="text-zinc-400">Membros Coautores do LABIC:</strong>{" "}
                 {viewingItem.authorIds
+                  .filter((id) => id !== viewingItem.primaryAuthorId)
                   .map((id) => members.find((m) => m.id === id)?.name)
                   .filter(Boolean)
-                  .join(", ") || "—"}
+                  .join(", ") || (viewingItem.primaryAuthorId ? members.find((m) => m.id === viewingItem.primaryAuthorId)?.name : "—")}
               </p>
               {viewingItem.externalAuthors && (
                 <p>
-                  <strong className="text-zinc-400">Autores Externos:</strong>{" "}
+                  <strong className="text-zinc-400">
+                    {viewingItem.primaryAuthorExternal ? "Demais Autores Externos:" : "Autores Externos:"}
+                  </strong>{" "}
                   {viewingItem.externalAuthors}
                 </p>
               )}
@@ -537,30 +598,85 @@ export default function ProducoesPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-zinc-400 mb-1">
-                  Autor Principal do Trabalho * (inclui membros ativos e egressos/inativos)
-                </label>
-                <select
-                  value={primaryAuthorId}
-                  onChange={(e) => handlePrimaryAuthorChange(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
-                >
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.institution}){m.status === "INATIVO" ? " — Egresso/Inativo" : ""}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-zinc-500 mt-1">
-                  Você pode registrar produções em nome de qualquer membro do laboratório (inclusive quem já saiu), vinculando diretamente ao acervo dele.
-                </p>
+              <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="block text-zinc-300 font-medium">
+                    Autor Principal do Trabalho *
+                  </label>
+                  <div className="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded p-1 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrimaryAuthorType("LABIC");
+                        if (!primaryAuthorId) {
+                          setPrimaryAuthorId(currentUser?.id || members[0]?.id || "");
+                        }
+                      }}
+                      className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
+                        primaryAuthorType === "LABIC"
+                          ? "bg-emerald-600 text-white font-medium"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      Membro do LABIC
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrimaryAuthorType("EXTERNAL");
+                      }}
+                      className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
+                        primaryAuthorType === "EXTERNAL"
+                          ? "bg-amber-600 text-white font-medium"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      Autor Externo (Não cadastrado)
+                    </button>
+                  </div>
+                </div>
+
+                {primaryAuthorType === "LABIC" ? (
+                  <div>
+                    <select
+                      value={primaryAuthorId}
+                      onChange={(e) => handlePrimaryAuthorChange(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.institution}){m.status === "INATIVO" ? " — Egresso/Inativo" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-zinc-500 mt-1">
+                      Você pode registrar produções em nome de qualquer membro do laboratório (inclusive quem já saiu), vinculando diretamente ao acervo dele.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      value={primaryAuthorExternal}
+                      onChange={(e) => setPrimaryAuthorExternal(e.target.value)}
+                      placeholder="Ex.: Prof. Dr. João Silva (USP) ou Dra. Maria Santos"
+                      className="w-full bg-zinc-900 border border-amber-800/70 rounded px-3 py-2 text-zinc-100 placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+                    />
+                    <p className="text-[11px] text-amber-400/90 mt-1">
+                      Utilize quando a pesquisa foi liderada por alguém de fora do LABIC. Selecione você e seus colegas do LABIC na seção abaixo para vincular a produção ao laboratório.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-zinc-400">
-                    Demais Autores / Coautores ({selectedAuthors.length} selecionado(s))
+                    {primaryAuthorType === "EXTERNAL"
+                      ? "Membros do LABIC Participantes / Coautores *"
+                      : "Demais Autores / Coautores do LABIC"}{" "}
+                    ({selectedAuthors.length} selecionado(s))
                   </label>
                   <div className="flex items-center gap-2 text-[11px]">
                     <button
@@ -582,7 +698,7 @@ export default function ProducoesPage() {
                 </div>
                 <div className="max-h-36 overflow-y-auto bg-zinc-900 border border-zinc-800 rounded p-2 space-y-1">
                   {members.map((m) => {
-                    const isPrimary = m.id === primaryAuthorId;
+                    const isPrimary = primaryAuthorType === "LABIC" && m.id === primaryAuthorId;
                     return (
                       <label
                         key={m.id}

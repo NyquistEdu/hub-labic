@@ -454,7 +454,12 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
               projectId: pr.project_id ? String(pr.project_id) : undefined,
               primaryAuthorId: pr.primary_author_id
                 ? String(pr.primary_author_id)
+                : pr.primary_author_external
+                ? undefined
                 : authorIds[0],
+              primaryAuthorExternal: pr.primary_author_external
+                ? String(pr.primary_author_external)
+                : undefined,
               authorIds,
               externalAuthors: pr.external_authors ? String(pr.external_authors) : undefined,
               fileName: pr.file_name ? String(pr.file_name) : undefined,
@@ -497,7 +502,12 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
               projectId: s.project_id ? String(s.project_id) : undefined,
               primaryAuthorId: s.primary_author_id
                 ? String(s.primary_author_id)
+                : s.primary_author_external
+                ? undefined
                 : authorIds[0],
+              primaryAuthorExternal: s.primary_author_external
+                ? String(s.primary_author_external)
+                : undefined,
               authorIds,
               externalAuthors: s.external_authors ? String(s.external_authors) : undefined,
               reviewerIds: (s.reviewer_ids as string[]) || [],
@@ -1082,6 +1092,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
 
     const newProd: ProductionItem = {
       ...item,
+      primaryAuthorExternal: item.primaryAuthorExternal?.trim() || undefined,
       authorIds: ensuredAuthors,
       id: `prod-${Date.now()}`,
     };
@@ -1096,6 +1107,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
         venue_or_agency: newProd.venueOrAgency,
         project_id: newProd.projectId || null,
         primary_author_id: newProd.primaryAuthorId || null,
+        primary_author_external: newProd.primaryAuthorExternal || '',
         author_ids: newProd.authorIds,
         external_authors: newProd.externalAuthors || '',
         file_name: newProd.fileName || null,
@@ -1109,7 +1121,14 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
   const updateProduction = async (prodId: string, updates: Partial<ProductionItem>) => {
     const target = productions.find((p) => p.id === prodId);
     if (!target) return;
-    const merged: ProductionItem = { ...target, ...updates };
+    const merged: ProductionItem = {
+      ...target,
+      ...updates,
+      primaryAuthorExternal:
+        updates.primaryAuthorExternal !== undefined
+          ? updates.primaryAuthorExternal?.trim() || undefined
+          : target.primaryAuthorExternal,
+    };
     if (merged.primaryAuthorId && !merged.authorIds.includes(merged.primaryAuthorId)) {
       merged.authorIds = [merged.primaryAuthorId, ...merged.authorIds];
     }
@@ -1126,6 +1145,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
           venue_or_agency: merged.venueOrAgency,
           project_id: merged.projectId || null,
           primary_author_id: merged.primaryAuthorId || null,
+          primary_author_external: merged.primaryAuthorExternal || '',
           author_ids: merged.authorIds,
           external_authors: merged.externalAuthors || '',
           file_name: merged.fileName || null,
@@ -1486,6 +1506,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
       : sub.authorIds;
     const newSub: ConferenceSubmission = {
       ...sub,
+      primaryAuthorExternal: sub.primaryAuthorExternal?.trim() || undefined,
       authorIds: ensuredAuthors,
       id: `sub-${Date.now()}`,
       updatedAt: new Date().toISOString().slice(0, 10),
@@ -1498,6 +1519,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
         title: newSub.title,
         project_id: newSub.projectId || null,
         primary_author_id: newSub.primaryAuthorId || null,
+        primary_author_external: newSub.primaryAuthorExternal || '',
         author_ids: newSub.authorIds,
         external_authors: newSub.externalAuthors || '',
         reviewer_ids: newSub.reviewerIds,
@@ -1518,7 +1540,15 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
     const target = submissions.find((s) => s.id === subId);
     if (!target) return;
     const updatedAt = new Date().toISOString().slice(0, 10);
-    const merged: ConferenceSubmission = { ...target, ...updates, updatedAt };
+    const merged: ConferenceSubmission = {
+      ...target,
+      ...updates,
+      primaryAuthorExternal:
+        updates.primaryAuthorExternal !== undefined
+          ? updates.primaryAuthorExternal?.trim() || undefined
+          : target.primaryAuthorExternal,
+      updatedAt,
+    };
     if (merged.primaryAuthorId && !merged.authorIds.includes(merged.primaryAuthorId)) {
       merged.authorIds = [merged.primaryAuthorId, ...merged.authorIds];
     }
@@ -1529,6 +1559,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
         .update({
           title: merged.title,
           primary_author_id: merged.primaryAuthorId || null,
+          primary_author_external: merged.primaryAuthorExternal || '',
           author_ids: merged.authorIds,
           external_authors: merged.externalAuthors || '',
           reviewer_ids: merged.reviewerIds,

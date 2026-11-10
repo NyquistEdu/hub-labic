@@ -278,6 +278,7 @@ export default function PublicShowcasePage() {
           ) : (
             <div className="divide-y divide-zinc-800/60">
               {filteredPublicProductions.map((prod) => {
+                const primaryExt = prod.primaryAuthorExternal ? [prod.primaryAuthorExternal] : [];
                 const labicAuthorNames = prod.authorIds
                   .map((id) => members.find((m) => m.id === id)?.name)
                   .filter(Boolean);
@@ -287,7 +288,7 @@ export default function PublicShowcasePage() {
                       .map((s) => s.trim())
                       .filter(Boolean)
                   : [];
-                const authorNames = [...labicAuthorNames, ...extNames].join(", ");
+                const authorNames = [...primaryExt, ...labicAuthorNames, ...extNames].join(", ");
                 return (
                   <div key={prod.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>

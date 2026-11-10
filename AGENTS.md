@@ -70,9 +70,10 @@
 1. **Gerenciador de Múltiplos Anexos (`src/components/AttachmentManager.tsx`):**
    - Utilizado em Produções, Entregas de Projetos, Congressos, Editais de Startups e Documentos Gerais.
    - **Regra explícita de formato:** Arquivos **`.PDF`** são enviados via upload direto para o Supabase Storage; **qualquer outro formato** (ZIP, DOCX, código, Drive, DOI) deve ser adicionado como **Link Externo (`https://...`)**. Ambos permitem anexar múltiplos itens por registro.
-2. **Produções (`/app/producoes`) e Autores Externos (`externalAuthors`):**
-   - Separação clara entre **Autor Principal (`primaryAuthorId`)** — que pode ser o próprio usuário ou qualquer outro membro ativo/inativo/egresso — e **Coautores do LABIC (`authorIds[]`)** com botão *"Marcar todos"*.
-   - **Autores / Coautores Externos ao LABIC (`externalAuthors`):** Campo de texto onde se escreve o nome completo dos autores que não estão cadastrados no sistema separados por vírgula (presente em Produções e em Submissões de Congressos), vinculando coautores externos sem criar contas de usuário para eles.
+2. **Produções (`/app/producoes`), Autor Principal Externo (`primaryAuthorExternal`) e Coautores Externos (`externalAuthors`):**
+   - **Autor Principal Flexível:** O autor principal pode ser um **Membro do LABIC (`primaryAuthorId`)** (ativo, inativo ou egresso) OU um **Autor Externo não cadastrado no sistema (`primaryAuthorExternal`)**. Isso atende diretamente a casos em que um pesquisador do LABIC participou como coautor em uma pesquisa liderada por um orientador/pesquisador externo à instituição.
+   - **Coautores do LABIC (`authorIds[]`):** Quando o autor principal for externo, os pesquisadores do LABIC que participaram do trabalho são selecionados em `authorIds[]`, vinculando automaticamente a produção ao portfólio e contadores desses membros no laboratório.
+   - **Coautores Externos ao LABIC (`externalAuthors`):** Campo de texto onde se escreve o nome completo dos demais autores externos que não estão cadastrados no sistema separados por vírgula (presente em Produções e em Submissões de Congressos), vinculando-os formalmente sem criar contas de usuário.
    - Soma quantitativa sem duplicidade nos indicadores anuais (calculados dinamicamente a partir dos anos reais existentes no banco, sem hardcode de "2026+").
 3. **Formatação Limpa de Rótulos, Datas e Horários:**
    - **Proibido exibir códigos internos de enum em `UPPER_SNAKE_CASE`** (como `EM_ANDAMENTO`, `REUNIAO_GERAL_MENSAL`, `TEMPLATE_ARTIGO`, `CONSUMIVEL`). Utilize sempre os mapas de tradução em `src/types/labic.ts` (`PROJECT_STATUS_LABELS`, `MEETING_TYPE_LABELS`, etc.).

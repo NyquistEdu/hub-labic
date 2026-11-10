@@ -90,3 +90,9 @@ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
+
+-- Permitir autor principal externo não cadastrado no sistema
+ALTER TABLE public.productions ADD COLUMN IF NOT EXISTS primary_author_external text DEFAULT '';
+ALTER TABLE public.conference_submissions ADD COLUMN IF NOT EXISTS primary_author_external text DEFAULT '';
+
+

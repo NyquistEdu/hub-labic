@@ -320,6 +320,7 @@ export interface ProductionItem {
   year: number;
   venueOrAgency: string;
   primaryAuthorId?: string;
+  primaryAuthorExternal?: string; // Nome completo do autor principal quando não for membro cadastrado no LABIC
   authorIds: string[];
   externalAuthors?: string; // Autores externos ao LABIC separados por vírgula
   projectId?: string;
@@ -410,6 +411,7 @@ export interface ConferenceSubmission {
   title: string;
   projectId?: string;
   primaryAuthorId?: string;
+  primaryAuthorExternal?: string; // Nome completo do autor principal quando não for membro cadastrado no LABIC
   authorIds: string[];
   externalAuthors?: string; // Coautores externos separados por vírgula
   reviewerIds: string[];
