@@ -1,0 +1,9 @@
+# Regras de IA para o Projeto HUB-LABIC (IFS Campus Lagarto)
+Sempre leia o arquivo AGENTS.md na raiz antes de propor alterações.
+
+1. Interface estilo Supabase Studio (Variante A) com Engenharia Semiótica (ícones sempre acompanhados de rótulos claros, badges semânticos e zero ambiguidade).
+2. Visibilidade progressiva na Sidebar: só mostre na seção "Minhas Coordenações" os departamentos que o usuário logado coordena. Oculte completamente "Finanças" de quem não é DIRETORA, COORD_GERAL ou COORD_FINANCAS.
+3. Sigilo de Bolsa: O valor monetário (R$) de bolsas de projetos só é visível para DIRETORA, COORD_GERAL e o próprio bolsista (nunca para o coorientador ou terceiros).
+4. Trajetória Multi-Institucional: Pesquisadores formados no IFS que avançam para Mestrado/Doutorado (USP, Canadá, Itália, etc.) continuam ATIVOS no LABIC e aparecem no Mapa Mundial "LABIC pelo Mundo".
+5. Congressos (CROS 2027): Permita que qualquer membro (incluindo o próprio autor ou coorientador) seja designado como revisor interno.
+6. Toda página deve conter o botão de tutorial contextual (`PageTutorialButton`) explicando o propósito da tela e como operá-la.
