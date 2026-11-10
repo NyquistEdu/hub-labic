@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
 import {
   ConferenceSubmission,
+  formatDateBR,
   LabicMilestone,
   SubmissionStatus,
   SUBMISSION_STATUS_LABELS,
@@ -45,6 +46,7 @@ export default function CongressoDetalhePage() {
   const [subAuthors, setSubAuthors] = useState<string[]>(
     currentUser ? [currentUser.id] : []
   );
+  const [subExternalAuthors, setSubExternalAuthors] = useState("");
   const [subReviewers, setSubReviewers] = useState<string[]>([]);
   const [subStatus, setSubStatus] = useState<SubmissionStatus>("RASCUNHO");
   const [initialPdfUrl, setInitialPdfUrl] = useState("");
@@ -114,6 +116,7 @@ export default function CongressoDetalhePage() {
     const defAuthor = currentUser?.id || members[0]?.id || "";
     setPrimaryAuthorId(defAuthor);
     setSubAuthors(defAuthor ? [defAuthor] : []);
+    setSubExternalAuthors("");
     setSubReviewers([]);
     setSubStatus("RASCUNHO");
     setInitialPdfUrl("");
@@ -127,6 +130,7 @@ export default function CongressoDetalhePage() {
     const prim = sub.primaryAuthorId || sub.authorIds[0] || "";
     setPrimaryAuthorId(prim);
     setSubAuthors(sub.authorIds);
+    setSubExternalAuthors(sub.externalAuthors || "");
     setSubReviewers(sub.reviewerIds);
     setSubStatus(sub.status);
     setInitialPdfUrl("");
@@ -156,6 +160,7 @@ export default function CongressoDetalhePage() {
         title: subTitle.trim(),
         primaryAuthorId: primaryAuthorId || finalAuthors[0],
         authorIds: finalAuthors,
+        externalAuthors: subExternalAuthors.trim() || undefined,
         reviewerIds: subReviewers,
         status: subStatus,
       });
@@ -181,6 +186,7 @@ export default function CongressoDetalhePage() {
         title: subTitle.trim(),
         primaryAuthorId: primaryAuthorId || finalAuthors[0],
         authorIds: finalAuthors,
+        externalAuthors: subExternalAuthors.trim() || undefined,
         reviewerIds: subReviewers,
         status: subStatus,
         fileName: initialPdfUrl || "Pendente de PDF",
@@ -250,8 +256,11 @@ export default function CongressoDetalhePage() {
           </div>
           <p className="text-xs text-zinc-400 mt-0.5">
             Local: {conf.location || "A definir"} · Revisão Interna até:{" "}
-            {conf.internalReviewDeadline || "A definir"} · Deadline Oficial:{" "}
-            {conf.officialSubmissionDeadline || "A definir"}
+            {conf.internalReviewDeadline ? formatDateBR(conf.internalReviewDeadline) : "A definir"}{" "}
+            · Deadline Oficial:{" "}
+            {conf.officialSubmissionDeadline
+              ? formatDateBR(conf.officialSubmissionDeadline)
+              : "A definir"}
           </p>
         </div>
 
@@ -338,7 +347,7 @@ export default function CongressoDetalhePage() {
                         ms.completed ? "line-through text-zinc-500" : "text-zinc-100"
                       }`}
                     >
-                      Até {ms.dueDate}: {ms.title}
+                      Até {formatDateBR(ms.dueDate)}: {ms.title}
                     </span>
                     {ms.description && (
                       <span className="text-zinc-500 ml-2">— {ms.description}</span>
@@ -393,12 +402,15 @@ export default function CongressoDetalhePage() {
                       <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 font-medium">
                         {SUBMISSION_STATUS_LABELS[sub.status] || sub.status}
                       </span>
-                      <span className="text-zinc-500">Atualizado em {sub.updatedAt}</span>
+                      <span className="text-zinc-500">
+                        Atualizado em {formatDateBR(sub.updatedAt)}
+                      </span>
                     </div>
                     <h3 className="text-base font-semibold text-zinc-100">{sub.title}</h3>
                     <p className="text-zinc-300">
                       <strong>Autor Principal:</strong> {primAuthor?.name || "—"}
-                      {coAuthors ? ` · Coautores: ${coAuthors}` : ""}
+                      {coAuthors ? ` · Coautores (LABIC): ${coAuthors}` : ""}
+                      {sub.externalAuthors ? ` · Autores Externos: ${sub.externalAuthors}` : ""}
                     </p>
                     <p className="text-zinc-400">
                       <strong>Revisores Internos Designados:</strong>{" "}
@@ -651,6 +663,19 @@ export default function CongressoDetalhePage() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">
+                  Autores / Coautores Externos ao LABIC (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={subExternalAuthors}
+                  onChange={(e) => setSubExternalAuthors(e.target.value)}
+                  placeholder="Escreva o nome completo dos autores que não estão cadastrados no sistema separados por vírgula"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
+                />
               </div>
 
               <div>

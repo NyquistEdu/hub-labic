@@ -5,6 +5,8 @@ import { useLabic } from "@/context/LabicContext";
 import {
   CoordinationType,
   COORDINATION_LABELS,
+  formatMonthYearBR,
+  getScholarshipVigenciaStatus,
   GlobalRole,
   GLOBAL_ROLE_LABELS,
   LabicMember,
@@ -24,6 +26,7 @@ const ALL_COORDINATIONS: CoordinationType[] = [
 export default function MembrosPage() {
   const {
     members,
+    projects,
     isAdmin,
     addMember,
     updateMemberAccount,
@@ -207,110 +210,225 @@ export default function MembrosPage() {
       )}
 
       <div className="space-y-3">
-        {members.map((m) => (
-          <div
-            key={m.id}
-            className="bg-[#111318] border border-zinc-800/80 rounded-lg p-4 space-y-3 text-xs"
-          >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {m.avatarUrl ? (
-                  <img
-                    src={m.avatarUrl}
-                    alt={m.name}
-                    className="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-semibold text-emerald-400 shrink-0">
-                    {m.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-zinc-100">{m.name}</span>
-                    <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-emerald-400 font-medium">
-                      {GLOBAL_ROLE_LABELS[m.globalRole]}
-                    </span>
-                    {m.status === "INATIVO" ? (
-                      <span className="px-2 py-0.5 rounded bg-red-950/60 border border-red-900/50 text-[11px] text-red-300">
-                        Inativo
+        {members.map((m) => {
+          // Filtra SOMENTE os projetos em que este membro recebe bolsa
+          const memberScholarships = projects
+            .map((proj) => {
+              const link = proj.members.find(
+                (pm) => pm.profileId === m.id && pm.roleInProject === "BOLSISTA"
+              );
+              if (!link) return null;
+              const vigencia = getScholarshipVigenciaStatus(
+                link.scholarshipStartMonth,
+                link.scholarshipEndMonth,
+                proj.status
+              );
+              return {
+                projectId: proj.id,
+                projectTitle: proj.title,
+                fundingAgency: proj.fundingAgency,
+                projectYear: proj.year,
+                monthlyValue: link.monthlyScholarshipBRL || 0,
+                startMonth: link.scholarshipStartMonth,
+                endMonth: link.scholarshipEndMonth,
+                installments: link.scholarshipInstallments,
+                vigencia,
+              };
+            })
+            .filter(Boolean) as {
+            projectId: string;
+            projectTitle: string;
+            fundingAgency: string;
+            projectYear: number;
+            monthlyValue: number;
+            startMonth?: string;
+            endMonth?: string;
+            installments?: number;
+            vigencia: { isActiveNow: boolean; label: string };
+          }[];
+
+          // Ganho mensal atual (soma apenas bolsas vigentes no mês atual)
+          const activeMonthlyTotal = memberScholarships.reduce(
+            (acc, s) => (s.vigencia.isActiveNow ? acc + Number(s.monthlyValue || 0) : acc),
+            0
+          );
+
+          return (
+            <div
+              key={m.id}
+              className="bg-[#111318] border border-zinc-800/80 rounded-lg p-4 space-y-3 text-xs"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {m.avatarUrl ? (
+                    <img
+                      src={m.avatarUrl}
+                      alt={m.name}
+                      className="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-semibold text-emerald-400 shrink-0">
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-zinc-100">{m.name}</span>
+                      <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-emerald-400 font-medium">
+                        {GLOBAL_ROLE_LABELS[m.globalRole]}
                       </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-900/40 text-[11px] text-emerald-300">
-                        Ativo
-                      </span>
-                    )}
+                      {m.status === "INATIVO" ? (
+                        <span className="px-2 py-0.5 rounded bg-red-950/60 border border-red-900/50 text-[11px] text-red-300">
+                          Inativo
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-900/40 text-[11px] text-emerald-300">
+                          Ativo
+                        </span>
+                      )}
+                      {memberScholarships.length > 0 && (
+                        <span
+                          className={`px-2 py-0.5 rounded border text-[11px] font-semibold ${
+                            activeMonthlyTotal > 0
+                              ? "bg-emerald-950/70 border-emerald-700/70 text-emerald-300"
+                              : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                          }`}
+                        >
+                          Ganho Mensal Atual: R$ {activeMonthlyTotal.toLocaleString("pt-BR")}/mês
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-zinc-400 mt-0.5">
+                      {m.email} · {m.course || m.degreeLevel} ({m.institution}) · {m.currentCity},{" "}
+                      {m.currentCountry}
+                    </div>
                   </div>
-                  <div className="text-zinc-400 mt-0.5">
-                    {m.email} · {m.course || m.degreeLevel} ({m.institution}) · {m.currentCity},{" "}
-                    {m.currentCountry}
-                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={m.globalRole}
+                    onChange={(e) => handleRoleChangeInline(m, e.target.value as GlobalRole)}
+                    className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-zinc-200 text-[11px] cursor-pointer"
+                    title="Alterar Papel Global"
+                  >
+                    <option value="PESQUISADOR">Cargo: Pesquisador</option>
+                    <option value="COORD_GERAL">Cargo: Coordenação Geral</option>
+                    <option value="DIRETORA">Cargo: Diretora</option>
+                  </select>
+
+                  <button
+                    onClick={() => openChangePasswordModal(m)}
+                    className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-emerald-400 font-medium"
+                  >
+                    Trocar Senha
+                  </button>
+
+                  <button
+                    onClick={() => openEditModal(m)}
+                    className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
+                  >
+                    Editar Dados
+                  </button>
+
+                  <button
+                    onClick={() => toggleMemberStatus(m.id)}
+                    className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300"
+                  >
+                    {m.status === "ATIVO" ? "Desativar" : "Reativar"}
+                  </button>
+
+                  <button
+                    onClick={() => deleteMember(m.id)}
+                    className="px-2.5 py-1 rounded bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-900/40"
+                  >
+                    Excluir
+                  </button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={m.globalRole}
-                  onChange={(e) => handleRoleChangeInline(m, e.target.value as GlobalRole)}
-                  className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-zinc-200 text-[11px] cursor-pointer"
-                  title="Alterar Papel Global"
-                >
-                  <option value="PESQUISADOR">Cargo: Pesquisador</option>
-                  <option value="COORD_GERAL">Cargo: Coordenação Geral</option>
-                  <option value="DIRETORA">Cargo: Diretora</option>
-                </select>
+              {/* Quadro explícito de Bolsas do Membro (somente projetos onde recebe bolsa) */}
+              <div className="pt-2.5 border-t border-zinc-800/60 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-medium text-zinc-300">
+                    Bolsas e Projetos Remunerados ({memberScholarships.length})
+                  </span>
+                  <span className="text-[11px] text-zinc-400">
+                    Total Mensal Vigente:{" "}
+                    <strong className="text-emerald-400">
+                      R$ {activeMonthlyTotal.toLocaleString("pt-BR")}/mês
+                    </strong>
+                  </span>
+                </div>
 
-                <button
-                  onClick={() => openChangePasswordModal(m)}
-                  className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-emerald-400 font-medium"
-                >
-                  Trocar Senha
-                </button>
+                {memberScholarships.length === 0 ? (
+                  <p className="text-[11px] text-zinc-500">
+                    Nenhuma bolsa vinculada a este membro no momento.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {memberScholarships.map((sch) => (
+                      <div
+                        key={sch.projectId}
+                        className="p-2.5 rounded bg-zinc-900/60 border border-zinc-800/90 flex items-center justify-between gap-3"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="font-medium text-zinc-100">{sch.projectTitle}</div>
+                          <div className="text-[11px] text-zinc-400">
+                            {sch.fundingAgency} · Início:{" "}
+                            {sch.startMonth ? formatMonthYearBR(sch.startMonth) : "—"} · Fim:{" "}
+                            {sch.endMonth ? formatMonthYearBR(sch.endMonth) : "—"}
+                            {sch.installments ? ` (${sch.installments} parcelas)` : ""}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div
+                            className={`font-semibold ${
+                              sch.vigencia.isActiveNow
+                                ? "text-emerald-400"
+                                : "text-zinc-500 line-through"
+                            }`}
+                          >
+                            R$ {sch.monthlyValue.toLocaleString("pt-BR")}/mês
+                          </div>
+                          <span
+                            className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] border ${
+                              sch.vigencia.isActiveNow
+                                ? "bg-emerald-950/60 border-emerald-800/50 text-emerald-300"
+                                : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                            }`}
+                          >
+                            {sch.vigencia.label}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                <button
-                  onClick={() => openEditModal(m)}
-                  className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
-                >
-                  Editar Dados
-                </button>
-
-                <button
-                  onClick={() => toggleMemberStatus(m.id)}
-                  className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300"
-                >
-                  {m.status === "ATIVO" ? "Desativar" : "Reativar"}
-                </button>
-
-                <button
-                  onClick={() => deleteMember(m.id)}
-                  className="px-2.5 py-1 rounded bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-900/40"
-                >
-                  Excluir
-                </button>
+              <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] text-zinc-500 mr-1">Coordenações atribuídas:</span>
+                {ALL_COORDINATIONS.map((coord) => {
+                  const has = m.coordinations.includes(coord);
+                  return (
+                    <button
+                      key={coord}
+                      onClick={() => toggleMemberCoordination(m.id, coord)}
+                      className={`px-2 py-1 rounded text-[11px] border transition-colors ${
+                        has
+                          ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300 font-medium"
+                          : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      {COORDINATION_LABELS[coord]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-
-            <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-zinc-500 mr-1">Coordenações atribuídas:</span>
-              {ALL_COORDINATIONS.map((coord) => {
-                const has = m.coordinations.includes(coord);
-                return (
-                  <button
-                    key={coord}
-                    onClick={() => toggleMemberCoordination(m.id, coord)}
-                    className={`px-2 py-1 rounded text-[11px] border transition-colors ${
-                      has
-                        ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-300 font-medium"
-                        : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200"
-                    }`}
-                  >
-                    {COORDINATION_LABELS[coord]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal de Trocar Senha (sem exibir a senha atual) */}

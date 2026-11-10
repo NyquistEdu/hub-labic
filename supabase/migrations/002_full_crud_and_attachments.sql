@@ -44,7 +44,34 @@ ALTER TABLE public.general_documents
 ALTER TABLE public.meetings
   ADD COLUMN IF NOT EXISTS meeting_date text DEFAULT '',
   ADD COLUMN IF NOT EXISTS meeting_time text DEFAULT '',
-  ADD COLUMN IF NOT EXISTS minutes_notes text DEFAULT '';
+  ADD COLUMN IF NOT EXISTS minutes_notes text DEFAULT '',
+  ALTER COLUMN scheduled_at TYPE text USING scheduled_at::text;
+
+ALTER TABLE public.productions
+  ADD COLUMN IF NOT EXISTS external_authors text DEFAULT '';
+
+ALTER TABLE public.conference_submissions
+  ADD COLUMN IF NOT EXISTS external_authors text DEFAULT '';
+
+ALTER TABLE public.project_scholarships_private
+  ADD COLUMN IF NOT EXISTS start_month text DEFAULT '',
+  ADD COLUMN IF NOT EXISTS end_month text DEFAULT '',
+  ADD COLUMN IF NOT EXISTS installments int DEFAULT 12;
+
+ALTER TABLE public.conferences
+  ALTER COLUMN internal_review_deadline TYPE text USING COALESCE(internal_review_deadline::text, ''),
+  ALTER COLUMN official_submission_deadline TYPE text USING COALESCE(official_submission_deadline::text, ''),
+  ALTER COLUMN event_date TYPE text USING COALESCE(event_date::text, '');
+
+ALTER TABLE public.project_deliverables
+  ALTER COLUMN due_date TYPE text USING COALESCE(due_date::text, '');
+
+ALTER TABLE public.projects
+  ALTER COLUMN start_date TYPE text USING COALESCE(start_date::text, ''),
+  ALTER COLUMN end_date TYPE text USING COALESCE(end_date::text, '');
+
+ALTER TABLE public.media_schedule_slots
+  ALTER COLUMN scheduled_date TYPE text USING COALESCE(scheduled_date::text, '');
 
 -- Garantir que os buckets de Storage sejam públicos e permitam upload/leitura
 UPDATE storage.buckets

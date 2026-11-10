@@ -2,6 +2,12 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
+import {
+  EQUIPMENT_STATUS_LABELS,
+  formatDateBR,
+  SUPPLY_REQUEST_STATUS_LABELS,
+  SUPPLY_REQUEST_TYPE_LABELS,
+} from "@/types/labic";
 
 const PRINT_STATUS_LABELS: Record<string, string> = {
   AGUARDANDO_APROVACAO: "Aguardando Aprovação do Coordenador",
@@ -248,7 +254,7 @@ export default function ServicosPage() {
                 <option value="">Selecione o patrimônio...</option>
                 {equipmentAssets.map((eq) => (
                   <option key={eq.id} value={eq.id}>
-                    [{eq.code}] {eq.name} ({eq.status})
+                    [{eq.code}] {eq.name} ({EQUIPMENT_STATUS_LABELS[eq.status] || eq.status})
                   </option>
                 ))}
               </select>
@@ -291,7 +297,8 @@ export default function ServicosPage() {
                       {req.quantity}x {req.itemName}
                     </div>
                     <div className="text-[11px] text-zinc-500">
-                      {req.requestType} · {req.createdAt}
+                      {SUPPLY_REQUEST_TYPE_LABELS[req.requestType] || req.requestType} ·{" "}
+                      {formatDateBR(req.createdAt)}
                     </div>
                     {req.coordinatorResponse && (
                       <div className="text-[11px] text-emerald-400 mt-0.5">
@@ -301,7 +308,7 @@ export default function ServicosPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-zinc-300 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">
-                      {req.status}
+                      {SUPPLY_REQUEST_STATUS_LABELS[req.status] || req.status}
                     </span>
                     <button
                       onClick={() => deleteSupplyRequest(req.id)}
@@ -397,7 +404,7 @@ export default function ServicosPage() {
                   <div key={slot.id} className="py-2 flex items-center justify-between">
                     <span className="text-zinc-200 font-medium">{mName}</span>
                     <span className="text-zinc-400">
-                      {slot.scheduledDate} · {slot.topicSuggestion}
+                      {formatDateBR(slot.scheduledDate)} · {slot.topicSuggestion}
                     </span>
                   </div>
                 );

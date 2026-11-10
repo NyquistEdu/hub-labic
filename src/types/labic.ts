@@ -27,6 +27,173 @@ export const COORDINATION_LABELS: Record<CoordinationType, string> = {
 
 export type WorkMode = 'PRESENCIAL_LAGARTO' | 'REMOTO_EXTERNO';
 
+export const WORK_MODE_LABELS: Record<WorkMode, string> = {
+  PRESENCIAL_LAGARTO: 'Presencial (Campus Lagarto)',
+  REMOTO_EXTERNO: 'Remoto / Outra Instituição',
+};
+
+export const PROJECT_STATUS_LABELS: Record<string, string> = {
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDO: 'Concluído',
+  PAUSADO: 'Pausado',
+};
+
+export const DELIVERABLE_TYPE_LABELS: Record<string, string> = {
+  RELATORIO_PARCIAL: 'Relatório Parcial',
+  RELATORIO_FINAL: 'Relatório Final',
+  PROTOTIPO_BANCADA: 'Protótipo / Bancada',
+  DOCUMENTO_OPCIONAL: 'Documento / Entrega',
+};
+
+export const DELIVERABLE_STATUS_LABELS: Record<string, string> = {
+  PENDENTE: 'Pendente',
+  ENTREGUE: 'Entregue',
+  VALIDADO: 'Validado / Aprovado',
+  ATRASADO: 'Atrasado',
+};
+
+export const CONFERENCE_STATUS_LABELS: Record<string, string> = {
+  ABERTO: 'Aberto',
+  EM_REVISAO: 'Em Revisão Interna',
+  ENCERRADO: 'Encerrado',
+};
+
+export const STARTUP_STAGE_LABELS: Record<string, string> = {
+  IDEACAO: 'Ideação',
+  MVP_PROTOTIPO: 'MVP / Protótipo',
+  VALIDACAO: 'Em Validação',
+  INCUBADA_CAPTANDO: 'Incubada / Captando',
+};
+
+export const STARTUP_PHASE_LABELS: Record<string, string> = {
+  SUBMETIDO: 'Submetido',
+  FASE_1: 'Fase 1',
+  FASE_2_PITCH: 'Fase 2 (Pitch)',
+  APROVADO_CONTEMPLADO: 'Aprovado / Contemplado',
+  NAO_APROVADO: 'Não Selecionado',
+};
+
+export const SUPPLY_REQUEST_TYPE_LABELS: Record<string, string> = {
+  CONSUMIVEL: 'Consumível',
+  EMPRESTIMO_CAUTELA: 'Empréstimo (Cautela)',
+};
+
+export const SUPPLY_REQUEST_STATUS_LABELS: Record<string, string> = {
+  PENDENTE: 'Pendente de Aprovação',
+  APROVADO_ENTREGUE: 'Aprovado / Entregue',
+  EM_FALTA_COMPRAR: 'Em Falta (Comprar)',
+  DEVOLVIDO: 'Devolvido',
+  RECUSADO: 'Recusado',
+};
+
+export const EQUIPMENT_STATUS_LABELS: Record<string, string> = {
+  OPERACIONAL: 'Operacional',
+  PRECISA_MANUTENCAO: 'Precisa de Manutenção',
+  EM_MANUTENCAO: 'Em Manutenção',
+  INATIVO: 'Inativo',
+};
+
+export const MEETING_TYPE_LABELS: Record<string, string> = {
+  ORIENTACAO_SEMANAL: 'Orientação Semanal',
+  REUNIAO_GERAL_MENSAL: 'Reunião Geral Mensal',
+  COORDENACAO: 'Reunião de Coordenação',
+  CONGRESSO_REVISAO: 'Revisão de Congresso',
+};
+
+export const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
+  TEMPLATE_ARTIGO: 'Template / Modelo',
+  MANUAL_BANCADA: 'Manual de Bancada / Norma',
+  OFICIO_EDITAL: 'Ofício / Edital',
+  OUTRO_DOCUMENTO: 'Outro Documento',
+};
+
+/**
+ * Formata datas ISO (YYYY-MM-DD ou timestamps ISO) para DD/MM/AAAA
+ */
+export function formatDateBR(raw?: string): string {
+  if (!raw) return '—';
+  const trimmed = raw.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+  return trimmed;
+}
+
+/**
+ * Formata data e horário de reunião sem nunca exibir timestamp ISO bruto
+ */
+export function formatMeetingDateTime(
+  meetingDate?: string,
+  meetingTime?: string,
+  scheduledAt?: string
+): string {
+  if (meetingDate && /^\d{4}-\d{2}-\d{2}$/.test(meetingDate.trim())) {
+    const d = formatDateBR(meetingDate.trim());
+    const t = meetingTime && meetingTime.trim() ? meetingTime.trim().slice(0, 5) : '';
+    return t ? `${d} às ${t}` : d;
+  }
+  if (!scheduledAt) return '—';
+  const trimmed = scheduledAt.trim();
+  // Caso já esteja no formato DD/MM/YYYY às HH:MM
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(trimmed)) return trimmed;
+  // Caso seja um timestamp ISO 2026-11-10T14:00:00...
+  const tsMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (tsMatch) {
+    return `${tsMatch[3]}/${tsMatch[2]}/${tsMatch[1]} às ${tsMatch[4]}:${tsMatch[5]}`;
+  }
+  return formatDateBR(trimmed);
+}
+
+/**
+ * Formata YYYY-MM para MM/AAAA
+ */
+export function formatMonthYearBR(ym?: string): string {
+  if (!ym) return '—';
+  const m = ym.trim().match(/^(\d{4})-(\d{2})$/);
+  if (m) return `${m[2]}/${m[1]}`;
+  return ym;
+}
+
+/**
+ * Calcula a quantidade de meses/parcelas (inclusivo) entre dois meses YYYY-MM
+ */
+export function calculateInstallmentsBetween(startMonth?: string, endMonth?: string): number {
+  if (!startMonth || !endMonth) return 12;
+  const s = startMonth.trim().match(/^(\d{4})-(\d{2})$/);
+  const e = endMonth.trim().match(/^(\d{4})-(\d{2})$/);
+  if (!s || !e) return 12;
+  const startTotal = Number(s[1]) * 12 + Number(s[2]);
+  const endTotal = Number(e[1]) * 12 + Number(e[2]);
+  const diff = endTotal - startTotal + 1;
+  return diff > 0 ? diff : 1;
+}
+
+/**
+ * Verifica se a bolsa está vigente no mês/ano atual
+ */
+export function getScholarshipVigenciaStatus(
+  startMonth?: string,
+  endMonth?: string,
+  projectStatus?: string
+): { isActiveNow: boolean; label: string } {
+  if (projectStatus && projectStatus !== 'EM_ANDAMENTO') {
+    return { isActiveNow: false, label: 'Projeto Concluído / Pausado' };
+  }
+  const nowYM = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const hasStart = Boolean(startMonth && /^\d{4}-\d{2}$/.test(startMonth.trim()));
+  const hasEnd = Boolean(endMonth && /^\d{4}-\d{2}$/.test(endMonth.trim()));
+
+  if (hasStart && nowYM < startMonth!.trim()) {
+    return { isActiveNow: false, label: 'Vigência Futura' };
+  }
+  if (hasEnd && nowYM > endMonth!.trim()) {
+    return { isActiveNow: false, label: 'Vigência Encerrada' };
+  }
+  return { isActiveNow: true, label: 'Vigente' };
+}
+
 export interface LabicAttachment {
   id: string;
   label: string;
@@ -111,6 +278,7 @@ export interface ProductionItem {
   venueOrAgency: string;
   primaryAuthorId?: string;
   authorIds: string[];
+  externalAuthors?: string; // Autores externos ao LABIC separados por vírgula
   projectId?: string;
   fileName?: string;
   attachments: LabicAttachment[];
@@ -123,6 +291,9 @@ export interface ProjectScholarMember {
   roleInProject: 'BOLSISTA' | 'VOLUNTARIO' | 'COORIENTADOR' | 'ORIENTADOR';
   scholarshipProgram?: string;
   monthlyScholarshipBRL?: number;
+  scholarshipStartMonth?: string; // YYYY-MM (ex.: 2026-03)
+  scholarshipEndMonth?: string; // YYYY-MM (ex.: 2027-02)
+  scholarshipInstallments?: number; // Quantidade de parcelas (ex.: 12)
 }
 
 export interface ProjectDeliverable {
@@ -197,6 +368,7 @@ export interface ConferenceSubmission {
   projectId?: string;
   primaryAuthorId?: string;
   authorIds: string[];
+  externalAuthors?: string; // Coautores externos separados por vírgula
   reviewerIds: string[];
   status: SubmissionStatus;
   fileName: string;

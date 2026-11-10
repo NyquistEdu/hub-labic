@@ -4,7 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
-import { LabicAttachment, LabicMilestone, StartupApplication } from "@/types/labic";
+import {
+  formatDateBR,
+  LabicAttachment,
+  LabicMilestone,
+  STARTUP_PHASE_LABELS,
+  StartupApplication,
+} from "@/types/labic";
 import { AttachmentManager } from "@/components/AttachmentManager";
 
 export default function StartupEditalDetalhePage() {
@@ -141,7 +147,9 @@ export default function StartupEditalDetalhePage() {
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-emerald-400">{startup.name}</span>
           <span className="text-xs text-zinc-600">·</span>
-          <span className="text-xs text-zinc-400">{edital.phaseOrStatus}</span>
+          <span className="text-xs text-zinc-400">
+            {STARTUP_PHASE_LABELS[edital.phaseOrStatus] || edital.phaseOrStatus}
+          </span>
         </div>
         <h1 className="text-lg font-semibold text-zinc-100 mt-0.5">
           Edital: {edital.programName} ({edital.year})
@@ -223,7 +231,7 @@ export default function StartupEditalDetalhePage() {
                         ms.completed ? "line-through text-zinc-500" : "text-zinc-100"
                       }`}
                     >
-                      Até {ms.dueDate}: {ms.title}
+                      Até {formatDateBR(ms.dueDate)}: {ms.title}
                     </span>
                     <span
                       className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${

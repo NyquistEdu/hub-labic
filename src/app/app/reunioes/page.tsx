@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { LabicMeeting } from "@/types/labic";
+import { formatMeetingDateTime, LabicMeeting, MEETING_TYPE_LABELS } from "@/types/labic";
 
 export default function ReunioesPage() {
   const { meetings, members, currentUser, addMeeting, updateMeeting, deleteMeeting } = useLabic();
@@ -122,13 +122,14 @@ export default function ReunioesPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <span className="text-[11px] text-emerald-400 font-medium">
-                      {m.meetingType}
+                      {MEETING_TYPE_LABELS[m.meetingType] || m.meetingType}
                     </span>
                     <h2 className="text-sm font-semibold text-zinc-100 mt-0.5">{m.title}</h2>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-zinc-300 font-medium">
-                      {m.scheduledAt} · {m.locationOrLink}
+                      {formatMeetingDateTime(m.meetingDate, m.meetingTime, m.scheduledAt)} ·{" "}
+                      {m.locationOrLink}
                     </span>
                     <button
                       onClick={() => openEditModal(m)}

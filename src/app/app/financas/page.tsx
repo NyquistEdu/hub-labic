@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { FinanceBox } from "@/types/labic";
+import { FinanceBox, formatDateBR } from "@/types/labic";
 
 export default function FinancasPage() {
   const {
@@ -222,7 +222,7 @@ export default function FinancasPage() {
                     <div>
                       <div className="font-medium text-zinc-100">{tx.description}</div>
                       <div className="text-[11px] text-zinc-500">
-                        {tx.txDate} · {box ? box.name : "Caixa Geral"} · Por {regName}
+                        {formatDateBR(tx.txDate)} · {box ? box.name : "Caixa Geral"} · Por {regName}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

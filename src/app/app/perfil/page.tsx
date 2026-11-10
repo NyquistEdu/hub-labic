@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { AcademicStep, PRODUCTION_CATEGORY_LABELS, WorkMode } from "@/types/labic";
+import {
+  AcademicStep,
+  formatMonthYearBR,
+  getScholarshipVigenciaStatus,
+  PRODUCTION_CATEGORY_LABELS,
+  SUPPLY_REQUEST_STATUS_LABELS,
+  SUPPLY_REQUEST_TYPE_LABELS,
+  WorkMode,
+} from "@/types/labic";
 
 export default function MeuPerfilPage() {
   const {
@@ -168,11 +176,18 @@ export default function MeuPerfilPage() {
       p.members.some((m) => m.profileId === currentUser.id)
   );
 
-  // Soma total de bolsas recebidas pelo usuário logado
+  // Soma total de bolsas vigentes recebidas pelo usuário logado no mês atual
   const totalScholarshipBRL = myProjects.reduce((sum, proj) => {
     const myLink = proj.members.find((m) => m.profileId === currentUser.id);
     if (myLink?.roleInProject === "BOLSISTA" && myLink.monthlyScholarshipBRL) {
-      return sum + Number(myLink.monthlyScholarshipBRL);
+      const vig = getScholarshipVigenciaStatus(
+        myLink.scholarshipStartMonth,
+        myLink.scholarshipEndMonth,
+        proj.status
+      );
+      if (vig.isActiveNow) {
+        return sum + Number(myLink.monthlyScholarshipBRL);
+      }
     }
     return sum;
   }, 0);
@@ -548,7 +563,7 @@ export default function MeuPerfilPage() {
               </h2>
               {totalScholarshipBRL > 0 && (
                 <div className="px-2.5 py-1 rounded bg-emerald-950/50 border border-emerald-800/60 text-emerald-300 text-xs font-semibold">
-                  Total de Bolsas: R$ {totalScholarshipBRL.toLocaleString("pt-BR")}/mês
+                  Ganho Mensal Atual (Bolsas Vigentes): R$ {totalScholarshipBRL.toLocaleString("pt-BR")}/mês
                 </div>
               )}
             </div>
@@ -558,21 +573,65 @@ export default function MeuPerfilPage() {
               <div className="divide-y divide-zinc-800/60 text-xs mt-2">
                 {myProjects.map((proj) => {
                   const myLink = proj.members.find((m) => m.profileId === currentUser.id);
+                  const isScholar = myLink?.roleInProject === "BOLSISTA";
+                  const vigencia = isScholar
+                    ? getScholarshipVigenciaStatus(
+                        myLink?.scholarshipStartMonth,
+                        myLink?.scholarshipEndMonth,
+                        proj.status
+                      )
+                    : null;
+
                   return (
-                    <div key={proj.id} className="py-2.5 flex items-center justify-between">
+                    <div key={proj.id} className="py-2.5 flex items-center justify-between gap-3">
                       <div>
                         <div className="font-medium text-zinc-100">{proj.title}</div>
                         <div className="text-[11px] text-zinc-500">
                           {proj.fundingAgency} · {proj.year} ·{" "}
-                          {myLink?.roleInProject === "BOLSISTA"
-                            ? "Bolsista"
-                            : "Pesquisador Integrante"}
+                          {isScholar ? "Bolsista" : "Pesquisador Integrante"}
                         </div>
+                        {isScholar &&
+                          (myLink?.scholarshipStartMonth ||
+                            myLink?.scholarshipEndMonth ||
+                            myLink?.scholarshipInstallments) && (
+                            <div className="text-[11px] text-zinc-400 mt-0.5">
+                              Vigência:{" "}
+                              {myLink.scholarshipStartMonth
+                                ? formatMonthYearBR(myLink.scholarshipStartMonth)
+                                : "—"}{" "}
+                              até{" "}
+                              {myLink.scholarshipEndMonth
+                                ? formatMonthYearBR(myLink.scholarshipEndMonth)
+                                : "—"}
+                              {myLink.scholarshipInstallments
+                                ? ` · ${myLink.scholarshipInstallments} parcelas`
+                                : ""}
+                            </div>
+                          )}
                       </div>
-                      {myLink?.roleInProject === "BOLSISTA" && myLink.monthlyScholarshipBRL && (
-                        <span className="text-xs font-medium text-emerald-400">
-                          R$ {myLink.monthlyScholarshipBRL.toLocaleString("pt-BR")}/mês
-                        </span>
+                      {isScholar && myLink?.monthlyScholarshipBRL && (
+                        <div className="text-right shrink-0">
+                          <div
+                            className={`text-xs font-semibold ${
+                              vigencia?.isActiveNow
+                                ? "text-emerald-400"
+                                : "text-zinc-500 line-through"
+                            }`}
+                          >
+                            R$ {myLink.monthlyScholarshipBRL.toLocaleString("pt-BR")}/mês
+                          </div>
+                          {vigencia && (
+                            <span
+                              className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] border ${
+                                vigencia.isActiveNow
+                                  ? "bg-emerald-950/60 border-emerald-800/50 text-emerald-300"
+                                  : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                              }`}
+                            >
+                              {vigencia.label}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   );
@@ -595,9 +654,13 @@ export default function MeuPerfilPage() {
                       <span className="text-zinc-200">
                         {req.quantity}x {req.itemName}
                       </span>
-                      <span className="text-[11px] text-zinc-500 ml-2">({req.requestType})</span>
+                      <span className="text-[11px] text-zinc-500 ml-2">
+                        ({SUPPLY_REQUEST_TYPE_LABELS[req.requestType] || req.requestType})
+                      </span>
                     </div>
-                    <span className="text-[11px] text-zinc-400">{req.status}</span>
+                    <span className="text-[11px] text-zinc-400">
+                      {SUPPLY_REQUEST_STATUS_LABELS[req.status] || req.status}
+                    </span>
                   </div>
                 ))}
               </div>

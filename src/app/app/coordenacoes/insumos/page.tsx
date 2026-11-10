@@ -2,7 +2,12 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { InventoryItem } from "@/types/labic";
+import {
+  formatDateBR,
+  InventoryItem,
+  SUPPLY_REQUEST_STATUS_LABELS,
+  SUPPLY_REQUEST_TYPE_LABELS,
+} from "@/types/labic";
 
 export default function CoordenacaoInsumosPage() {
   const {
@@ -101,10 +106,13 @@ export default function CoordenacaoInsumosPage() {
                       </span>
                       <span className="text-zinc-400 ml-2">· Solicitante: {reqMember}</span>
                       <div className="text-[11px] text-zinc-500">
-                        {req.requestType} · {req.createdAt}
+                        {SUPPLY_REQUEST_TYPE_LABELS[req.requestType] || req.requestType} ·{" "}
+                        {formatDateBR(req.createdAt)}
                       </div>
                     </div>
-                    <span className="text-emerald-400 font-medium">{req.status}</span>
+                    <span className="text-emerald-400 font-medium">
+                      {SUPPLY_REQUEST_STATUS_LABELS[req.status] || req.status}
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">

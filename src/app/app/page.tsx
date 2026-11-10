@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
+import { formatDateBR, formatMeetingDateTime, SUBMISSION_STATUS_LABELS } from "@/types/labic";
 
 export default function DashboardOverviewPage() {
   const {
@@ -92,7 +93,9 @@ export default function DashboardOverviewPage() {
                   <span className="text-xs font-medium text-zinc-200">{alert.title}</span>
                   <p className="text-xs text-zinc-400">{alert.message}</p>
                 </div>
-                <span className="text-[11px] text-zinc-500 shrink-0">{alert.dateLabel}</span>
+                <span className="text-[11px] text-zinc-500 shrink-0">
+                  {formatDateBR(alert.dateLabel)}
+                </span>
               </div>
             ))}
           </div>
@@ -159,7 +162,9 @@ export default function DashboardOverviewPage() {
                           {conf?.acronym || "Congresso"}
                         </div>
                       </div>
-                      <span className="text-[11px] text-zinc-400">{sub.status}</span>
+                      <span className="text-[11px] text-zinc-400">
+                        {SUBMISSION_STATUS_LABELS[sub.status] || sub.status}
+                      </span>
                     </div>
                   );
                 })}
@@ -181,7 +186,9 @@ export default function DashboardOverviewPage() {
                 {meetings.slice(0, 3).map((m) => (
                   <div key={m.id} className="py-2 flex items-center justify-between text-xs">
                     <span className="text-zinc-200">{m.title}</span>
-                    <span className="text-zinc-500">{m.scheduledAt}</span>
+                    <span className="text-zinc-500">
+                      {formatMeetingDateTime(m.meetingDate, m.meetingTime, m.scheduledAt)}
+                    </span>
                   </div>
                 ))}
               </div>

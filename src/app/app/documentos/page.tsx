@@ -2,7 +2,12 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { GeneralDocument, LabicAttachment } from "@/types/labic";
+import {
+  DOCUMENT_CATEGORY_LABELS,
+  formatDateBR,
+  GeneralDocument,
+  LabicAttachment,
+} from "@/types/labic";
 import { AttachmentManager } from "@/components/AttachmentManager";
 
 export default function DocumentosPage() {
@@ -131,9 +136,11 @@ export default function DocumentosPage() {
                 return (
                   <tr key={doc.id} className="hover:bg-zinc-900/20">
                     <td className="py-3 px-4 font-medium text-zinc-100">{doc.title}</td>
-                    <td className="py-3 px-4 text-zinc-400">{doc.category}</td>
+                    <td className="py-3 px-4 text-zinc-400">
+                      {DOCUMENT_CATEGORY_LABELS[doc.category] || doc.category}
+                    </td>
                     <td className="py-3 px-4 text-zinc-400">{uploader}</td>
-                    <td className="py-3 px-4 text-zinc-500">{doc.uploadedAt}</td>
+                    <td className="py-3 px-4 text-zinc-500">{formatDateBR(doc.uploadedAt)}</td>
                     <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1.5">
                         {list.map((att) => (

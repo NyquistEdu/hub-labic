@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
+import { formatDateBR } from "@/types/labic";
 
 export default function CoordenacaoMidiaPage() {
   const {
@@ -125,7 +126,7 @@ export default function CoordenacaoMidiaPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-zinc-400">
-                        {slot.scheduledDate} · {slot.topicSuggestion}
+                        {formatDateBR(slot.scheduledDate)} · {slot.topicSuggestion}
                       </span>
                       <button
                         onClick={() => deleteMediaSlot(slot.id)}

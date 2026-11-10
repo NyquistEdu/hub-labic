@@ -413,6 +413,12 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
                     ? String(m.scholarship_program)
                     : undefined,
                   monthlyScholarshipBRL: priv ? Number(priv.monthly_value_brl) : undefined,
+                  scholarshipStartMonth:
+                    priv && priv.start_month ? String(priv.start_month) : undefined,
+                  scholarshipEndMonth:
+                    priv && priv.end_month ? String(priv.end_month) : undefined,
+                  scholarshipInstallments:
+                    priv && priv.installments ? Number(priv.installments) : undefined,
                 };
               }),
             deliverables: pdRows
@@ -450,6 +456,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
                 ? String(pr.primary_author_id)
                 : authorIds[0],
               authorIds,
+              externalAuthors: pr.external_authors ? String(pr.external_authors) : undefined,
               fileName: pr.file_name ? String(pr.file_name) : undefined,
               attachments: Array.isArray(pr.attachments)
                 ? (pr.attachments as LabicAttachment[])
@@ -492,6 +499,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
                 ? String(s.primary_author_id)
                 : authorIds[0],
               authorIds,
+              externalAuthors: s.external_authors ? String(s.external_authors) : undefined,
               reviewerIds: (s.reviewer_ids as string[]) || [],
               status: (s.status as SubmissionStatus) || 'RASCUNHO',
               fileName: String(s.file_name || ''),
@@ -1089,6 +1097,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
         project_id: newProd.projectId || null,
         primary_author_id: newProd.primaryAuthorId || null,
         author_ids: newProd.authorIds,
+        external_authors: newProd.externalAuthors || '',
         file_name: newProd.fileName || null,
         attachments: newProd.attachments || [],
         verified_by_coordination: newProd.verifiedByCoordination,
@@ -1118,6 +1127,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
           project_id: merged.projectId || null,
           primary_author_id: merged.primaryAuthorId || null,
           author_ids: merged.authorIds,
+          external_authors: merged.externalAuthors || '',
           file_name: merged.fileName || null,
           attachments: merged.attachments || [],
           is_sensitive: merged.isSensitive,
@@ -1171,6 +1181,9 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
             project_id: newProj.id,
             scholar_profile_id: m.profileId,
             monthly_value_brl: m.monthlyScholarshipBRL,
+            start_month: m.scholarshipStartMonth || '',
+            end_month: m.scholarshipEndMonth || '',
+            installments: m.scholarshipInstallments || 12,
             active: true,
           });
         }
@@ -1232,6 +1245,9 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
               project_id: projectId,
               scholar_profile_id: m.profileId,
               monthly_value_brl: m.monthlyScholarshipBRL,
+              start_month: m.scholarshipStartMonth || '',
+              end_month: m.scholarshipEndMonth || '',
+              installments: m.scholarshipInstallments || 12,
               active: true,
             });
           }
@@ -1483,6 +1499,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
         project_id: newSub.projectId || null,
         primary_author_id: newSub.primaryAuthorId || null,
         author_ids: newSub.authorIds,
+        external_authors: newSub.externalAuthors || '',
         reviewer_ids: newSub.reviewerIds,
         status: newSub.status,
         file_name: newSub.fileName,
@@ -1513,6 +1530,7 @@ export function LabicProvider({ children }: { children: React.ReactNode }) {
           title: merged.title,
           primary_author_id: merged.primaryAuthorId || null,
           author_ids: merged.authorIds,
+          external_authors: merged.externalAuthors || '',
           reviewer_ids: merged.reviewerIds,
           status: merged.status,
           file_name: merged.fileName,

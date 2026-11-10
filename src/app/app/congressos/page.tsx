@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
-import { LabicConference } from "@/types/labic";
+import { CONFERENCE_STATUS_LABELS, formatDateBR, LabicConference } from "@/types/labic";
 
 export default function CongressosPage() {
   const {
@@ -118,7 +118,9 @@ export default function CongressosPage() {
                       <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 font-semibold">
                         {conf.acronym}
                       </span>
-                      <span className="text-zinc-400">{conf.status}</span>
+                      <span className="text-zinc-400">
+                        {CONFERENCE_STATUS_LABELS[conf.status] || conf.status}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
@@ -139,19 +141,23 @@ export default function CongressosPage() {
                   <h2 className="text-base font-semibold text-zinc-100">{conf.name}</h2>
                   <p className="text-zinc-400">
                     Local: {conf.location || "A definir"} · Evento:{" "}
-                    {conf.eventDate || "A definir"}
+                    {conf.eventDate ? formatDateBR(conf.eventDate) : "A definir"}
                   </p>
                   <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-zinc-400">
                     <div className="bg-zinc-900/50 border border-zinc-800/70 rounded p-2">
                       <span className="block text-zinc-500">Prazo Revisão Interna</span>
                       <span className="text-zinc-200 font-medium">
-                        {conf.internalReviewDeadline || "Não definido"}
+                        {conf.internalReviewDeadline
+                          ? formatDateBR(conf.internalReviewDeadline)
+                          : "Não definido"}
                       </span>
                     </div>
                     <div className="bg-zinc-900/50 border border-zinc-800/70 rounded p-2">
                       <span className="block text-zinc-500">Deadline Oficial</span>
                       <span className="text-zinc-200 font-medium">
-                        {conf.officialSubmissionDeadline || "Não definido"}
+                        {conf.officialSubmissionDeadline
+                          ? formatDateBR(conf.officialSubmissionDeadline)
+                          : "Não definido"}
                       </span>
                     </div>
                   </div>

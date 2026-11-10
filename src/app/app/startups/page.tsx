@@ -3,7 +3,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
-import { LabicStartup, StartupApplication } from "@/types/labic";
+import {
+  LabicStartup,
+  STARTUP_PHASE_LABELS,
+  STARTUP_STAGE_LABELS,
+  StartupApplication,
+} from "@/types/labic";
 
 export default function StartupsPage() {
   const {
@@ -152,7 +157,7 @@ export default function StartupsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-emerald-400 font-semibold">
-                        {st.stage}
+                        {STARTUP_STAGE_LABELS[st.stage] || st.stage}
                       </span>
                       {st.showOnPublicShowcase && (
                         <span className="text-[11px] text-zinc-500">· Pública na Vitrine</span>
@@ -218,7 +223,7 @@ export default function StartupsPage() {
                                   {app.programName} ({app.year})
                                 </span>
                                 <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-emerald-400">
-                                  {app.phaseOrStatus}
+                                  {STARTUP_PHASE_LABELS[app.phaseOrStatus] || app.phaseOrStatus}
                                 </span>
                               </div>
                               <div className="text-[11px] text-zinc-400">

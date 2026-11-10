@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLabic } from "@/context/LabicContext";
 import { WorldMapLabic } from "@/components/WorldMapLabic";
-import { PRODUCTION_CATEGORY_LABELS } from "@/types/labic";
+import { PRODUCTION_CATEGORY_LABELS, STARTUP_STAGE_LABELS } from "@/types/labic";
 
 export default function PublicShowcasePage() {
   const { members, productions, projects, startups, isAuthenticated } = useLabic();
@@ -239,7 +239,9 @@ export default function PublicShowcasePage() {
                   <div key={st.id} className="py-3.5 first:pt-0 last:pb-0 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-zinc-100">{st.name}</span>
-                      <span className="text-[11px] text-zinc-400">{st.stage}</span>
+                      <span className="text-[11px] text-zinc-400">
+                        {STARTUP_STAGE_LABELS[st.stage] || st.stage}
+                      </span>
                     </div>
                     <p className="text-xs text-zinc-400">{st.tagline}</p>
                   </div>
@@ -276,10 +278,16 @@ export default function PublicShowcasePage() {
           ) : (
             <div className="divide-y divide-zinc-800/60">
               {filteredPublicProductions.map((prod) => {
-                const authorNames = prod.authorIds
+                const labicAuthorNames = prod.authorIds
                   .map((id) => members.find((m) => m.id === id)?.name)
-                  .filter(Boolean)
-                  .join(", ");
+                  .filter(Boolean);
+                const extNames = prod.externalAuthors
+                  ? prod.externalAuthors
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                  : [];
+                const authorNames = [...labicAuthorNames, ...extNames].join(", ");
                 return (
                   <div key={prod.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>

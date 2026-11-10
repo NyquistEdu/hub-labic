@@ -2,7 +2,17 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { LabicAttachment, LabicProject, ProjectDeliverable } from "@/types/labic";
+import {
+  calculateInstallmentsBetween,
+  DELIVERABLE_STATUS_LABELS,
+  formatDateBR,
+  formatMonthYearBR,
+  getScholarshipVigenciaStatus,
+  LabicAttachment,
+  LabicProject,
+  PROJECT_STATUS_LABELS,
+  ProjectDeliverable,
+} from "@/types/labic";
 import { AttachmentManager } from "@/components/AttachmentManager";
 
 export default function ProjetosPage() {
@@ -36,6 +46,9 @@ export default function ProjetosPage() {
       profileId: string;
       roleInProject: "BOLSISTA" | "VOLUNTARIO";
       monthlyScholarshipBRL?: number;
+      scholarshipStartMonth?: string;
+      scholarshipEndMonth?: string;
+      scholarshipInstallments?: number;
     }[]
   >([]);
 
@@ -81,6 +94,9 @@ export default function ProjetosPage() {
         profileId: m.profileId,
         roleInProject: m.roleInProject === "BOLSISTA" ? "BOLSISTA" : "VOLUNTARIO",
         monthlyScholarshipBRL: m.monthlyScholarshipBRL,
+        scholarshipStartMonth: m.scholarshipStartMonth || "",
+        scholarshipEndMonth: m.scholarshipEndMonth || "",
+        scholarshipInstallments: m.scholarshipInstallments ?? 12,
       }))
     );
     setShowProjectModal(true);
@@ -94,17 +110,57 @@ export default function ProjetosPage() {
     );
   };
 
-  const updateMemberScholar = (id: string, isScholar: boolean, value?: number) => {
+  const updateMemberScholar = (
+    id: string,
+    isScholar: boolean,
+    patch?: {
+      monthlyScholarshipBRL?: number;
+      scholarshipStartMonth?: string;
+      scholarshipEndMonth?: string;
+      scholarshipInstallments?: number;
+    }
+  ) => {
     setProjectMembers((prev) =>
-      prev.map((m) =>
-        m.profileId === id
-          ? {
-              ...m,
-              roleInProject: isScholar ? "BOLSISTA" : "VOLUNTARIO",
-              monthlyScholarshipBRL: isScholar ? value : undefined,
-            }
-          : m
-      )
+      prev.map((m) => {
+        if (m.profileId !== id) return m;
+        if (!isScholar) {
+          return {
+            profileId: m.profileId,
+            roleInProject: "VOLUNTARIO",
+          };
+        }
+        const defaultStart = `${year}-03`;
+        const defaultEnd = `${year + 1}-02`;
+        const nextStart =
+          patch?.scholarshipStartMonth !== undefined
+            ? patch.scholarshipStartMonth
+            : m.scholarshipStartMonth || defaultStart;
+        const nextEnd =
+          patch?.scholarshipEndMonth !== undefined
+            ? patch.scholarshipEndMonth
+            : m.scholarshipEndMonth || defaultEnd;
+        const autoInstallments =
+          patch?.scholarshipStartMonth !== undefined ||
+          patch?.scholarshipEndMonth !== undefined
+            ? calculateInstallmentsBetween(nextStart, nextEnd)
+            : undefined;
+        const nextInstallments =
+          patch?.scholarshipInstallments !== undefined
+            ? patch.scholarshipInstallments
+            : autoInstallments ?? m.scholarshipInstallments ?? 12;
+
+        return {
+          ...m,
+          roleInProject: "BOLSISTA",
+          monthlyScholarshipBRL:
+            patch?.monthlyScholarshipBRL !== undefined
+              ? patch.monthlyScholarshipBRL
+              : m.monthlyScholarshipBRL,
+          scholarshipStartMonth: nextStart,
+          scholarshipEndMonth: nextEnd,
+          scholarshipInstallments: nextInstallments,
+        };
+      })
     );
   };
 
@@ -243,14 +299,16 @@ export default function ProjetosPage() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-zinc-800/60 pb-3">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium text-emerald-400">
                         {proj.fundingAgency}
                       </span>
                       <span className="text-xs text-zinc-600">·</span>
                       <span className="text-xs text-zinc-400">Ano: {proj.year}</span>
                       <span className="text-xs text-zinc-600">·</span>
-                      <span className="text-xs text-zinc-400">{proj.status}</span>
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-200 font-medium">
+                        {PROJECT_STATUS_LABELS[proj.status] || proj.status}
+                      </span>
                       {proj.showOnPublicShowcase && (
                         <>
                           <span className="text-xs text-zinc-600">·</span>
@@ -305,11 +363,18 @@ export default function ProjetosPage() {
                           const showScholarship =
                             canSeeScholarshipValue(pm.profileId) &&
                             pm.roleInProject === "BOLSISTA";
+                          const vigencia = showScholarship
+                            ? getScholarshipVigenciaStatus(
+                                pm.scholarshipStartMonth,
+                                pm.scholarshipEndMonth,
+                                proj.status
+                              )
+                            : null;
 
                           return (
                             <div
                               key={pm.profileId}
-                              className="py-2.5 flex items-center justify-between gap-2"
+                              className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                             >
                               <div>
                                 <span className="text-zinc-200 font-medium">
@@ -322,13 +387,43 @@ export default function ProjetosPage() {
                                 )}
                               </div>
                               {showScholarship && (
-                                <div className="flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/50 text-[10px] text-emerald-300">
-                                    Bolsista
+                                <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded border text-[10px] font-medium ${
+                                      vigencia?.isActiveNow
+                                        ? "bg-emerald-950/60 border-emerald-800/50 text-emerald-300"
+                                        : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                                    }`}
+                                  >
+                                    Bolsista · {vigencia?.label}
                                   </span>
                                   {pm.monthlyScholarshipBRL && (
-                                    <span className="text-emerald-400 font-semibold">
+                                    <span
+                                      className={`font-semibold ${
+                                        vigencia?.isActiveNow
+                                          ? "text-emerald-400"
+                                          : "text-zinc-400 line-through"
+                                      }`}
+                                    >
                                       R$ {pm.monthlyScholarshipBRL.toLocaleString("pt-BR")}/mês
+                                    </span>
+                                  )}
+                                  {(pm.scholarshipStartMonth ||
+                                    pm.scholarshipEndMonth ||
+                                    pm.scholarshipInstallments) && (
+                                    <span className="text-[11px] text-zinc-400">
+                                      (
+                                      {pm.scholarshipStartMonth
+                                        ? formatMonthYearBR(pm.scholarshipStartMonth)
+                                        : "—"}{" "}
+                                      até{" "}
+                                      {pm.scholarshipEndMonth
+                                        ? formatMonthYearBR(pm.scholarshipEndMonth)
+                                        : "—"}
+                                      {pm.scholarshipInstallments
+                                        ? ` · ${pm.scholarshipInstallments} parcelas`
+                                        : ""}
+                                      )
                                     </span>
                                   )}
                                 </div>
@@ -371,8 +466,10 @@ export default function ProjetosPage() {
                                   <p className="text-[11px] text-zinc-400">{del.description}</p>
                                 )}
                                 <div className="text-[11px] text-zinc-500 mt-0.5">
-                                  {del.dueDate ? `Prazo: ${del.dueDate} · ` : ""}Status:{" "}
-                                  <span className="text-emerald-400">{del.status}</span>
+                                  {del.dueDate ? `Prazo: ${formatDateBR(del.dueDate)} · ` : ""}Status:{" "}
+                                  <span className="text-emerald-400">
+                                    {DELIVERABLE_STATUS_LABELS[del.status] || del.status}
+                                  </span>
                                 </div>
                               </div>
                               {hasAccess && (
@@ -602,31 +699,85 @@ export default function ProjetosPage() {
                           <span className="text-zinc-200 font-medium">{m.name}</span>
                         </label>
                         {selected && (
-                          <div className="mt-2 pl-5 flex items-center gap-3">
+                          <div className="mt-2 pl-5 space-y-2">
                             <label className="flex items-center gap-1.5 text-zinc-300 cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={isScholar}
                                 onChange={(e) =>
-                                  updateMemberScholar(
-                                    m.id,
-                                    e.target.checked,
-                                    selected.monthlyScholarshipBRL
-                                  )
+                                  updateMemberScholar(m.id, e.target.checked, {
+                                    monthlyScholarshipBRL: selected.monthlyScholarshipBRL,
+                                  })
                                 }
                               />
-                              <span>Recebe Bolsa</span>
+                              <span>Recebe Bolsa neste projeto</span>
                             </label>
                             {isScholar && (
-                              <input
-                                type="number"
-                                placeholder="Valor R$ (ex: 700)"
-                                value={selected.monthlyScholarshipBRL || ""}
-                                onChange={(e) =>
-                                  updateMemberScholar(m.id, true, Number(e.target.value))
-                                }
-                                className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 w-36"
-                              />
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-0.5">
+                                    Valor Mensal (R$)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    placeholder="Ex: 700"
+                                    value={selected.monthlyScholarshipBRL || ""}
+                                    onChange={(e) =>
+                                      updateMemberScholar(m.id, true, {
+                                        monthlyScholarshipBRL: Number(e.target.value),
+                                      })
+                                    }
+                                    className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 w-full"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-0.5">
+                                    Início (Mês/Ano)
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={selected.scholarshipStartMonth || ""}
+                                    onChange={(e) =>
+                                      updateMemberScholar(m.id, true, {
+                                        scholarshipStartMonth: e.target.value,
+                                      })
+                                    }
+                                    className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 w-full"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-0.5">
+                                    Fim (Mês/Ano)
+                                  </label>
+                                  <input
+                                    type="month"
+                                    value={selected.scholarshipEndMonth || ""}
+                                    onChange={(e) =>
+                                      updateMemberScholar(m.id, true, {
+                                        scholarshipEndMonth: e.target.value,
+                                      })
+                                    }
+                                    className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 w-full"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-0.5">
+                                    Qtd. de Parcelas
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={60}
+                                    value={selected.scholarshipInstallments ?? 12}
+                                    onChange={(e) =>
+                                      updateMemberScholar(m.id, true, {
+                                        scholarshipInstallments: Number(e.target.value),
+                                      })
+                                    }
+                                    className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 w-full"
+                                  />
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}

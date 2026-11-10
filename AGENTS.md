@@ -51,10 +51,13 @@
    - `COMPUTADORES`: Estações de trabalho (PCs) e status operacional (`/app/coordenacoes/computadores`).
    - `LIMPEZA`: Quadro semanal permitindo selecionar **múltiplos dias da semana** (`Segunda` a `Domingo`) para tarefas recorrentes, listando apenas membros `PRESENCIAL_LAGARTO` (`/app/coordenacoes/limpeza`).
    - `MIDIA`: Seleção de membros aptos e sorteio automático de datas de postagem (`/app/coordenacoes/midia`).
-3. **Sigilo Absoluto de Bolsas em Projetos (`/app/projetos` e `/app/perfil`):**
+3. **Sigilo Absoluto, Vigência e Cálculo de Bolsas (`/app/projetos`, `/app/perfil` e `/app/membros`):**
    - O status de `Bolsista` e o valor em R$ (`monthlyScholarshipBRL`) **SÓ podem ser vistos pela `DIRETORA`, por `COORD_GERAL` e pelo próprio bolsista**.
    - **PROIBIDO exibir aviso de `"Valor restrito"` ou revelar quem é bolsista** para os demais usuários (incluindo o Coorientador ou outros integrantes do projeto). Para terceiros, todos os alunos do projeto aparecem simplesmente como **`Pesquisador Integrante`**.
-   - No **Meu Perfil (`/app/perfil`)**, o próprio usuário visualiza a **Soma Total de Bolsas (`Total de Bolsas: R$ X/mês`)** que ele recebe somando todos os projetos em que é bolsista.
+   - **Vigência e Parcelas da Bolsa:** Toda bolsa registra o **Início (`scholarshipStartMonth`, formato `YYYY-MM`)**, o **Fim (`scholarshipEndMonth`, formato `YYYY-MM`)** e a **Quantidade de Parcelas (`scholarshipInstallments`, calculada automaticamente e editável)**.
+   - **Cálculo Dinâmico de Ganho Mensal Atual (`getScholarshipVigenciaStatus`):** O ganho mensal atual de cada membro soma **apenas as bolsas vigentes no mês/ano atual** (e cujo projeto esteja `EM_ANDAMENTO`), reduzindo ou aumentando automaticamente conforme as vigências iniciam ou encerram.
+   - **Detalhamento de Ganhos em `/app/membros`:** Na página de Membros e Permissões (restrita à `DIRETORA` e `COORD_GERAL`), cada cartão de membro exibe explicitamente o **Ganho Mensal Atual (`R$ X/mês`)** e a lista **somente dos projetos em que aquele membro recebe bolsa**, com valor mensal, início/fim (`MM/AAAA`), parcelas e status de vigência (`Vigente` vs `Vigência Encerrada`).
+   - No **Meu Perfil (`/app/perfil`)**, o próprio usuário visualiza seu **Ganho Mensal Atual (Bolsas Vigentes: R$ X/mês)** e os detalhes de vigência/parcelas de cada bolsa.
 4. **Trava de Acesso em Projetos (`canAccessProject`):**
    - Qualquer pesquisador pode cadastrar um novo projeto, mas **apenas os membros vinculados ao projeto (Orientador, Coorientador, Integrantes) ou `DIRETORA` / `COORD_GERAL`** podem abrir os detalhes internos, entregas/arquivos e o **Bloco de Notas Compartilhado do Projeto (`notes`)** ou editar o projeto.
 5. **Trava de Acesso em Editais de Startups (`canAccessStartupEdital`):**
@@ -67,16 +70,20 @@
 1. **Gerenciador de Múltiplos Anexos (`src/components/AttachmentManager.tsx`):**
    - Utilizado em Produções, Entregas de Projetos, Congressos, Editais de Startups e Documentos Gerais.
    - **Regra explícita de formato:** Arquivos **`.PDF`** são enviados via upload direto para o Supabase Storage; **qualquer outro formato** (ZIP, DOCX, código, Drive, DOI) deve ser adicionado como **Link Externo (`https://...`)**. Ambos permitem anexar múltiplos itens por registro.
-2. **Produções (`/app/producoes`):**
-   - Separação clara entre **Autor Principal (`primaryAuthorId`)** — que pode ser o próprio usuário ou qualquer outro membro ativo/inativo/egresso — e **Coautores (`authorIds[]`)** com botão *"Marcar todos"*.
+2. **Produções (`/app/producoes`) e Autores Externos (`externalAuthors`):**
+   - Separação clara entre **Autor Principal (`primaryAuthorId`)** — que pode ser o próprio usuário ou qualquer outro membro ativo/inativo/egresso — e **Coautores do LABIC (`authorIds[]`)** com botão *"Marcar todos"*.
+   - **Autores / Coautores Externos ao LABIC (`externalAuthors`):** Campo de texto onde se escreve o nome completo dos autores que não estão cadastrados no sistema separados por vírgula (presente em Produções e em Submissões de Congressos), vinculando coautores externos sem criar contas de usuário para eles.
    - Soma quantitativa sem duplicidade nos indicadores anuais (calculados dinamicamente a partir dos anos reais existentes no banco, sem hardcode de "2026+").
-3. **Congressos e Página Exclusiva (`/app/congressos` e `/app/congressos/[id]`):**
+3. **Formatação Limpa de Rótulos, Datas e Horários:**
+   - **Proibido exibir códigos internos de enum em `UPPER_SNAKE_CASE`** (como `EM_ANDAMENTO`, `REUNIAO_GERAL_MENSAL`, `TEMPLATE_ARTIGO`, `CONSUMIVEL`). Utilize sempre os mapas de tradução em `src/types/labic.ts` (`PROJECT_STATUS_LABELS`, `MEETING_TYPE_LABELS`, etc.).
+   - **Proibido exibir timestamps ISO brutos** (`2026-11-10T14:00:00+00:00`). Utilize sempre `formatDateBR` (`DD/MM/AAAA`) e `formatMeetingDateTime` (`DD/MM/AAAA às HH:MM`).
+4. **Congressos e Página Exclusiva (`/app/congressos` e `/app/congressos/[id]`):**
    - Cada congresso possui sua página dedicada (`/app/congressos/[id]`) contendo:
      - **Cronograma Interno de Metas (`milestones[]`)**: Datas-alvo internas do laboratório (ex.: *"Até data X: finalizar Introdução"*).
      - **Fluxo Real de Versões em PDF (`versions[]`) e Checklist de Status**: O autor envia o PDF da v1; o revisor baixa o PDF, faz upload do PDF revisado/comentado com parecer; o autor envia a v2 corrigida.
      - **Sem trava de conflito de interesse:** Qualquer membro (inclusive o próprio autor ou coorientador) pode ser designado como revisor interno.
-4. **Reuniões (`/app/reunioes`):**
+5. **Reuniões (`/app/reunioes`):**
    - Utiliza inputs nativos `<input type="date" />` e `<input type="time" />`, botões *"Marcar todos / Desmarcar todos"* para participantes, registro de pauta/ata (`minutesNotes`) e CRUD completo.
-5. **Solicitações e Escalas (`/app/servicos`):**
+6. **Solicitações e Escalas (`/app/servicos`):**
    - Os 3 formulários superiores ocupam **1 linha horizontal inteira cada** (1. Solicitar Insumo; 2. Solicitar Autorização para Impressão 3D; 3. Reportar Defeito), mantendo os cartões inferiores de acompanhamento e escalas em blocos de 2 colunas.
    - Na Impressão 3D, o pesquisador solicita autorização de uso da impressora; a Coordenação de Impressão 3D aprova (`APROVADO_PARA_IMPRIMIR`) e depois dá baixa como concluída (`CONCLUIDO`).

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useLabic } from "@/context/LabicContext";
-import { EquipmentAsset } from "@/types/labic";
+import { EQUIPMENT_STATUS_LABELS, EquipmentAsset } from "@/types/labic";
 
 export default function CoordenacaoManutencaoPage() {
   const {
@@ -97,7 +97,9 @@ export default function CoordenacaoManutencaoPage() {
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-zinc-300 font-medium mr-1">{eq.status}</span>
+                    <span className="text-zinc-300 font-medium mr-1">
+                      {EQUIPMENT_STATUS_LABELS[eq.status] || eq.status}
+                    </span>
                     <button
                       onClick={() => updateEquipmentStatus(eq.id, "OPERACIONAL", "")}
                       className="px-2 py-1 rounded bg-emerald-600 text-white"

@@ -35,6 +35,7 @@ export default function ProducoesPage() {
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>(
     currentUser ? [currentUser.id] : []
   );
+  const [externalAuthors, setExternalAuthors] = useState("");
   const [projectId, setProjectId] = useState("");
   const [attachments, setAttachments] = useState<LabicAttachment[]>([]);
   const [isSensitive, setIsSensitive] = useState(false);
@@ -62,6 +63,7 @@ export default function ProducoesPage() {
     const defAuthor = currentUser?.id || members[0]?.id || "";
     setPrimaryAuthorId(defAuthor);
     setSelectedAuthors(defAuthor ? [defAuthor] : []);
+    setExternalAuthors("");
     setProjectId("");
     setAttachments([]);
     setIsSensitive(false);
@@ -77,6 +79,7 @@ export default function ProducoesPage() {
     const prim = prod.primaryAuthorId || prod.authorIds[0] || "";
     setPrimaryAuthorId(prim);
     setSelectedAuthors(prod.authorIds);
+    setExternalAuthors(prod.externalAuthors || "");
     setProjectId(prod.projectId || "");
     setAttachments(prod.attachments || []);
     setIsSensitive(prod.isSensitive);
@@ -107,7 +110,7 @@ export default function ProducoesPage() {
       ? Array.from(new Set([primaryAuthorId, ...selectedAuthors]))
       : selectedAuthors;
 
-    if (finalAuthors.length === 0) return;
+    if (finalAuthors.length === 0 && !externalAuthors.trim()) return;
 
     if (editingId) {
       await updateProduction(editingId, {
@@ -117,6 +120,7 @@ export default function ProducoesPage() {
         venueOrAgency: venueOrAgency.trim(),
         primaryAuthorId: primaryAuthorId || finalAuthors[0],
         authorIds: finalAuthors,
+        externalAuthors: externalAuthors.trim() || undefined,
         projectId: projectId || undefined,
         attachments,
         fileName: attachments[0]?.url || undefined,
@@ -130,6 +134,7 @@ export default function ProducoesPage() {
         venueOrAgency: venueOrAgency.trim(),
         primaryAuthorId: primaryAuthorId || finalAuthors[0],
         authorIds: finalAuthors,
+        externalAuthors: externalAuthors.trim() || undefined,
         projectId: projectId || undefined,
         attachments,
         fileName: attachments[0]?.url || undefined,
@@ -247,7 +252,12 @@ export default function ProducoesPage() {
                       )}
                       {coauthorNames && (
                         <div className="text-[11px] text-zinc-500">
-                          Coautores: {coauthorNames}
+                          Coautores (LABIC): {coauthorNames}
+                        </div>
+                      )}
+                      {prod.externalAuthors && (
+                        <div className="text-[11px] text-zinc-400 mt-0.5">
+                          Autores Externos: {prod.externalAuthors}
                         </div>
                       )}
                     </td>
@@ -333,12 +343,18 @@ export default function ProducoesPage() {
                 )?.name || "—"}
               </p>
               <p>
-                <strong className="text-zinc-400">Todos os Autores Vinculados:</strong>{" "}
+                <strong className="text-zinc-400">Autores do LABIC:</strong>{" "}
                 {viewingItem.authorIds
                   .map((id) => members.find((m) => m.id === id)?.name)
                   .filter(Boolean)
-                  .join(", ")}
+                  .join(", ") || "—"}
               </p>
+              {viewingItem.externalAuthors && (
+                <p>
+                  <strong className="text-zinc-400">Autores Externos:</strong>{" "}
+                  {viewingItem.externalAuthors}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2 pt-2 border-t border-zinc-800/80">
@@ -513,6 +529,22 @@ export default function ProducoesPage() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">
+                  Autores / Coautores Externos ao LABIC (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={externalAuthors}
+                  onChange={(e) => setExternalAuthors(e.target.value)}
+                  placeholder="Escreva o nome completo dos autores que não estão cadastrados no sistema separados por vírgula"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-zinc-100"
+                />
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Escreva o nome completo dos autores que não estão cadastrados no sistema separados por vírgula (ex.: Prof. Dr. João Silva, Dra. Maria Oliveira).
+                </p>
               </div>
 
               <div>

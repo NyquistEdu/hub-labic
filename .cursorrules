@@ -8,10 +8,11 @@ Sempre leia o arquivo AGENTS.md na raiz antes de propor ou implementar alteraç�
    - Sessão expira em 24 horas (localStorage 'labic_auth_session' + cookie max-age=86400).
    - Nunca exiba senhas na tela de login nem em /app/membros (use apenas o modal "Trocar Senha").
    - DIRETORA e COORD_GERAL podem promover/rebaixar o Papel Global (PESQUISADOR, COORD_GERAL, DIRETORA) de qualquer conta.
-   - Sigilo de Bolsa: nunca mostre "Valor restrito" nem revele quem é bolsista para quem não é DIRETORA, COORD_GERAL ou o próprio bolsista (mostre apenas "Pesquisador Integrante").
+   - Sigilo e Vigência de Bolsa: nunca mostre "Valor restrito" nem revele quem é bolsista para quem não é DIRETORA, COORD_GERAL ou o próprio bolsista (mostre apenas "Pesquisador Integrante"). Toda bolsa possui início (YYYY-MM), fim (YYYY-MM) e parcelas, calculando o Ganho Mensal Atual apenas com bolsas vigentes (exibido em /app/membros e /app/perfil).
    - Projetos e Editais de Startups só podem ser abertos/editados pelos membros vinculados a eles (ou DIRETORA / COORD_GERAL).
-5. Fluxos específicos:
-   - Produções: Autor Principal (primaryAuthorId, incluindo egressos/inativos) + Coautores (authorIds[]).
+5. Fluxos específicos e Formatação:
+   - Nunca renderize enums brutos (EM_ANDAMENTO, etc.) nem timestamps ISO; use os mapas de tradução e formatDateBR / formatMeetingDateTime em src/types/labic.ts.
+   - Produções e Congressos: Autor Principal (primaryAuthorId) + Coautores do LABIC (authorIds[]) + Autores Externos separados por vírgula (externalAuthors).
    - Congressos (/app/congressos/[id]): metas internas (milestones[]), histórico de revisões em PDF (versions[]) e sem trava de conflito de interesse.
    - Limpeza: seleção de múltiplos dias da semana (Segunda a Domingo).
    - Serviços (/app/servicos): 3 formulários em linhas horizontais de largura total + solicitação de autorização para uso da impressora 3D.
