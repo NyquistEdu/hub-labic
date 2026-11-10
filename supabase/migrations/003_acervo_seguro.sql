@@ -263,6 +263,9 @@ create policy cadastros_gestao on public.cadastros_egressos
 
 -- Permissões de tabela (o RLS acima decide linha a linha).
 grant usage on schema public to anon, authenticated;
+revoke all on public.gestores, public.pessoas, public.pessoas_contato, public.projetos, public.projeto_pessoas,
+  public.conquistas, public.conquista_pessoas, public.iniciativas, public.iniciativa_pessoas, public.parceiros,
+  public.marcos, public.cadastros_egressos from anon, authenticated;
 grant select on public.pessoas, public.projetos, public.projeto_pessoas, public.conquistas,
   public.conquista_pessoas, public.iniciativas, public.iniciativa_pessoas, public.parceiros,
   public.marcos to anon;
