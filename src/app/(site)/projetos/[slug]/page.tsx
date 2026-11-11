@@ -70,7 +70,7 @@ export default async function PaginaProjeto({ params }: Props) {
               <ul className="mt-3 space-y-3">
                 {equipe.map(({ pessoa, papel }) => (
                   <li key={pessoa!.id}>
-                    <Link href={`/pessoas#${pessoa!.slug}`} className="flex items-center gap-3 group">
+                    <Link href={`/pessoas/${pessoa!.slug}`} className="flex items-center gap-3 group">
                       <Retrato pessoa={pessoa!} tamanho={48} />
                       <span>
                         <strong className="block leading-tight group-hover:underline">{pessoa!.nome}</strong>

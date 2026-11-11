@@ -15,10 +15,10 @@ import {
  * Descrição das telas de cadastro. Para criar um campo novo: acrescente a coluna
  * numa migração SQL, em src/lib/tipos.ts e na lista "campos" abaixo.
  * -------------------------------------------------------------------------- */
-type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe' | 'projeto' | 'arquivo';
+type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe' | 'projeto' | 'pessoa' | 'arquivo';
 interface Campo { nome: string; rotulo: string; tipo: TipoCampo; opcoes?: Record<string, string>; ajuda?: string; obrigatorio?: boolean }
 interface Entidade {
-  chave: 'pessoas' | 'projetos' | 'conquistas' | 'iniciativas' | 'parceiros' | 'marcos';
+  chave: 'pessoas' | 'projetos' | 'conquistas' | 'iniciativas' | 'parceiros' | 'marcos' | 'depoimentos';
   titulo: string;
   singular: string;
   nomeDe: (i: Item) => string;
@@ -47,7 +47,7 @@ const ENTIDADES: Entidade[] = [
       { nome: 'onde_esta', rotulo: 'Onde está hoje', tipo: 'texto', ajuda: 'Ex.: Mestrando em Robótica na Queen\'s University' },
       { nome: 'cidade', rotulo: 'Cidade atual', tipo: 'texto' },
       { nome: 'pais', rotulo: 'País atual', tipo: 'texto' },
-      { nome: 'bio', rotulo: 'Minibiografia ou depoimento', tipo: 'longo' },
+      { nome: 'bio', rotulo: 'Minibiografia', tipo: 'longo', ajuda: 'Aparece no perfil da pessoa. Depoimentos ficam na aba Depoimentos.' },
       { nome: 'foto_url', rotulo: 'Foto', tipo: 'imagem' },
       { nome: 'lattes_url', rotulo: 'Lattes', tipo: 'texto' },
       { nome: 'linkedin_url', rotulo: 'LinkedIn', tipo: 'texto' },
@@ -116,6 +116,23 @@ const ENTIDADES: Entidade[] = [
     ],
   },
   {
+    chave: 'depoimentos', titulo: 'Depoimentos', singular: 'depoimento', temSlug: false,
+    nomeDe: (i) => String(i.autor || '') || 'Depoimento sem autor',
+    detalheDe: (i) => {
+      const t = String(i.texto ?? '');
+      return [i.ano, i.destaque ? 'em destaque' : '', t.length > 90 ? `${t.slice(0, 90)}...` : t].filter(Boolean).join(', ');
+    },
+    campos: [
+      { nome: 'pessoa_id', rotulo: 'Pessoa do acervo', tipo: 'pessoa', ajuda: 'Opcional. Liga o depoimento ao perfil: ele aparece também na página da pessoa, com a foto dela.' },
+      { nome: 'autor', rotulo: 'Nome de quem escreveu', tipo: 'texto', ajuda: 'Se ficar vazio e houver pessoa escolhida, usamos o nome dela.' },
+      { nome: 'papel', rotulo: 'Quem é', tipo: 'texto', ajuda: 'Ex.: Egressa de Engenharia Elétrica, hoje mestranda na UFS' },
+      { nome: 'texto', rotulo: 'Depoimento', tipo: 'longo', obrigatorio: true },
+      { nome: 'ano', rotulo: 'Ano', tipo: 'numero' },
+      { nome: 'destaque', rotulo: 'Destacar no topo da página de depoimentos', tipo: 'sim_nao' },
+      PUBLICADO,
+    ],
+  },
+  {
     chave: 'parceiros', titulo: 'Parceiros', singular: 'parceiro', temSlug: false,
     nomeDe: (i) => String(i.nome ?? ''),
     detalheDe: (i) => String(i.tipo ?? ''),
@@ -150,6 +167,7 @@ const PADROES: Record<string, Item> = {
   iniciativas: { estagio: 'IDEACAO', pessoaIds: [], publicado: true },
   parceiros: { publicado: true },
   marcos: { ano: new Date().getFullYear(), publicado: true },
+  depoimentos: { ano: new Date().getFullYear(), publicado: true },
 };
 
 interface Cadastro { id: string; criado_em: string; status: string; dados: Record<string, unknown>; foto_path: string }
@@ -245,11 +263,16 @@ export default function Gestao() {
         let v = valores[c.nome];
         if (c.tipo === 'numero') v = v === '' || v === undefined || v === null ? null : Number(v);
         else if (c.tipo === 'sim_nao') v = Boolean(v);
-        else if (c.tipo === 'projeto') v = v || null;
+        else if (c.tipo === 'projeto' || c.tipo === 'pessoa') v = v || null;
         else if (c.tipo === 'areas' || c.tipo === 'imagens') v = v ?? [];
         else v = v ?? '';
         if (c.obrigatorio && (v === '' || v === null)) throw new Error(`Preencha o campo "${c.rotulo}".`);
         linha[c.nome] = v;
+      }
+      if (ent.chave === 'depoimentos' && !String(linha.autor ?? '').trim()) {
+        const p = acervo?.pessoas.find((x) => x.id === linha.pessoa_id);
+        if (!p) throw new Error('Escreva o nome de quem deu o depoimento ou escolha a pessoa do acervo.');
+        linha.autor = p.nome;
       }
       if (ent.temSlug) linha.slug = valores.slug || gerarSlug(ent.nomeDe(valores));
       let id = valores.id;
@@ -301,6 +324,22 @@ export default function Gestao() {
     });
   }
 
+  /** O depoimento escrito no formulário de egresso vira um registro em Depoimentos, ligado ao perfil. */
+  async function guardarDepoimento(c: Cadastro, pessoaId: string, nome: string) {
+    if (!sb) return;
+    const d = c.dados as Record<string, string | number | boolean | null>;
+    const texto = String(d.depoimento ?? '').trim();
+    if (!texto) return;
+    const ja = acervo?.depoimentos.some((x) => x.pessoa_id === pessoaId && x.texto.trim() === texto);
+    if (ja) return;
+    const papel = ['Egresso', d.curso ? `de ${d.curso}` : ''].filter(Boolean).join(' ');
+    const { error } = await sb.from('depoimentos').insert({
+      pessoa_id: pessoaId, autor: nome, papel, texto, ano: d.ano_saida ?? d.ano_entrada ?? null,
+      publicado: Boolean(d.autoriza_publicacao),
+    });
+    if (error) throw new Error(`O perfil foi salvo, mas o depoimento não: ${error.message}`);
+  }
+
   async function aprovarCadastro(c: Cadastro) {
     if (!sb) return;
     await executar(async () => {
@@ -314,11 +353,12 @@ export default function Gestao() {
       const { data, error } = await sb.from('pessoas').insert({
         slug: `${gerarSlug(nome)}-${c.id.slice(0, 4)}`, nome, vinculo: 'EGRESSO', papel: 'Egresso',
         instituicao: 'IFS Campus Lagarto', curso: d.curso ?? '', ano_entrada: d.ano_entrada ?? null, ano_saida: d.ano_saida ?? null,
-        onde_esta: d.onde_esta ?? '', cidade: d.cidade ?? '', pais: d.pais ?? '', bio: d.depoimento ?? '',
+        onde_esta: d.onde_esta ?? '', cidade: d.cidade ?? '', pais: d.pais ?? '',
         lattes_url: d.lattes_url ?? '', linkedin_url: d.linkedin_url ?? '', foto_url, publicado: Boolean(d.autoriza_publicacao),
       }).select('id').single();
       if (error) throw new Error(error.message);
       await sb.from('pessoas_contato').upsert({ pessoa_id: data.id, email: String(d.email ?? '') });
+      await guardarDepoimento(c, data.id as string, nome);
       const up = await sb.from('cadastros_egressos').update({ status: 'APROVADO', pessoa_id: data.id }).eq('id', c.id);
       if (up.error) throw new Error(up.error.message);
       return `${nome} entrou na lista de pessoas. Projetos e conquistas informados continuam visíveis no cadastro para você registrar.`;
@@ -347,6 +387,7 @@ export default function Gestao() {
       }
       const email = String(c.dados.email ?? '');
       if (email) await sb.from('pessoas_contato').upsert({ pessoa_id: pessoaId, email });
+      await guardarDepoimento(c, pessoaId, String(mudancas.nome ?? atual.nome));
       const up = await sb.from('cadastros_egressos').update({ status: 'APROVADO', pessoa_id: pessoaId }).eq('id', c.id);
       if (up.error) throw new Error(up.error.message);
       return `Perfil de ${String(mudancas.nome ?? atual.nome)} atualizado com os dados do formulário. Projetos e conquistas ligados a ele foram mantidos.`;
@@ -474,6 +515,7 @@ export default function Gestao() {
                   <h2 className="text-3xl mt-10">O que falta completar</h2>
                   <ul className="mt-3 space-y-1.5 list-disc pl-5">
                     <li>Cadastros de egressos aguardando revisão: {pendentes.length}</li>
+                    <li>Depoimentos enviados pelo site esperando revisão: {acervo.depoimentos.filter((d) => !d.publicado).length}</li>
                     <li>Projetos sem foto de capa: {acervo.projetos.filter((p) => !p.capa_url).length}</li>
                     <li>Projetos sem equipe registrada: {acervo.projetos.filter((p) => p.equipe.length === 0).length}</li>
                     <li>Projetos sem ano de início: {acervo.projetos.filter((p) => !p.ano_inicio).length}</li>
@@ -481,7 +523,7 @@ export default function Gestao() {
                     <li>Egressos sem informação de onde estão hoje: {acervo.pessoas.filter((p) => p.vinculo === 'EGRESSO' && !p.onde_esta).length}</li>
                   </ul>
                   <p className="mt-8 text-sm text-grafite">
-                    Link para enviar aos ex-membros: <Link className="underline" href="/egressos" target="_blank">/egressos</Link>
+                    Link para enviar aos ex-membros: <Link className="underline" href="/egressos" target="_blank">/egressos</Link>{' '}e para pedir depoimentos: <Link className="underline" href="/depoimentos#deixe-seu-depoimento" target="_blank">/depoimentos</Link>
                   </p>
                 </>
               )}
@@ -590,7 +632,7 @@ function pessoasParecidas(nome: string, pessoas: Pessoa[]): Pessoa[] {
 
 const ROTULO_CAMPO: Record<string, string> = {
   nome: 'Nome', vinculo: 'Vínculo', papel: 'Papel', curso: 'Curso', ano_entrada: 'Ano de entrada', ano_saida: 'Ano de saída',
-  onde_esta: 'Onde está hoje', cidade: 'Cidade', pais: 'País', bio: 'Minibiografia ou depoimento',
+  onde_esta: 'Onde está hoje', cidade: 'Cidade', pais: 'País', bio: 'Minibiografia',
   lattes_url: 'Lattes', linkedin_url: 'LinkedIn', foto_url: 'Foto',
 };
 
@@ -600,7 +642,7 @@ function camposDoCadastro(c: Cadastro): { chave: string; valor: string | number 
   const lista: [string, string | number | null | undefined][] = [
     ['nome', typeof d.nome === 'string' ? d.nome.trim() : ''], ['vinculo', 'EGRESSO'], ['papel', 'Egresso'], ['curso', d.curso],
     ['ano_entrada', d.ano_entrada], ['ano_saida', d.ano_saida], ['onde_esta', d.onde_esta], ['cidade', d.cidade], ['pais', d.pais],
-    ['bio', d.depoimento], ['lattes_url', d.lattes_url], ['linkedin_url', d.linkedin_url],
+    ['lattes_url', d.lattes_url], ['linkedin_url', d.linkedin_url],
   ];
   return lista.filter(([, v]) => v !== '' && v !== null && v !== undefined).map(([chave, valor]) => ({ chave, valor: valor as string | number }));
 }
@@ -871,6 +913,17 @@ function Formulario({ entidade, inicial, acervo, sb, ocupado, aoSalvar, aoExclui
                 {enviando === c.nome && <small>Enviando PDF...</small>}
                 {c.ajuda && <small>{c.ajuda}</small>}
               </div>
+            );
+          if (c.tipo === 'pessoa')
+            return (
+              <label key={c.nome} className="campo">
+                <span>{c.rotulo}</span>
+                <select className="entrada" value={String(valor ?? '')} onChange={(e) => def(c.nome, e.target.value)}>
+                  <option value="">Nenhuma (pessoa fora do acervo)</option>
+                  {acervo.pessoas.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </select>
+                {c.ajuda && <small>{c.ajuda}</small>}
+              </label>
             );
           if (c.tipo === 'projeto')
             return (

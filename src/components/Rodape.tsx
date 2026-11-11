@@ -24,12 +24,14 @@ export function Rodape() {
             <li><Link className="underline underline-offset-4" href="/startups">Startups</Link></li>
             <li><Link className="underline underline-offset-4" href="/publicacoes">Publicações</Link></li>
             <li><Link className="underline underline-offset-4" href="/conquistas">Conquistas</Link></li>
+            <li><Link className="underline underline-offset-4" href="/depoimentos">Depoimentos</Link></li>
           </ul>
         </div>
         <div>
           <p className="font-semibold mb-2">Faz parte desta história?</p>
           <ul className="space-y-1">
             <li><Link className="underline underline-offset-4" href="/egressos">Cadastro de egressos</Link></li>
+            <li><Link className="underline underline-offset-4" href="/depoimentos#deixe-seu-depoimento">Deixar um depoimento</Link></li>
             <li><Link className="underline underline-offset-4" href="/gestao">Área de gestão</Link></li>
           </ul>
           <address className="not-italic text-grafite text-sm mt-4">

@@ -12,6 +12,9 @@ No painel do Supabase: **SQL Editor > New query**. Cole o conteúdo de
 O script cria as tabelas novas, liga as regras de acesso e **tranca as tabelas antigas do rascunho**
 (que estavam abertas a qualquer visitante, com senhas em texto puro). Nada é apagado.
 
+Depois rode, na ordem, `004_publicacoes.sql` (PDFs de artigos e TCCs) e `005_depoimentos.sql`
+(depoimentos: visitantes enviam pelo site, e o texto só aparece depois que a coordenação publica).
+
 ## 2. Criar o usuário da coordenação
 
 No painel do Supabase: **Authentication > Users > Add user > Create new user**.

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import inicial from '@/data/acervo-inicial.json';
 import { getSupabase } from './supabase';
-import type { Acervo, Conquista, Iniciativa, Marco, Parceiro, Pessoa, Projeto } from './tipos';
+import type { Acervo, Conquista, Depoimento, Iniciativa, Marco, Parceiro, Pessoa, Projeto } from './tipos';
 
 /** Monta o acervo a partir do arquivo inicial (usado enquanto o banco novo não está no ar). */
 export function acervoInicial(): Acervo {
@@ -20,12 +20,12 @@ export function acervoInicial(): Acervo {
   });
   const parceiros: Parceiro[] = inicial.parceiros.map((p, i) => ({ ...p, id: `p${i}` }));
   const marcos: Marco[] = inicial.marcos.map((m, i) => ({ ...m, id: `m${i}` }));
-  return { pessoas, projetos, conquistas, iniciativas, parceiros, marcos, origem: 'inicial' };
+  return { pessoas, projetos, conquistas, iniciativas, parceiros, marcos, depoimentos: [], origem: 'inicial' };
 }
 
 /** Lê tudo o que o usuário atual pode ver (visitante: só publicados; gestor: tudo). */
 export async function lerAcervoDoBanco(sb: SupabaseClient): Promise<Acervo> {
-  const [pe, pr, pp, co, cp, ini, ip, pa, ma] = await Promise.all([
+  const [pe, pr, pp, co, cp, ini, ip, pa, ma, de] = await Promise.all([
     sb.from('pessoas').select('*').order('nome'),
     sb.from('projetos').select('*').order('titulo'),
     sb.from('projeto_pessoas').select('*'),
@@ -35,6 +35,7 @@ export async function lerAcervoDoBanco(sb: SupabaseClient): Promise<Acervo> {
     sb.from('iniciativa_pessoas').select('*'),
     sb.from('parceiros').select('*').order('nome'),
     sb.from('marcos').select('*').order('ano').order('mes', { nullsFirst: true }),
+    sb.from('depoimentos').select('*').order('destaque', { ascending: false }).order('ano', { ascending: false, nullsFirst: false }),
   ]);
   const erro = [pe, pr, pp, co, cp, ini, ip, pa, ma].find((r) => r.error)?.error;
   if (erro) throw new Error(erro.message);
@@ -60,6 +61,8 @@ export async function lerAcervoDoBanco(sb: SupabaseClient): Promise<Acervo> {
     iniciativas,
     parceiros: (pa.data ?? []) as Parceiro[],
     marcos: (ma.data ?? []) as Marco[],
+    // a tabela de depoimentos é mais nova: se ela ainda não existir, o resto do site continua no ar
+    depoimentos: de.error ? [] : ((de.data ?? []) as Depoimento[]),
     origem: 'banco',
   };
 }
