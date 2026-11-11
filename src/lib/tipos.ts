@@ -1,4 +1,4 @@
-export type Vinculo = 'COORDENACAO' | 'PESQUISADOR' | 'ESTUDANTE' | 'EGRESSO' | 'PARCEIRO';
+export type Vinculo = 'COORDENACAO' | 'PESQUISADOR' | 'ESTUDANTE' | 'EGRESSO' | 'PARCEIRO' | 'EGRESSO_PARCEIRO';
 export type TipoConquista = 'ARTIGO' | 'TCC' | 'SOFTWARE' | 'PREMIO' | 'EDITAL' | 'TRAJETORIA' | 'EVENTO';
 export type Estagio = 'IDEACAO' | 'VALIDACAO' | 'MVP' | 'OPERACAO' | 'ENCERRADA';
 
@@ -139,7 +139,17 @@ export const VINCULO_ROTULO: Record<Vinculo, string> = {
   ESTUDANTE: 'Estudantes',
   EGRESSO: 'Egressos',
   PARCEIRO: 'Parceiros de pesquisa',
+  EGRESSO_PARCEIRO: 'Egressos e parceiros de pesquisa',
 };
+
+/**
+ * Grupo da página de pessoas em que alguém aparece. Quem é "egresso e parceiro de pesquisa"
+ * aparece nos dois grupos.
+ */
+export function noGrupo(vinculo: Vinculo, grupo: Vinculo): boolean {
+  if (vinculo === grupo) return true;
+  return vinculo === 'EGRESSO_PARCEIRO' && (grupo === 'EGRESSO' || grupo === 'PARCEIRO');
+}
 
 export const TIPO_ROTULO: Record<TipoConquista, string> = {
   ARTIGO: 'Artigo',

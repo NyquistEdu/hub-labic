@@ -86,7 +86,12 @@ export function ListaPublicacoes({ itens }: { itens: ItemPublicacao[] }) {
                   {c.url && (
                     <a className={`botao botao-pequeno ${c.arquivo_url ? 'botao-vazado' : ''}`} href={c.url} target="_blank" rel="noreferrer">Abrir publicação</a>
                   )}
-                  {!c.arquivo_url && !c.url && <span className="text-sm text-grafite">Arquivo ainda não disponível</span>}
+                  {!c.arquivo_url && c.tipo === 'TCC' && (
+                    <span className="botao botao-pequeno botao-vazado opacity-50 pointer-events-none" aria-disabled="true">
+                      Baixar PDF (em breve)
+                    </span>
+                  )}
+                  {!c.arquivo_url && !c.url && c.tipo !== 'TCC' && <span className="text-sm text-grafite">Arquivo ainda não disponível</span>}
                 </div>
               </li>
             ))}

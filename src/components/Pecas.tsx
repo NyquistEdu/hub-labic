@@ -65,11 +65,11 @@ export function Retrato({ pessoa, tamanho = 72 }: { pessoa: Pessoa; tamanho?: nu
   );
 }
 
-export function CartaoPessoa({ pessoa }: { pessoa: Pessoa }) {
+export function CartaoPessoa({ pessoa, ancora = true }: { pessoa: Pessoa; ancora?: boolean }) {
   const local = [pessoa.cidade, pessoa.pais].filter(Boolean).join(', ');
   const href = `/pessoas/${pessoa.slug}`;
   return (
-    <article id={pessoa.slug} className="flex gap-4 scroll-mt-24">
+    <article id={ancora ? pessoa.slug : undefined} className="flex gap-4 scroll-mt-24">
       <Link href={href} tabIndex={-1} aria-hidden className="flex-none">
         <Retrato pessoa={pessoa} />
       </Link>

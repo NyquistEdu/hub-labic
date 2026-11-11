@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { carregarAcervo } from '@/lib/acervo';
-import { ANO_FUNDACAO, AREAS, ESTAGIO_ROTULO } from '@/lib/tipos';
+import { ANO_FUNDACAO, AREAS, ESTAGIO_ROTULO, noGrupo } from '@/lib/tipos';
 import { CartaoProjeto, Retrato } from '@/components/Pecas';
 
 export const revalidate = 60;
@@ -11,7 +11,7 @@ export default async function Inicio() {
   const a = await carregarAcervo();
   const destaques = a.projetos.filter((p) => p.destaque).slice(0, 5);
   const anos = new Date().getFullYear() - ANO_FUNDACAO;
-  const egressos = a.pessoas.filter((p) => p.vinculo === 'EGRESSO' && p.destaque).slice(0, 3);
+  const egressos = a.pessoas.filter((p) => noGrupo(p.vinculo, 'EGRESSO') && p.destaque).slice(0, 3);
   const marcos = [...a.marcos].sort((x, y) => x.ano - y.ano || (x.mes ?? 13) - (y.mes ?? 13));
 
   return (
