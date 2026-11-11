@@ -19,6 +19,15 @@ export default function Contato() {
         <FormularioContato />
         <aside className="space-y-8">
           <div>
+            <h2 className="text-3xl">Por e-mail</h2>
+            <p className="mt-3 text-lg">
+              <a className="underline underline-offset-4 font-semibold break-all" href="mailto:stephaniekamarryas@gmail.com">
+                stephaniekamarryas@gmail.com
+              </a>
+              <span className="block text-grafite">Stephanie Kamarry, coordenadora do LABIC</span>
+            </p>
+          </div>
+          <div>
             <h2 className="text-3xl">No Instagram</h2>
             <ul className="mt-3 space-y-2 text-lg">
               <li>
