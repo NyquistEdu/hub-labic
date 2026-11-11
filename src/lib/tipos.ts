@@ -131,7 +131,7 @@ export const TIPO_ROTULO: Record<TipoConquista, string> = {
   PREMIO: 'Prêmio',
   EDITAL: 'Edital aprovado',
   TRAJETORIA: 'Trajetória de egresso',
-  EVENTO: 'Evento',
+  EVENTO: 'Trabalho em evento',
 };
 
 export const ESTAGIO_ROTULO: Record<Estagio, string> = {
