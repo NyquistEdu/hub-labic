@@ -12,6 +12,7 @@ export const MENU = [
   { href: '/conquistas', rotulo: 'Conquistas' },
   { href: '/depoimentos', rotulo: 'Depoimentos' },
   { href: '/#historia', rotulo: 'História' },
+  { href: '/contato', rotulo: 'Fale conosco' },
 ];
 
 function ativo(caminho: string, href: string) {
