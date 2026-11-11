@@ -43,7 +43,7 @@ export default async function Startups() {
                   {gente.map((p, j) => (
                     <span key={p!.id}>
                       {j > 0 && (j === gente.length - 1 ? ' e ' : ', ')}
-                      <Link className="underline" href={`/pessoas#${p!.slug}`}>{p!.nome}</Link>
+                      <Link className="underline" href={`/pessoas/${p!.slug}`}>{p!.nome}</Link>
                     </span>
                   ))}
                 </p>

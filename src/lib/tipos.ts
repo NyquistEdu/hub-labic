@@ -95,6 +95,18 @@ export interface Marco {
   publicado: boolean;
 }
 
+export interface Depoimento {
+  id: string;
+  /** pessoa do acervo a quem o depoimento pertence (opcional) */
+  pessoa_id: string | null;
+  autor: string;
+  papel: string;
+  texto: string;
+  ano: number | null;
+  destaque: boolean;
+  publicado: boolean;
+}
+
 export interface Acervo {
   pessoas: Pessoa[];
   projetos: Projeto[];
@@ -102,6 +114,7 @@ export interface Acervo {
   iniciativas: Iniciativa[];
   parceiros: Parceiro[];
   marcos: Marco[];
+  depoimentos: Depoimento[];
   /** 'banco' quando veio do Supabase; 'inicial' quando veio do arquivo de acervo inicial */
   origem: 'banco' | 'inicial';
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AREAS, STATUS_ROTULO, iniciais, type Pessoa, type Projeto } from '@/lib/tipos';
+import { AREAS, STATUS_ROTULO, iniciais, type Depoimento, type Pessoa, type Projeto } from '@/lib/tipos';
 import { Capa } from './Capa';
 
 export function EtiquetaArea({ area }: { area: string }) {
@@ -67,22 +67,50 @@ export function Retrato({ pessoa, tamanho = 72 }: { pessoa: Pessoa; tamanho?: nu
 
 export function CartaoPessoa({ pessoa }: { pessoa: Pessoa }) {
   const local = [pessoa.cidade, pessoa.pais].filter(Boolean).join(', ');
+  const href = `/pessoas/${pessoa.slug}`;
   return (
     <article id={pessoa.slug} className="flex gap-4 scroll-mt-24">
-      <Retrato pessoa={pessoa} />
+      <Link href={href} tabIndex={-1} aria-hidden className="flex-none">
+        <Retrato pessoa={pessoa} />
+      </Link>
       <div className="min-w-0">
-        <h3 className="text-2xl">{pessoa.nome}</h3>
+        <h3 className="text-2xl">
+          <Link href={href} className="hover:underline underline-offset-4 decoration-[3px]">{pessoa.nome}</Link>
+        </h3>
         <p className="text-[0.95rem] font-semibold">{[pessoa.papel, pessoa.instituicao].filter(Boolean).join(', ')}</p>
         {pessoa.onde_esta && <p className="text-[0.95rem] mt-1">{pessoa.onde_esta}</p>}
-        {pessoa.bio && <p className="text-[0.95rem] text-grafite mt-1">{pessoa.bio}</p>}
+        {pessoa.bio && <p className="text-[0.95rem] text-grafite mt-1 line-clamp-3">{pessoa.bio}</p>}
         <p className="text-sm text-grafite mt-1 flex flex-wrap gap-x-3">
           {local && <span>{local}</span>}
-          {pessoa.lattes_url && <a className="underline" href={pessoa.lattes_url} target="_blank" rel="noreferrer">Lattes</a>}
-          {pessoa.linkedin_url && <a className="underline" href={pessoa.linkedin_url} target="_blank" rel="noreferrer">LinkedIn</a>}
-          {pessoa.github_url && <a className="underline" href={pessoa.github_url} target="_blank" rel="noreferrer">GitHub</a>}
+          <Link className="underline font-semibold text-tinta" href={href}>Ver perfil</Link>
         </p>
       </div>
     </article>
+  );
+}
+
+/** Citação de um depoimento. O texto vai em fonte de leitura, não na de títulos. */
+export function CitacaoDepoimento({ depoimento, pessoa, grande = false }: { depoimento: Depoimento; pessoa?: Pessoa; grande?: boolean }) {
+  const autor = pessoa?.nome || depoimento.autor;
+  const papel = depoimento.papel || [pessoa?.papel, pessoa?.instituicao].filter(Boolean).join(', ');
+  return (
+    <figure className="border-[2.5px] border-tinta rounded-[22px] p-6 md:p-8 flex flex-col h-full">
+      <span aria-hidden className="display text-7xl leading-[0.6] h-8">“</span>
+      <blockquote className={`mt-2 mb-6 ${grande ? 'text-xl md:text-2xl' : 'text-lg'} leading-relaxed whitespace-pre-line`}>
+        {depoimento.texto}
+      </blockquote>
+      <figcaption className="mt-auto pt-4 border-t-[2.5px] border-tinta flex items-center gap-3">
+        {pessoa && <Retrato pessoa={pessoa} tamanho={48} />}
+        <span className="min-w-0">
+          <strong className="block leading-tight">
+            {pessoa ? <Link href={`/pessoas/${pessoa.slug}`} className="hover:underline">{autor}</Link> : autor}
+          </strong>
+          {(papel || depoimento.ano) && (
+            <span className="text-sm text-grafite">{[papel, depoimento.ano].filter(Boolean).join(', ')}</span>
+          )}
+        </span>
+      </figcaption>
+    </figure>
   );
 }
 

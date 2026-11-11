@@ -98,14 +98,14 @@ export function FormularioEgresso() {
           <label className="campo"><span>Currículo Lattes</span><input name="lattes_url" type="url" className="entrada" placeholder="https://lattes.cnpq.br/..." /></label>
           <label className="campo"><span>LinkedIn</span><input name="linkedin_url" type="url" className="entrada" placeholder="https://www.linkedin.com/in/..." /></label>
         </div>
-        <label className="campo"><span>O que o LABIC significou para você (opcional)</span><textarea name="depoimento" className="entrada" /></label>
+        <label className="campo"><span>O que o LABIC significou para você (opcional)</span><textarea name="depoimento" className="entrada" /><small>Este texto pode aparecer na página de depoimentos e no seu perfil, depois da revisão da coordenação.</small></label>
       </fieldset>
 
       <input name="site" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
 
       <label className="flex gap-3 items-start">
         <input type="checkbox" name="autoriza" required className="mt-1.5 w-5 h-5 accent-black" />
-        <span>Autorizo o LABIC a publicar meu nome, foto, período no laboratório e trajetória no site. Posso pedir a remoção quando quiser.</span>
+        <span>Autorizo o LABIC a publicar meu nome, foto, período no laboratório, trajetória e depoimento no site. Posso pedir a remoção quando quiser.</span>
       </label>
 
       {erro && <p role="alert" className="border-[2.5px] border-vermelho rounded-xl p-3 font-semibold">{erro}</p>}
