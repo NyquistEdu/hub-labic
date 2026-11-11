@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { carregarAcervo } from '@/lib/acervo';
-import { STATUS_ROTULO } from '@/lib/tipos';
+import { STATUS_ROTULO, TIPO_ROTULO } from '@/lib/tipos';
 import { Capa } from '@/components/Capa';
 import { CartaoProjeto, EtiquetaArea, Retrato } from '@/components/Pecas';
 
@@ -26,6 +26,10 @@ export default async function PaginaProjeto({ params }: Props) {
   const equipe = p.equipe
     .map((e) => ({ pessoa: a.pessoas.find((x) => x.id === e.pessoaId), papel: e.papel }))
     .filter((e) => e.pessoa);
+  const producao = a.conquistas
+    .filter((c) => c.projeto_id === p.id)
+    .sort((x, y) => y.ano - x.ano || x.titulo.localeCompare(y.titulo));
+  const nomes = new Map(a.pessoas.map((x) => [x.id, x.nome]));
   const parecidos = a.projetos.filter((x) => x.id !== p.id && x.areas.some((ar) => p.areas.includes(ar))).slice(0, 3);
   const periodo = p.ano_inicio ? (p.ano_fim && p.ano_fim !== p.ano_inicio ? `${p.ano_inicio} a ${p.ano_fim}` : `${p.ano_inicio}`) : '';
 
@@ -87,6 +91,31 @@ export default async function PaginaProjeto({ params }: Props) {
             <Capa key={g} src={g} alt={`${p.titulo}, foto ${i + 2}`} areas={p.areas} className="aspect-[4/3] border-[2.5px] border-tinta rounded-[22px]" />
           ))}
         </div>
+      )}
+
+      {producao.length > 0 && (
+        <section className="contorno mt-16">
+          <h2 className="text-4xl md:text-5xl">O que este projeto já rendeu</h2>
+          <ul className="mt-6 max-w-4xl">
+            {producao.map((c) => {
+              const gente = c.autores || c.pessoaIds.map((id) => nomes.get(id)).filter(Boolean).join(', ');
+              return (
+                <li key={c.id} className="border-t-[2.5px] border-tinta py-4 md:grid md:grid-cols-[5rem_1fr] md:gap-4">
+                  <p className="display text-3xl">{c.ano}</p>
+                  <div>
+                    <span className="etiqueta">{TIPO_ROTULO[c.tipo]}</span>
+                    <h3 className="mt-2 text-2xl">{c.titulo}</h3>
+                    {c.veiculo && <p className="font-semibold mt-1">{c.veiculo}</p>}
+                    {gente && <p className="text-sm text-grafite mt-1">{gente}</p>}
+                    {c.url && (
+                      <a href={c.url} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-4">Ver a fonte</a>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {parecidos.length > 0 && (

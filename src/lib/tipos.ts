@@ -53,6 +53,8 @@ export interface Conquista {
   autores: string;
   descricao: string;
   url: string;
+  /** projeto ao qual a conquista está ligada (opcional) */
+  projeto_id?: string | null;
   publicado: boolean;
   pessoaIds: string[];
 }

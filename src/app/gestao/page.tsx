@@ -15,7 +15,7 @@ import {
  * Descrição das telas de cadastro. Para criar um campo novo: acrescente a coluna
  * numa migração SQL, em src/lib/tipos.ts e na lista "campos" abaixo.
  * -------------------------------------------------------------------------- */
-type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe';
+type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe' | 'projeto';
 interface Campo { nome: string; rotulo: string; tipo: TipoCampo; opcoes?: Record<string, string>; ajuda?: string; obrigatorio?: boolean }
 interface Entidade {
   chave: 'pessoas' | 'projetos' | 'conquistas' | 'iniciativas' | 'parceiros' | 'marcos';
@@ -92,6 +92,7 @@ const ENTIDADES: Entidade[] = [
       { nome: 'autores', rotulo: 'Autores, como na publicação', tipo: 'texto', ajuda: 'Opcional. Se ficar vazio, o site lista as pessoas marcadas abaixo.' },
       { nome: 'descricao', rotulo: 'Descrição', tipo: 'longo' },
       { nome: 'url', rotulo: 'Link (DOI, notícia, certificado)', tipo: 'texto' },
+      { nome: 'projeto_id', rotulo: 'Projeto relacionado', tipo: 'projeto', ajuda: 'A conquista aparece na página desse projeto.' },
       { nome: 'pessoaIds', rotulo: 'Pessoas do LABIC envolvidas', tipo: 'pessoas' },
       PUBLICADO,
     ],
@@ -234,6 +235,7 @@ export default function Gestao() {
         let v = valores[c.nome];
         if (c.tipo === 'numero') v = v === '' || v === undefined || v === null ? null : Number(v);
         else if (c.tipo === 'sim_nao') v = Boolean(v);
+        else if (c.tipo === 'projeto') v = v || null;
         else if (c.tipo === 'areas' || c.tipo === 'imagens') v = v ?? [];
         else v = v ?? '';
         if (c.obrigatorio && (v === '' || v === null)) throw new Error(`Preencha o campo "${c.rotulo}".`);
@@ -837,6 +839,17 @@ function Formulario({ entidade, inicial, acervo, sb, ocupado, aoSalvar, aoExclui
               </div>
             );
           }
+          if (c.tipo === 'projeto')
+            return (
+              <label key={c.nome} className="campo">
+                <span>{c.rotulo}</span>
+                <select className="entrada" value={String(valor ?? '')} onChange={(e) => def(c.nome, e.target.value)}>
+                  <option value="">Nenhum</option>
+                  {acervo.projetos.map((pr) => <option key={pr.id} value={pr.id}>{pr.titulo}</option>)}
+                </select>
+                {c.ajuda && <small>{c.ajuda}</small>}
+              </label>
+            );
           return (
             <label key={c.nome} className="campo">
               <span>{c.rotulo}</span>
