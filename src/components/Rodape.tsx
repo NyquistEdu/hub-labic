@@ -34,6 +34,21 @@ export function Rodape() {
             <li><Link className="underline underline-offset-4" href="/depoimentos#deixe-seu-depoimento">Deixar um depoimento</Link></li>
             <li><Link className="underline underline-offset-4" href="/gestao">Área de gestão</Link></li>
           </ul>
+          <p className="font-semibold mt-6 mb-2">No Instagram</p>
+          <ul className="space-y-1">
+            <li>
+              <a className="underline underline-offset-4" href="https://www.instagram.com/labic.ifs/" target="_blank" rel="noreferrer">
+                @labic.ifs
+              </a>
+              <span className="text-grafite text-sm">, o laboratório</span>
+            </li>
+            <li>
+              <a className="underline underline-offset-4" href="https://www.instagram.com/stephaniekamarry/" target="_blank" rel="noreferrer">
+                @stephaniekamarry
+              </a>
+              <span className="text-grafite text-sm">, a coordenadora</span>
+            </li>
+          </ul>
           <address className="not-italic text-grafite text-sm mt-4">
             Estrada da Barragem, 286, Jardim Campo Novo, Lagarto, Sergipe
           </address>
