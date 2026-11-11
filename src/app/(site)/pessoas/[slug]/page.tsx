@@ -16,6 +16,7 @@ const VINCULO_SINGULAR = {
   ESTUDANTE: 'Estudante',
   EGRESSO: 'Egresso',
   PARCEIRO: 'Parceria de pesquisa',
+  EGRESSO_PARCEIRO: 'Egresso e parceiro de pesquisa',
 } as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -88,7 +89,7 @@ export default async function PaginaPessoa({ params }: Props) {
             <div className="prosa text-lg">
               {p.bio.split('\n').filter(Boolean).map((par, i) => <p key={i}>{par}</p>)}
             </div>
-          ) : p.vinculo === 'EGRESSO' ? (
+          ) : p.vinculo === 'EGRESSO' || p.vinculo === 'EGRESSO_PARCEIRO' ? (
             <p className="text-lg text-grafite max-w-[58ch]">
               Ainda não temos uma apresentação para este perfil. Se você é {p.nome.split(' ')[0]}, mande sua trajetória
               pelo <Link href="/egressos" className="underline">cadastro de egressos</Link>.

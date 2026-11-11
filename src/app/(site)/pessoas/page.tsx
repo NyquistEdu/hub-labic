@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { carregarAcervo } from '@/lib/acervo';
-import { VINCULO_ROTULO, type Vinculo } from '@/lib/tipos';
+import { VINCULO_ROTULO, noGrupo, type Vinculo } from '@/lib/tipos';
 import { CartaoPessoa, TituloPagina } from '@/components/Pecas';
 
 export const revalidate = 60;
@@ -20,14 +20,14 @@ export default async function Pessoas() {
       </TituloPagina>
       <div className="contorno space-y-16">
         {ORDEM.map((v) => {
-          const grupo = a.pessoas.filter((p) => p.vinculo === v);
+          const grupo = a.pessoas.filter((p) => noGrupo(p.vinculo, v));
           if (grupo.length === 0) return null;
           return (
             <section key={v}>
               <h2 className="text-4xl md:text-5xl border-b-[2.5px] border-tinta pb-2">{VINCULO_ROTULO[v]}</h2>
               <div className="mt-8 grid gap-x-10 gap-y-10 md:grid-cols-2">
                 {grupo.map((p) => (
-                  <CartaoPessoa key={p.id} pessoa={p} />
+                  <CartaoPessoa key={p.id} pessoa={p} ancora={!(v === 'PARCEIRO' && p.vinculo === 'EGRESSO_PARCEIRO')} />
                 ))}
               </div>
             </section>

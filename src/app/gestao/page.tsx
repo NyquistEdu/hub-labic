@@ -38,7 +38,7 @@ const ENTIDADES: Entidade[] = [
     detalheDe: (i) => [VINCULO_ROTULO[i.vinculo as keyof typeof VINCULO_ROTULO], i.instituicao, i.ano_entrada && `entrou em ${i.ano_entrada}`].filter(Boolean).join(', '),
     campos: [
       { nome: 'nome', rotulo: 'Nome completo', tipo: 'texto', obrigatorio: true },
-      { nome: 'vinculo', rotulo: 'Vínculo com o LABIC', tipo: 'opcoes', opcoes: { COORDENACAO: 'Coordenação', PESQUISADOR: 'Pesquisador(a)', ESTUDANTE: 'Estudante (membro atual)', EGRESSO: 'Egresso(a)', PARCEIRO: 'Parceiro(a) de pesquisa' } },
+      { nome: 'vinculo', rotulo: 'Vínculo com o LABIC', tipo: 'opcoes', opcoes: { COORDENACAO: 'Coordenação', PESQUISADOR: 'Pesquisador(a)', ESTUDANTE: 'Estudante (membro atual)', EGRESSO: 'Egresso(a)', PARCEIRO: 'Parceiro(a) de pesquisa', EGRESSO_PARCEIRO: 'Egresso(a) e parceiro(a) de pesquisa' }, ajuda: 'Egresso e parceiro aparece nos dois grupos do site: Egressos e Parceiros de pesquisa.' },
       { nome: 'papel', rotulo: 'Papel', tipo: 'texto', ajuda: 'Ex.: Bolsista PIBITI, Pesquisador, Egresso' },
       { nome: 'instituicao', rotulo: 'Instituição', tipo: 'texto' },
       { nome: 'curso', rotulo: 'Curso', tipo: 'texto' },
@@ -539,7 +539,7 @@ export default function Gestao() {
                     <li>Projetos sem equipe registrada: {acervo.projetos.filter((p) => p.equipe.length === 0).length}</li>
                     <li>Projetos sem ano de início: {acervo.projetos.filter((p) => !p.ano_inicio).length}</li>
                     <li>Pessoas sem foto: {acervo.pessoas.filter((p) => !p.foto_url).length}</li>
-                    <li>Egressos sem informação de onde estão hoje: {acervo.pessoas.filter((p) => p.vinculo === 'EGRESSO' && !p.onde_esta).length}</li>
+                    <li>Egressos sem informação de onde estão hoje: {acervo.pessoas.filter((p) => (p.vinculo === 'EGRESSO' || p.vinculo === 'EGRESSO_PARCEIRO') && !p.onde_esta).length}</li>
                   </ul>
                   <p className="mt-8 text-sm text-grafite">
                     Link para enviar aos ex-membros: <Link className="underline" href="/egressos" target="_blank">/egressos</Link>{' '}e para pedir depoimentos: <Link className="underline" href="/depoimentos#deixe-seu-depoimento" target="_blank">/depoimentos</Link>
