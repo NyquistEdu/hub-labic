@@ -25,6 +25,7 @@ export function Rodape() {
             <li><Link className="underline underline-offset-4" href="/publicacoes">Publicações</Link></li>
             <li><Link className="underline underline-offset-4" href="/conquistas">Conquistas</Link></li>
             <li><Link className="underline underline-offset-4" href="/depoimentos">Depoimentos</Link></li>
+            <li><Link className="underline underline-offset-4" href="/contato">Fale conosco</Link></li>
           </ul>
         </div>
         <div>

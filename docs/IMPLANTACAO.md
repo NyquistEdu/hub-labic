@@ -13,7 +13,7 @@ O script cria as tabelas novas, liga as regras de acesso e **tranca as tabelas a
 (que estavam abertas a qualquer visitante, com senhas em texto puro). Nada é apagado.
 
 Depois rode, na ordem, `004_publicacoes.sql` (PDFs de artigos e TCCs), `005_depoimentos.sql`
-(depoimentos: visitantes enviam pelo site, e o texto só aparece depois que a coordenação publica) e `006_vinculo_egresso_parceiro.sql` (vínculo "egresso e parceiro de pesquisa").
+(depoimentos: visitantes enviam pelo site, e o texto só aparece depois que a coordenação publica) , `006_vinculo_egresso_parceiro.sql` (vínculo "egresso e parceiro de pesquisa") e `007_mensagens.sql` (Fale conosco: visitantes enviam, só a gestão lê).
 
 ## 2. Criar o usuário da coordenação
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { ASSUNTOS, type Mensagem } from '@/lib/contato';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -199,6 +200,7 @@ export default function Gestao() {
   const [usuario, setUsuario] = useState('');
   const [acervo, setAcervo] = useState<Acervo | null>(null);
   const [cadastros, setCadastros] = useState<Cadastro[]>([]);
+  const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [aba, setAba] = useState('resumo');
   const [editando, setEditando] = useState<Item | null>(null);
@@ -209,11 +211,13 @@ export default function Gestao() {
 
   const recarregar = useCallback(async () => {
     if (!sb) return;
-    const [a, c, e] = await Promise.all([
+    const [a, c, e, m] = await Promise.all([
       lerAcervoDoBanco(sb),
       sb.from('cadastros_egressos').select('*').order('criado_em', { ascending: false }),
       sb.from('pessoas_contato').select('pessoa_id, email'),
+      sb.from('mensagens').select('*').order('criado_em', { ascending: false }),
     ]);
+    setMensagens(m.error ? [] : ((m.data ?? []) as Mensagem[]));
     setAcervo(a);
     setCadastros((c.data ?? []) as Cadastro[]);
     setEmails(Object.fromEntries((e.data ?? []).map((x) => [x.pessoa_id, x.email])));
@@ -254,6 +258,25 @@ export default function Gestao() {
     window.scrollTo({ top: 0 });
   }
   const pendentes = cadastros.filter((c) => c.status === 'PENDENTE');
+  const naoRespondidas = mensagens.filter((m) => !m.respondida);
+
+  async function marcarRespondida(m: Mensagem) {
+    if (!sb) return;
+    setOcupado(true); setErro('');
+    const { error } = await sb.from('mensagens').update({ respondida: !m.respondida }).eq('id', m.id);
+    if (error) setErro(`Não foi possível atualizar a mensagem: ${error.message}`);
+    await recarregar();
+    setOcupado(false);
+  }
+
+  async function apagarMensagem(m: Mensagem) {
+    if (!sb || !window.confirm(`Apagar a mensagem de ${m.nome}? Não dá para desfazer.`)) return;
+    setOcupado(true); setErro('');
+    const { error } = await sb.from('mensagens').delete().eq('id', m.id);
+    if (error) setErro(`Não foi possível apagar a mensagem: ${error.message}`);
+    await recarregar();
+    setOcupado(false);
+  }
 
   async function sair() {
     await sb?.auth.signOut();
@@ -482,6 +505,7 @@ export default function Gestao() {
         <nav aria-label="Seções" className="flex md:flex-col gap-1 overflow-x-auto">
           {[
             { chave: 'resumo', titulo: 'Visão geral', n: null as number | null },
+            { chave: 'mensagens', titulo: 'Fale conosco', n: naoRespondidas.length },
             { chave: 'cadastros', titulo: 'Cadastros de egressos', n: pendentes.length },
             ...ENTIDADES.map((e) => ({ chave: e.chave as string, titulo: e.titulo, n: acervo ? (acervo[e.chave] as unknown[]).length : 0 })),
           ].map((s) => (
@@ -492,7 +516,7 @@ export default function Gestao() {
               className={`text-left whitespace-nowrap px-3 py-2 rounded-xl font-semibold flex justify-between gap-3 ${aba === s.chave ? 'bg-tinta text-papel' : 'hover:bg-papel'}`}
             >
               {s.titulo}
-              {s.n !== null && <span className={s.chave === 'cadastros' && s.n > 0 ? 'bg-vermelho text-papel rounded-full px-2 text-sm' : 'opacity-60'}>{s.n}</span>}
+              {s.n !== null && <span className={(s.chave === 'cadastros' || s.chave === 'mensagens') && s.n > 0 ? 'bg-vermelho text-papel rounded-full px-2 text-sm' : 'opacity-60'}>{s.n}</span>}
             </button>
           ))}
         </nav>
@@ -533,6 +557,7 @@ export default function Gestao() {
                   </ul>
                   <h2 className="text-3xl mt-10">O que falta completar</h2>
                   <ul className="mt-3 space-y-1.5 list-disc pl-5">
+                    <li>Mensagens do Fale conosco sem resposta: {naoRespondidas.length}</li>
                     <li>Cadastros de egressos aguardando revisão: {pendentes.length}</li>
                     <li>Depoimentos enviados pelo site esperando revisão: {acervo.depoimentos.filter((d) => !d.publicado).length}</li>
                     <li>Projetos sem foto de capa: {acervo.projetos.filter((p) => !p.capa_url).length}</li>
@@ -546,6 +571,42 @@ export default function Gestao() {
                   </p>
                 </>
               )}
+            </div>
+          )}
+
+          {aba === 'mensagens' && (
+            <div>
+              <h1 className="text-5xl">Fale conosco</h1>
+              <p className="mt-2 text-grafite max-w-[60ch]">
+                Mensagens enviadas pela página /contato. Responda pelo seu e-mail e marque como respondida para tirar da contagem.
+              </p>
+              {mensagens.length === 0 && <p className="mt-6 text-lg">Nenhuma mensagem recebida ainda.</p>}
+              <ul className="mt-6 space-y-4">
+                {mensagens.map((m) => (
+                  <li key={m.id} className={`border-2 border-tinta rounded-2xl p-4 ${m.respondida ? 'opacity-60' : ''}`}>
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <p className="display text-3xl">{m.nome}</p>
+                      <span className="etiqueta">{m.respondida ? 'Respondida' : 'Sem resposta'}</span>
+                    </div>
+                    <p className="text-sm text-grafite">
+                      {ASSUNTOS[m.assunto] ?? m.assunto}, {new Date(m.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                    <p className="mt-3 whitespace-pre-wrap break-words">{m.mensagem}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <a
+                        className="botao botao-pequeno"
+                        href={`mailto:${m.email}?subject=${encodeURIComponent('Re: contato pelo site do LABIC')}`}
+                      >
+                        Responder para {m.email}
+                      </a>
+                      <button className="botao botao-vazado botao-pequeno" disabled={ocupado} onClick={() => marcarRespondida(m)}>
+                        {m.respondida ? 'Marcar como sem resposta' : 'Marcar como respondida'}
+                      </button>
+                      <button className="underline text-sm px-2" disabled={ocupado} onClick={() => apagarMensagem(m)}>Apagar</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
