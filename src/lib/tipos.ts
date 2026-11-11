@@ -53,6 +53,8 @@ export interface Conquista {
   autores: string;
   descricao: string;
   url: string;
+  /** PDF guardado no site (opcional) */
+  arquivo_url?: string;
   /** projeto ao qual a conquista está ligada (opcional) */
   projeto_id?: string | null;
   publicado: boolean;
