@@ -91,7 +91,7 @@ export function FormularioEgresso() {
         <label className="campo"><span>O que faz hoje</span><input name="onde_esta" required className="entrada" placeholder="Engenheira na empresa X, mestrando na universidade Y..." /></label>
         <div className="grid grid-cols-2 gap-4">
           <label className="campo"><span>Cidade</span><input name="cidade" className="entrada" /></label>
-          <label className="campo"><span>País</span><input name="pais" className="entrada" defaultValue="Brasil" /></label>
+          <label className="campo"><span>País</span><input name="pais" className="entrada" placeholder="Brasil" /></label>
         </div>
         <label className="campo"><span>Formação depois do IFS</span><textarea name="formacao" className="entrada" placeholder="Mestrado em..., pela..., concluído em..." /></label>
         <div className="grid sm:grid-cols-2 gap-4">
