@@ -4,6 +4,7 @@ const MENU = [
   { href: '/projetos', rotulo: 'Projetos' },
   { href: '/pessoas', rotulo: 'Pessoas' },
   { href: '/startups', rotulo: 'Startups' },
+  { href: '/publicacoes', rotulo: 'Publicações' },
   { href: '/conquistas', rotulo: 'Conquistas' },
   { href: '/#historia', rotulo: 'História' },
 ];
@@ -20,7 +21,7 @@ export function Cabecalho() {
             <span className="text-grafite">IFS Campus Lagarto</span>
           </span>
         </Link>
-        <nav aria-label="Principal" className="flex items-center gap-1 sm:gap-2 overflow-x-auto text-[0.95rem] font-semibold">
+        <nav aria-label="Principal" className="flex items-center gap-1 sm:gap-2 overflow-x-auto [scrollbar-width:none] text-[0.95rem] font-semibold">
           {MENU.map((m) => (
             <Link key={m.href} href={m.href} className="px-2.5 py-1.5 rounded-full hover:bg-tinta hover:text-papel whitespace-nowrap">
               {m.rotulo}

@@ -15,7 +15,7 @@ import {
  * Descrição das telas de cadastro. Para criar um campo novo: acrescente a coluna
  * numa migração SQL, em src/lib/tipos.ts e na lista "campos" abaixo.
  * -------------------------------------------------------------------------- */
-type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe' | 'projeto';
+type TipoCampo = 'texto' | 'longo' | 'numero' | 'opcoes' | 'sim_nao' | 'imagem' | 'imagens' | 'areas' | 'pessoas' | 'equipe' | 'projeto' | 'arquivo';
 interface Campo { nome: string; rotulo: string; tipo: TipoCampo; opcoes?: Record<string, string>; ajuda?: string; obrigatorio?: boolean }
 interface Entidade {
   chave: 'pessoas' | 'projetos' | 'conquistas' | 'iniciativas' | 'parceiros' | 'marcos';
@@ -92,6 +92,7 @@ const ENTIDADES: Entidade[] = [
       { nome: 'autores', rotulo: 'Autores, como na publicação', tipo: 'texto', ajuda: 'Opcional. Se ficar vazio, o site lista as pessoas marcadas abaixo.' },
       { nome: 'descricao', rotulo: 'Descrição', tipo: 'longo' },
       { nome: 'url', rotulo: 'Link (DOI, notícia, certificado)', tipo: 'texto' },
+      { nome: 'arquivo_url', rotulo: 'Arquivo em PDF', tipo: 'arquivo', ajuda: 'Opcional. Com o PDF aqui, o site oferece o botão de baixar. Envie só o que pode ser distribuído (versão do autor ou acesso aberto).' },
       { nome: 'projeto_id', rotulo: 'Projeto relacionado', tipo: 'projeto', ajuda: 'A conquista aparece na página desse projeto.' },
       { nome: 'pessoaIds', rotulo: 'Pessoas do LABIC envolvidas', tipo: 'pessoas' },
       PUBLICADO,
@@ -159,6 +160,15 @@ async function enviarImagem(sb: SupabaseClient, arquivo: File): Promise<string> 
   const { error } = await sb.storage.from('acervo').upload(caminho, arquivo, { contentType: arquivo.type });
   if (error) throw new Error(`Não foi possível enviar a imagem (${error.message}). Use JPG, PNG ou WebP com menos de 5 MB.`);
   return sb.storage.from('acervo').getPublicUrl(caminho).data.publicUrl;
+}
+
+async function enviarPdf(sb: SupabaseClient, arquivo: File): Promise<string> {
+  if (arquivo.type !== 'application/pdf') throw new Error('Envie um arquivo PDF.');
+  const base = gerarSlug(arquivo.name.replace(/\.pdf$/i, '')).slice(0, 60) || 'arquivo';
+  const caminho = `${base}-${crypto.randomUUID().slice(0, 8)}.pdf`;
+  const { error } = await sb.storage.from('publicacoes').upload(caminho, arquivo, { contentType: 'application/pdf' });
+  if (error) throw new Error(`Não foi possível enviar o PDF (${error.message}). O limite é de 20 MB.`);
+  return sb.storage.from('publicacoes').getPublicUrl(caminho).data.publicUrl;
 }
 
 export default function Gestao() {
@@ -839,6 +849,29 @@ function Formulario({ entidade, inicial, acervo, sb, ocupado, aoSalvar, aoExclui
               </div>
             );
           }
+          if (c.tipo === 'arquivo')
+            return (
+              <div key={c.nome} className="campo">
+                <span>{c.rotulo}</span>
+                {valor ? (
+                  <p className="mb-2 flex flex-wrap items-center gap-3">
+                    <a className="underline" href={String(valor)} target="_blank" rel="noreferrer">Abrir o PDF enviado</a>
+                    <button type="button" className="underline text-vermelho" onClick={() => def(c.nome, '')}>Remover</button>
+                  </p>
+                ) : null}
+                <input type="file" accept="application/pdf" className="entrada" aria-label={c.rotulo}
+                  onChange={async (e) => {
+                    const arq = e.target.files?.[0];
+                    if (!arq) return;
+                    setErroImg(''); setEnviando(c.nome);
+                    try { def(c.nome, await enviarPdf(sb, arq)); }
+                    catch (ex) { setErroImg(ex instanceof Error ? ex.message : 'Falha ao enviar o PDF.'); }
+                    finally { setEnviando(''); }
+                  }} />
+                {enviando === c.nome && <small>Enviando PDF...</small>}
+                {c.ajuda && <small>{c.ajuda}</small>}
+              </div>
+            );
           if (c.tipo === 'projeto')
             return (
               <label key={c.nome} className="campo">

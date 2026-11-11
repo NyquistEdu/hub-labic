@@ -22,6 +22,7 @@ export function Rodape() {
             <li><Link className="underline underline-offset-4" href="/projetos">Projetos</Link></li>
             <li><Link className="underline underline-offset-4" href="/pessoas">Pessoas</Link></li>
             <li><Link className="underline underline-offset-4" href="/startups">Startups</Link></li>
+            <li><Link className="underline underline-offset-4" href="/publicacoes">Publicações</Link></li>
             <li><Link className="underline underline-offset-4" href="/conquistas">Conquistas</Link></li>
           </ul>
         </div>
