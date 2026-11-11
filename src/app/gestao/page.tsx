@@ -170,7 +170,10 @@ const PADROES: Record<string, Item> = {
   depoimentos: { ano: new Date().getFullYear(), publicado: true },
 };
 
-interface Cadastro { id: string; criado_em: string; status: string; dados: Record<string, unknown>; foto_path: string }
+interface Cadastro { id: string; criado_em: string; status: string; dados: Record<string, unknown>; foto_path: string; pessoa_id?: string | null }
+
+/** Texto de um cadastro de egresso mostrado ao lado do formulário, para registrar o que a pessoa contou. */
+interface Referencia { aba: 'conquistas' | 'projetos'; pessoaId: string; nome: string; rotulo: string; texto: string }
 
 async function enviarImagem(sb: SupabaseClient, arquivo: File): Promise<string> {
   const ext = (arquivo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -202,6 +205,7 @@ export default function Gestao() {
   const [aviso, setAviso] = useState('');
   const [erro, setErro] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const [referencia, setReferencia] = useState<Referencia | null>(null);
 
   const recarregar = useCallback(async () => {
     if (!sb) return;
@@ -234,6 +238,21 @@ export default function Gestao() {
   }, [sb, router, recarregar]);
 
   const entidade = ENTIDADES.find((e) => e.chave === aba);
+
+  /** Abre Conquistas (formulário novo com a pessoa marcada) ou Projetos, com o texto do cadastro ao lado. */
+  function registrarDoCadastro(c: Cadastro, alvo: 'conquistas' | 'projetos') {
+    const d = c.dados as Record<string, string>;
+    if (!c.pessoa_id) return;
+    setErro(''); setAviso('');
+    setReferencia({
+      aba: alvo, pessoaId: c.pessoa_id, nome: d.nome,
+      rotulo: alvo === 'conquistas' ? `Conquistas que ${d.nome} informou no cadastro` : `Projetos que ${d.nome} informou no cadastro`,
+      texto: alvo === 'conquistas' ? d.conquistas : d.projetos,
+    });
+    setAba(alvo);
+    setEditando(alvo === 'conquistas' ? { ...PADROES.conquistas, pessoaIds: [c.pessoa_id] } : null);
+    window.scrollTo({ top: 0 });
+  }
   const pendentes = cadastros.filter((c) => c.status === 'PENDENTE');
 
   async function sair() {
@@ -557,6 +576,16 @@ export default function Gestao() {
                           <div key={k} className="min-w-0"><dt className="inline font-semibold">{k}: </dt><dd className="inline whitespace-pre-wrap break-words">{String(v)}</dd></div>
                         ))}
                       </dl>
+                      {c.status === 'APROVADO' && c.pessoa_id && (d.conquistas || d.projetos) && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {d.conquistas && (
+                            <button className="botao botao-pequeno" onClick={() => registrarDoCadastro(c, 'conquistas')}>Registrar conquista</button>
+                          )}
+                          {d.projetos && (
+                            <button className="botao botao-vazado botao-pequeno" onClick={() => registrarDoCadastro(c, 'projetos')}>Ligar a projetos</button>
+                          )}
+                        </div>
+                      )}
                       {c.status === 'PENDENTE' && acervo && (
                         <AcoesCadastro
                           cadastro={c}
@@ -572,6 +601,26 @@ export default function Gestao() {
                 })}
               </ul>
             </div>
+          )}
+
+          {referencia && referencia.aba === aba && (
+            <aside className="mb-8 border-2 border-tinta rounded-2xl p-4 bg-nevoa" aria-label="Texto do cadastro">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="font-semibold">{referencia.rotulo}</p>
+                <button className="underline text-sm" onClick={() => setReferencia(null)}>Fechar</button>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap break-words">{referencia.texto}</p>
+              <p className="mt-3 text-sm text-grafite">
+                {referencia.aba === 'conquistas'
+                  ? `Confira tipo, ano e título e salve. ${referencia.nome} já vem marcado(a) entre as pessoas envolvidas. Antes, busque na lista para não duplicar algo que já está no acervo.`
+                  : `Abra o projeto, marque ${referencia.nome} na equipe e escreva o papel. Se o projeto não existir, cadastre um novo.`}
+              </p>
+              {referencia.aba === 'conquistas' && !editando && (
+                <button className="botao botao-pequeno mt-3" onClick={() => setEditando({ ...PADROES.conquistas, pessoaIds: [referencia.pessoaId] })}>
+                  Registrar outra conquista de {referencia.nome.split(' ')[0]}
+                </button>
+              )}
+            </aside>
           )}
 
           {entidade && acervo && !editando && (
@@ -803,7 +852,14 @@ function Formulario({ entidade, inicial, acervo, sb, ocupado, aoSalvar, aoExclui
     }
   }
 
-  const pessoas = acervo.pessoas;
+  // quem já vem marcado ao abrir o formulário aparece no topo das listas de pessoas
+  const [pessoas] = useState(() => {
+    const marcados = new Set<string>([
+      ...((inicial.pessoaIds as string[]) ?? []),
+      ...((inicial.equipe as { pessoaId: string }[]) ?? []).map((e) => e.pessoaId),
+    ]);
+    return [...acervo.pessoas].sort((a, b) => Number(marcados.has(b.id)) - Number(marcados.has(a.id)));
+  });
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); aoSalvar(v); }} className="max-w-2xl">
