@@ -14,6 +14,8 @@
   --sans:"Instrument Sans",system-ui,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
+html[data-tema="escuro"]{--tinta:#fff;--papel:#000;--nevoa:#1a1a19;--linha:#3a3a38;--grafite:#a8a8a2;--azul:#6aa0ff;color-scheme:dark}
+html[data-tema="escuro"] .marca img{background:#fff;border-radius:12px;padding:3px}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--papel);color:var(--tinta);font:16px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
 :focus-visible{outline:3px solid var(--azul);outline-offset:3px;border-radius:4px}
@@ -22,7 +24,7 @@ h1,h2{font-family:var(--display);font-weight:800;text-transform:uppercase;line-h
 @media (min-width:768px){.contorno{padding-inline:2.5rem}}
 
 /* cabeçalho, como o do site */
-.topo{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);border-bottom:2.5px solid var(--tinta)}
+.topo{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--papel) 95%,transparent);backdrop-filter:blur(6px);border-bottom:2.5px solid var(--tinta)}
 .topo .contorno{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.6rem}
 .marca{display:flex;align-items:center;gap:.75rem;color:inherit;text-decoration:none;min-width:0}
 .marca img{width:52px;height:52px;flex:none}
@@ -41,7 +43,7 @@ h1,h2{font-family:var(--display);font-weight:800;text-transform:uppercase;line-h
 @media (max-width:980px){.layout{grid-template-columns:1fr}}
 .card{background:var(--papel);border:2.5px solid var(--tinta);border-radius:20px;padding:16px}
 .card h2{font-size:1.45rem;margin:0 0 .7rem}
-#stage{width:100%;display:block;background:#fff;border:2.5px solid var(--tinta);border-radius:12px;touch-action:none;cursor:crosshair;image-rendering:pixelated}
+#stage{width:100%;display:block;background:var(--papel);border:2.5px solid var(--tinta);border-radius:12px;touch-action:none;cursor:crosshair;image-rendering:pixelated}
 .row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
 .row+.row{margin-top:.6rem}
 
@@ -62,8 +64,9 @@ label{color:var(--tinta);font-size:.9rem;font-weight:500;display:inline-flex;ali
 .modes label:has(input:checked){background:var(--tinta);color:var(--papel)}
 .modes label:has(input:checked) input{accent-color:var(--papel)}
 
-.status{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:.8rem}
+.status{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:.8rem}
 @media (max-width:560px){.status{grid-template-columns:repeat(2,1fr)}}
+.topo .row{flex-wrap:nowrap}
 .stat{border:2px solid var(--tinta);border-radius:14px;padding:.4rem .7rem;background:var(--papel)}
 .stat b{display:block;font-size:.72rem;color:var(--grafite);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .stat span{font-variant-numeric:tabular-nums;font-size:1rem;font-weight:600}
@@ -104,7 +107,7 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
       <img src="/img/logo-labic-miolo.png" alt="" width="52" height="52">
       <span><strong>Laboratório de Inovação e Criatividade</strong><small>IFS Campus Lagarto</small></span>
     </a>
-    <a class="botao" href="/">← Voltar ao site</a>
+    <div class="row"><button type="button" id="btnTema" aria-pressed="false">☾ Tema escuro</button><a class="botao" href="/">← Voltar ao site</a></div>
   </div>
 </header>
 <section class="contorno intro">
@@ -120,6 +123,8 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
       <div class="row">
         <button class="primary" id="btnRun">▶ Iniciar</button>
         <button id="btnReset">↺ Reiniciar</button>
+        <button id="btnPng" title="Imagem com mapa, trajetória, gráficos e métricas">⬇ Relatório (PNG)</button>
+        <button id="btnCsv" title="Tabela com tempo, posição, V, W e os 16 sonares">⬇ Dados (CSV)</button>
         <label>Mapa
           <select id="selMap"></select>
         </label>
@@ -146,6 +151,8 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <div class="stat"><b>Tempo</b><span id="tTime">0,0 s</span></div>
         <div class="stat"><b>Posição</b><span id="tPos">—</span></div>
         <div class="stat"><b>Dist. ao destino</b><span id="tDist">—</span></div>
+        <div class="stat"><b>Trajeto percorrido</b><span id="tPath">0 cm</span></div>
+        <div class="stat"><b>Menor leitura de sonar</b><span id="tSon">—</span></div>
       </div>
     </div>
 
@@ -201,6 +208,7 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <code>Vmax</code> (cm/s) · <code>Wmax</code> (rad/s) · <code>tempo</code> = últimos instantes (s) · <code>tamos</code> = período de amostragem (s)<br>
         <code>i</code> = nº da chamada · <code>mem</code> = dicionário que persiste entre chamadas<br>
         Disponíveis também: <code>math</code>, <code>numpy</code> (importe com <code>import numpy as np</code>), <code>ocupado(x, y)</code> e <code>normaliza_angulo(a)</code>.<br>
+        Para desenhar no mapa: <code>marcar_pontos(lista, tamanho=4)</code>, <code>marcar_linha(lista)</code> e <code>limpar_marcas()</code> (listas de pares [x, y] em cm).<br>
         Devolva <code>V, W</code>. θ cresce no sentido anti-horário, eixo x para a frente do robô.</p>
       </details>
     </div>
@@ -230,7 +238,7 @@ const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 /* ============================== MAPA ============================== */
 let W=500, H=500, occ=new Uint8Array(W*H), mapDirty=true;
-const mapCv = document.createElement('canvas');
+let mapCv = document.createElement('canvas');
 
 function newMap(w,h){ W=w; H=h; occ=new Uint8Array(w*h); mapDirty=true; }
 function rect(x0,y0,x1,y1,v=1){
@@ -279,17 +287,30 @@ function isOcc(x,y){
   if(xi<0||yi<0||xi>=W||yi>=H) return 1;
   return occ[yi*W+xi];
 }
-function rebuildMapImage(){
-  mapCv.width=W; mapCv.height=H;
-  const c=mapCv.getContext('2d'), img=c.createImageData(W,H), d=img.data;
+function mapImage(th){
+  const m=document.createElement('canvas'); m.width=W; m.height=H;
+  const c=m.getContext('2d'), img=c.createImageData(W,H), d=img.data;
+  const livre=th==='escuro'?0:255, parede=255-livre;
   for(let y=0;y<H;y++){
     const row=(H-1-y)*W*4;                       // y para cima
-    for(let x=0;x<W;x++){
-      const o=row+x*4, v=occ[y*W+x]?0:255;
-      d[o]=v; d[o+1]=v; d[o+2]=v; d[o+3]=255;
-    }
+    for(let x=0;x<W;x++){ const o=row+x*4, v=occ[y*W+x]?parede:livre; d[o]=v; d[o+1]=v; d[o+2]=v; d[o+3]=255; }
   }
-  c.putImageData(img,0,0); mapDirty=false;
+  c.putImageData(img,0,0); return m;
+}
+function rebuildMapImage(){ mapCv=mapImage(TEMA); mapDirty=false; }
+
+/* ---- tema claro/escuro ---- */
+let TEMA='claro';
+const COR={
+  claro:{ink:'0,0,0',paper:'255,255,255',inkHex:'#000',paperHex:'#fff',grafite:'#5c5c58',linha:'#dcdcd8'},
+  escuro:{ink:'255,255,255',paper:'0,0,0',inkHex:'#fff',paperHex:'#000',grafite:'#a8a8a2',linha:'#3a3a38'}
+};
+const K=(a,th)=>`rgba(${COR[th||TEMA].ink},${a})`, Pp=(a,th)=>`rgba(${COR[th||TEMA].paper},${a})`;
+function aplicaTema(th,salvar){
+  TEMA=th; document.documentElement.dataset.tema=th; mapDirty=true;
+  const b=document.getElementById('btnTema');
+  if(b){ b.textContent=th==='escuro'?'☀ Tema claro':'☾ Tema escuro'; b.setAttribute('aria-pressed',String(th==='escuro')); }
+  if(salvar){ try{ localStorage.setItem('p3dx-tema',th); }catch(e){} }
 }
 
 /* ============================== ESTADO DA SIMULAÇÃO ============================== */
@@ -299,8 +320,10 @@ const P = {                 // parâmetros
 let pose=[50,250,0], start=[50,250,0], goal=[450,420];
 let vs=new Array(16).fill(P.smax), rays=[];
 let running=false, status='stop', t=0, iter=0, mem={};
-let trail=[], hist={t:[],V:[],W:[],d:[],s:[]};
+let trail=[], hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[]};
 let lastV=0, lastW=0, acc=0, lastTs=null;
+let pathLen=0, minSonar=Infinity, mapName='Laboratório';
+let marcas={pontos:[],tam:4,linha:[]};
 
 function sense(){
   rays=[];
@@ -391,6 +414,12 @@ def _p3dx_call(payload):
     if not (math.isfinite(V) and math.isfinite(W)):
         raise ValueError("V e W precisam ser números finitos")
     return json.dumps([V, W])
+def marcar_pontos(pontos, tamanho=4):
+    _js_pontos(json.dumps([[float(p[0]), float(p[1])] for p in pontos]), float(tamanho))
+def marcar_linha(pontos):
+    _js_linha(json.dumps([[float(p[0]), float(p[1])] for p in pontos]))
+def limpar_marcas():
+    _js_limpar()
 `;
 let py=null, pyCallFn=null, pyState='loading';
 function pyErr(e){
@@ -410,6 +439,9 @@ async function initPy(){
     await py.loadPackage('numpy');
     py.runPython(PRELUDE);
     py.globals.set('ocupado',(x,y)=>!!isOcc(x,y));
+    py.globals.set('_js_pontos',(j,tam)=>{ marcas.pontos=JSON.parse(j); marcas.tam=tam; });
+    py.globals.set('_js_linha',(j)=>{ marcas.linha=JSON.parse(j); });
+    py.globals.set('_js_limpar',()=>{ marcas={pontos:[],tam:4,linha:[]}; });
     pyCallFn=py.globals.get('_p3dx_call');
     pyState='ready'; syncRun(); compile();
   }catch(e){
@@ -467,62 +499,75 @@ function stepSim(){
   const nx=pose[0]+V*Math.cos(th)*dt, ny=pose[1]+V*Math.sin(th)*dt, nt=wrap(pose[2]+Wv*dt);
   lastV=V; lastW=Wv;
   if(collides(nx,ny)){ status='crash'; running=false; syncRun(); }
-  else { pose=[nx,ny,nt]; t+=dt; }
+  else { pathLen+=Math.hypot(nx-pose[0],ny-pose[1]); pose=[nx,ny,nt]; t+=dt; }
   trail.push([pose[0],pose[1]]);
   const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
-  hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(Math.min(...vs));
-  if(hist.t.length>4000){ for(const k in hist) hist[k].shift(); }
+  const smin=Math.min(...vs); minSonar=Math.min(minSonar,smin);
+  hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(smin);
+  hist.x.push(pose[0]); hist.y.push(pose[1]); hist.th.push(pose[2]); hist.sn.push(vs.slice());
+  if(hist.t.length>20000){ for(const k in hist) hist[k].shift(); }
   if(status!=='crash' && d<5){ status='arrived'; running=false; syncRun(); }
 }
 
 /* ============================== DESENHO ============================== */
 const cv=document.getElementById('stage'), ctx=cv.getContext('2d');
 function fitCanvas(){ if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } }
-function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
+// desenha o cenário em coordenadas do mundo (cm); o chamador posiciona a origem do canvas no canto do mapa
+function drawScene(c,th,mostraSonares){
+  const ink=COR[th].inkHex;
+  c.save(); c.translate(0,H); c.scale(1,-1);
+  if(trail.length>1){
+    c.strokeStyle=ink; c.lineWidth=2; c.beginPath();
+    c.moveTo(trail[0][0],trail[0][1]); for(let k=1;k<trail.length;k++) c.lineTo(trail[k][0],trail[k][1]); c.stroke();
+  }
+  // marcas feitas pelo código do aluno
+  if(marcas.pontos.length){
+    c.fillStyle=K(.6,th); const h=marcas.tam/2;
+    for(const q of marcas.pontos) c.fillRect(q[0]-h,q[1]-h,marcas.tam,marcas.tam);
+  }
+  if(marcas.linha.length>1){
+    c.strokeStyle=K(.9,th); c.lineWidth=2; c.setLineDash([7,4]); c.beginPath();
+    c.moveTo(marcas.linha[0][0],marcas.linha[0][1]); for(const q of marcas.linha) c.lineTo(q[0],q[1]); c.stroke(); c.setLineDash([]);
+    c.fillStyle=ink; for(const q of marcas.linha){ c.beginPath(); c.arc(q[0],q[1],2.2,0,7); c.fill(); }
+  }
+  // posição inicial (fantasma)
+  c.strokeStyle=K(.45,th); c.lineWidth=1.5; c.setLineDash([3,3]);
+  c.beginPath(); c.arc(start[0],start[1],R,0,7); c.stroke(); c.setLineDash([]);
+  c.beginPath(); c.moveTo(start[0],start[1]); c.lineTo(start[0]+R*Math.cos(start[2]),start[1]+R*Math.sin(start[2])); c.stroke();
+  // destino
+  c.strokeStyle=ink; c.fillStyle=K(.1,th); c.lineWidth=2.5;
+  c.beginPath(); c.arc(goal[0],goal[1],8,0,7); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(goal[0]-13,goal[1]); c.lineTo(goal[0]+13,goal[1]); c.moveTo(goal[0],goal[1]-13); c.lineTo(goal[0],goal[1]+13); c.stroke();
+  // feixes dos sonares
+  if(mostraSonares && rays.length){
+    for(let k=0;k<16;k++){
+      const r=rays[k], hit=vs[k]<P.smax-1;
+      c.strokeStyle=hit?K(.6,th):K(.18,th); c.lineWidth=1;
+      c.beginPath(); c.moveTo(r[0],r[1]); c.lineTo(r[2],r[3]); c.stroke();
+      if(hit){ c.fillStyle=ink; c.beginPath(); c.arc(r[2],r[3],2.2,0,7); c.fill(); }
+    }
+  }
+  // robô
+  c.fillStyle=status==='crash'?K(.6,th):Pp(.92,th); c.strokeStyle=ink; c.lineWidth=2.5;
+  c.beginPath(); c.arc(pose[0],pose[1],R,0,7); c.fill(); c.stroke();
+  c.lineWidth=2.4; c.beginPath(); c.moveTo(pose[0],pose[1]); c.lineTo(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2])); c.stroke();
+  c.fillStyle=ink; c.beginPath(); c.arc(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2]),3,0,7); c.fill();
+  c.restore();
+}
 function draw(){
   if(mapDirty) rebuildMapImage();
   fitCanvas();
   ctx.setTransform(1,0,0,1,0,0);
   ctx.drawImage(mapCv,0,0);
-  ctx.setTransform(1,0,0,-1,0,H);               // coordenadas matemáticas (y para cima, cm)
-  // trajetória
-  if(trail.length>1){
-    ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.beginPath();
-    ctx.moveTo(trail[0][0],trail[0][1]); for(let k=1;k<trail.length;k++) ctx.lineTo(trail[k][0],trail[k][1]); ctx.stroke();
-  }
-  // posição inicial (fantasma)
-  ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
-  ctx.beginPath(); ctx.arc(start[0],start[1],R,0,7); ctx.stroke(); ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(start[0],start[1]); ctx.lineTo(start[0]+R*Math.cos(start[2]),start[1]+R*Math.sin(start[2])); ctx.stroke();
-  // destino
-  ctx.strokeStyle='#000'; ctx.fillStyle='rgba(0,0,0,.1)'; ctx.lineWidth=2.5;
-  ctx.beginPath(); ctx.arc(goal[0],goal[1],8,0,7); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(goal[0]-13,goal[1]); ctx.lineTo(goal[0]+13,goal[1]); ctx.moveTo(goal[0],goal[1]-13); ctx.lineTo(goal[0],goal[1]+13); ctx.stroke();
-  // feixes dos sonares
-  if(rays.length){
-    for(let k=0;k<16;k++){
-      const r=rays[k]; const hit=vs[k]<P.smax-1;
-      ctx.strokeStyle=hit?'rgba(0,0,0,.6)':'rgba(0,0,0,.18)'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(r[0],r[1]); ctx.lineTo(r[2],r[3]); ctx.stroke();
-      if(hit){ ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(r[2],r[3],2.2,0,7); ctx.fill(); }
-    }
-  }
-  // robô
-  ctx.fillStyle=status==='crash'?'rgba(0,0,0,.6)':'rgba(255,255,255,.92)';
-  ctx.strokeStyle='#000'; ctx.lineWidth=2.5;
-  ctx.beginPath(); ctx.arc(pose[0],pose[1],R,0,7); ctx.fill(); ctx.stroke();
-  ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(pose[0],pose[1]);
-  ctx.lineTo(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2])); ctx.stroke();
-  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2]),3,0,7); ctx.fill();
-  ctx.setTransform(1,0,0,1,0,0);
+  drawScene(ctx,TEMA,true);
 }
 
-function plot(id,series,colors){
-  const c=document.getElementById(id), g=c.getContext('2d'), w=c.width, h=c.height;
-  g.clearRect(0,0,w,h);
-  const L=46,Rr=8,T=8,B=20, pw=w-L-Rr, ph=h-T-B, xs=hist.t;
-  const ink=css('--grafite'), line=css('--linha');
+function plotTo(c,series,colors,th,xs){
+  const g=c.getContext('2d'), w=c.width, h=c.height;
+  g.clearRect(0,0,w,h); g.fillStyle=COR[th].paperHex; g.fillRect(0,0,w,h);
+  const L=46,Rr=8,T=8,B=20, pw=w-L-Rr, ph=h-T-B;
+  const ink=COR[th].grafite, line=COR[th].linha;
   let lo=0, hi=0; for(const s of series) for(const v of s){ if(v<lo)lo=v; if(v>hi)hi=v; }
   if(hi-lo<1e-6){ hi=lo+1; }
   const pad=(hi-lo)*0.06; hi+=pad; if(lo<0) lo-=pad;
@@ -531,7 +576,7 @@ function plot(id,series,colors){
   g.font='16px "Instrument Sans",system-ui,sans-serif'; g.fillStyle=ink; g.strokeStyle=line; g.lineWidth=1;
   for(let k=0;k<=3;k++){ const v=lo+(hi-lo)*k/3, y=Y(v); g.beginPath(); g.moveTo(L,y); g.lineTo(w-Rr,y); g.stroke();
     g.textAlign='right'; g.fillText(Math.abs(v)<10?v.toFixed(1):v.toFixed(0),L-6,y+5); }
-  g.textAlign='center'; g.fillText(x0.toFixed(0)+' s',L+14,h-4); g.fillText(x1.toFixed(0)+' s',w-Rr-6,h-4);
+  g.textAlign='left'; g.fillText(x0.toFixed(0)+' s',L+4,h-4); g.textAlign='right'; g.fillText(x1.toFixed(0)+' s',w-Rr,h-4);
   series.forEach((s,si)=>{
     if(s.length<2) return;
     g.strokeStyle=colors[si]; g.lineWidth=2; g.beginPath();
@@ -540,9 +585,9 @@ function plot(id,series,colors){
     g.stroke();
   });
 }
+const PLOTS=[['pV','V',"V — velocidade linear (cm/s)"],['pW','W',"W — velocidade angular (rad/s)"],['pD','d',"Distância ao destino (cm)"],['pS','s',"Menor leitura dos sonares (cm)"]];
 function drawPlots(){
-  plot('pV',[hist.V],['#000']); plot('pW',[hist.W],['#000']);
-  plot('pD',[hist.d],['#000']); plot('pS',[hist.s],['#000']);
+  for(const [id,key] of PLOTS) plotTo(document.getElementById(id),[hist[key]],[COR[TEMA].inkHex],TEMA,hist.t);
 }
 
 const sonarEl=document.getElementById('sonars');
@@ -557,10 +602,12 @@ function updateInfo(){
   document.getElementById('tTime').textContent=fmt(t)+' s';
   document.getElementById('tPos').textContent='('+fmt(pose[0],0)+'; '+fmt(pose[1],0)+') '+fmt(pose[2]/DEG,0)+'°';
   document.getElementById('tDist').textContent=fmt(d,0)+' cm';
+  document.getElementById('tPath').textContent=fmt(pathLen,0)+' cm';
+  document.getElementById('tSon').textContent=isFinite(minSonar)?fmt(minSonar,0)+' cm':'—';
   [...sonarEl.children].forEach((e,k)=>{
     const v=vs[k], near=Math.max(0,Math.min(1,1-(v-SONAR_MIN)/200));
     e.lastChild.textContent=iter?Math.round(v):'—';
-    e.style.background=iter?`rgba(0,0,0,${(near*0.22).toFixed(2)})`:'';
+    e.style.background=iter?K((near*0.22).toFixed(2)):'';
   });
 }
 
@@ -583,7 +630,8 @@ const $=id=>document.getElementById(id);
 function syncRun(){ const b=$('btnRun'); b.disabled=(pyState==='loading'); b.textContent=pyState==='loading'?'⏳ Carregando Python…':running?'⏸ Pausar':'▶ Iniciar'; }
 function resetSim(){
   running=false; status='stop'; pose=start.slice(); t=0; iter=0; resetMem(); acc=0;
-  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[]}; lastV=lastW=0;
+  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[]}; lastV=lastW=0;
+  pathLen=0; minSonar=Infinity; marcas={pontos:[],tam:4,linha:[]};
   vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
   syncRun(); syncInputs();
 }
@@ -592,7 +640,7 @@ function syncInputs(){
   $('xd').value=Math.round(goal[0]); $('yd').value=Math.round(goal[1]);
 }
 function loadPreset(key){
-  const p=PRESETS[key]; p.build(); start=p.start.slice(); goal=p.goal.slice(); resetSim();
+  const p=PRESETS[key]; p.build(); mapName=p.nome; start=p.start.slice(); goal=p.goal.slice(); resetSim();
 }
 $('btnRun').onclick=()=>{
   if(status==='arrived'||status==='crash'||status==='error'){ resetSim(); }
@@ -654,12 +702,71 @@ $('fileMap').onchange=e=>{
     const d=g.getImageData(0,0,w,h).data; newMap(w,h);
     for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const o=((h-1-y)*w+x)*4; occ[y*w+x]=(d[o]+d[o+1]+d[o+2])/3<200?1:0; }
     start=[Math.min(w-30,40),Math.min(h-30,40),0]; goal=[Math.max(30,w-40),Math.max(30,h-40)];
-    URL.revokeObjectURL(url); resetSim();
+    mapName='Imagem importada'; URL.revokeObjectURL(url); resetSim();
   };
   img.src=url;
 };
 
+/* ============================== EXPORTAÇÃO ============================== */
+function baixar(nome,blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function carimbo(){ const d=new Date(), z=n=>String(n).padStart(2,'0'); return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes()); }
+function resultadoTexto(){
+  if(status==='arrived') return 'Chegou ao destino';
+  if(status==='crash') return 'Colisão';
+  if(status==='error') return 'Erro no controlador';
+  return running?'Em andamento':'Interrompido';
+}
+function exportarCsv(){
+  const cab=['t','x','y','theta','V','W','dist_destino','sonar_min'];
+  for(let k=1;k<=16;k++) cab.push('s'+k);
+  const f=v=>typeof v==='number'?String(+v.toFixed(4)):v;
+  const linhas=hist.t.map((tt,i)=>[tt,hist.x[i],hist.y[i],hist.th[i],hist.V[i],hist.W[i],hist.d[i],hist.s[i],...hist.sn[i]].map(f).join(','));
+  baixar('p3dx_dados_'+carimbo()+'.csv',new Blob([cab.join(',')+'\n'+linhas.join('\n')+'\n'],{type:'text/csv'}));
+}
+function exportarPng(){
+  const th='claro', pad=40, Wc=1400;
+  const mw=Math.min(900,Wc-2*pad), sc=mw/W, mh=Math.round(H*sc);
+  const pw=(Wc-2*pad-30)/2, ph=Math.round(pw*190/520);
+  const topo=330, Hc=topo+mh+40+2*(ph+44)+40;
+  const e=document.createElement('canvas'); e.width=Wc; e.height=Hc;
+  const g=e.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,Wc,Hc);
+  const sans=(px,w)=>`${w||400} ${px}px "Instrument Sans",system-ui,sans-serif`;
+  g.fillStyle='#000'; g.textAlign='left';
+  g.font='800 58px "Big Shoulders Display","Arial Narrow",sans-serif'; g.fillText('SIMULADOR PIONEER 3DX — RELATÓRIO',pad,pad+44);
+  g.font=sans(22); g.fillStyle='#5c5c58'; g.fillText(new Date().toLocaleString('pt-BR')+'  ·  Mapa: '+mapName,pad,pad+80);
+  g.fillStyle='#000'; g.font=sans(24,600);
+  const dfinal=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
+  const m1=[['Resultado',resultadoTexto()],['Tempo',t.toFixed(1)+' s'],['Trajeto percorrido',pathLen.toFixed(0)+' cm'],['Distância final ao destino',dfinal.toFixed(0)+' cm'],['Menor leitura de sonar',isFinite(minSonar)?minSonar.toFixed(0)+' cm':'—']];
+  const m2=[['Vmax',P.Vmax+' cm/s'],['Wmax',P.Wmax+' rad/s'],['Amostragem',P.tamos+' s'],['Alcance do sonar',P.smax+' cm'],['Posição inicial',`(${start[0].toFixed(0)}, ${start[1].toFixed(0)}) ${(start[2]/DEG).toFixed(0)}°`],['Destino',`(${goal[0].toFixed(0)}, ${goal[1].toFixed(0)})`]];
+  let y0=pad+122; const col=Math.floor((Wc-2*pad)/3);
+  m1.forEach((r,i)=>{ const x=pad+(i%3)*col, y=y0+Math.floor(i/3)*34; g.font=sans(20); g.fillStyle='#5c5c58'; g.fillText(r[0]+': ',x,y); const w=g.measureText(r[0]+': ').width; g.font=sans(22,600); g.fillStyle='#000'; g.fillText(r[1],x+w,y); });
+  y0+=34*2;
+  m2.forEach((r,i)=>{ const x=pad+(i%3)*col, y=y0+Math.floor(i/3)*30; g.font=sans(18); g.fillStyle='#5c5c58'; g.fillText(r[0]+': '+r[1],x,y); });
+  // mapa com trajetória
+  const my=topo; g.strokeStyle='#000'; g.lineWidth=3; g.strokeRect(pad+(Wc-2*pad-mw)/2-1.5,my-1.5,mw+3,mh+3);
+  g.save(); g.translate(pad+(Wc-2*pad-mw)/2,my); g.scale(sc,sc);
+  g.imageSmoothingEnabled=false; g.drawImage(mapImage(th),0,0);
+  drawScene(g,th,false); g.restore();
+  // gráficos
+  let py0=my+mh+40;
+  PLOTS.forEach(([id,key,tit],i)=>{
+    const x=pad+(i%2)*(pw+30), y=py0+Math.floor(i/2)*(ph+44);
+    g.font=sans(20,600); g.fillStyle='#000'; g.fillText(tit,x,y+20);
+    const c=document.createElement('canvas'); c.width=520; c.height=190; plotTo(c,[hist[key]],['#000'],th,hist.t);
+    g.drawImage(c,x,y+30,pw,ph); g.strokeStyle='#000'; g.lineWidth=2; g.strokeRect(x,y+30,pw,ph);
+  });
+  e.toBlob(b=>baixar('p3dx_relatorio_'+carimbo()+'.png',b),'image/png');
+}
+document.getElementById('btnPng').onclick=exportarPng;
+document.getElementById('btnCsv').onclick=exportarCsv;
+document.getElementById('btnTema').onclick=()=>aplicaTema(TEMA==='escuro'?'claro':'escuro',true);
+
 /* ============================== INÍCIO ============================== */
+let temaSalvo='claro'; try{ temaSalvo=localStorage.getItem('p3dx-tema')||'claro'; }catch(e){}
+aplicaTema(temaSalvo==='escuro'?'escuro':'claro',false);
 $('code').value=DEFAULT_CODE;
 loadPreset('lab');
 syncRun(); initPy();
