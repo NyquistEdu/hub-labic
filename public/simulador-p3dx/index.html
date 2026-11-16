@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador Pioneer 3DX — Controle e Navegação</title>
+<style>
+:root{
+  --bg:#f6f6f3; --panel:#ffffff; --ink:#1d1f23; --muted:#6a6f78; --line:#dcdcd6;
+  --accent:#1f6feb; --accent-ink:#fff; --ok:#1a7f4b; --bad:#c62f3b; --warn:#a15c00;
+  --code-bg:#fbfbf9;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#16181c; --panel:#1e2126; --ink:#e8e9ec; --muted:#9aa0aa; --line:#33373e;
+    --accent:#5a9bff; --accent-ink:#0b0d10; --ok:#4cc38a; --bad:#ff6b76; --warn:#e0a24a; --code-bg:#181b1f; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:14px 20px 4px}
+h1{font-size:18px;margin:0 0 2px;font-weight:650}
+header p{margin:0;color:var(--muted);font-size:12.5px}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:14px;padding:12px 20px 24px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600}
+#stage{width:100%;display:block;background:#fff;border:1px solid var(--line);border-radius:6px;touch-action:none;cursor:crosshair;image-rendering:pixelated}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row+.row{margin-top:8px}
+button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:7px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+select,input[type=number]{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:4px 6px}
+input[type=number]{width:68px}
+label{color:var(--muted);font-size:12.5px;display:inline-flex;align-items:center;gap:5px}
+.modes label{color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:4px 9px;cursor:pointer}
+.modes input{accent-color:var(--accent)}
+.modes label:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.stat b{display:block;font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.stat span{font-variant-numeric:tabular-nums;font-size:14px}
+#state.ok{color:var(--ok)} #state.bad{color:var(--bad)} #state.run{color:var(--accent)}
+.sliders{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center}
+.sliders output{font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+input[type=range]{accent-color:var(--accent);width:100%}
+.sonars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.sn{border-radius:5px;padding:3px 0;text-align:center;font-size:11px;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
+.sn i{display:block;font-style:normal;color:var(--muted);font-size:9.5px}
+.plots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plots figure{margin:0}
+.plots figcaption{font-size:11px;color:var(--muted);margin-bottom:2px}
+.plots canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+textarea{width:100%;min-height:290px;resize:vertical;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;tab-size:2;white-space:pre}
+#err{font-size:12.5px;margin-top:6px;min-height:18px}
+#err.bad{color:var(--bad)} #err.ok{color:var(--ok)} #err.warn{color:var(--warn)}
+details{font-size:12.5px;color:var(--muted)} details summary{cursor:pointer;color:var(--ink)}
+details code{background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+footer{padding:0 20px 18px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Simulador Pioneer 3DX — Controle e Navegação</h1>
+  <p>Robô diferencial de 33 cm, 16 sonares, mapa em que 1 pixel = 1 cm. Edite o controlador e veja o robô navegar.</p>
+</header>
+
+<div class="layout">
+  <!-- COLUNA ESQUERDA -->
+  <div>
+    <div class="card">
+      <div class="row">
+        <button class="primary" id="btnRun">▶ Iniciar</button>
+        <button id="btnReset">↺ Reiniciar</button>
+        <label>Mapa
+          <select id="selMap"></select>
+        </label>
+        <label>Velocidade
+          <select id="selSpeed">
+            <option value="0.5">0,5×</option><option value="1" selected>1×</option>
+            <option value="2">2×</option><option value="5">5×</option><option value="10">10×</option>
+          </select>
+        </label>
+        <label>Imagem do mapa <input type="file" id="fileMap" accept="image/*" style="max-width:170px"></label>
+      </div>
+      <div class="row modes" style="margin-top:10px">
+        <label><input type="radio" name="mode" value="goal" checked> Definir destino</label>
+        <label><input type="radio" name="mode" value="start"> Posição inicial (arraste p/ orientar)</label>
+        <label><input type="radio" name="mode" value="paint"> Pintar obstáculo</label>
+        <label><input type="radio" name="mode" value="erase"> Apagar</label>
+        <label>Pincel <input type="range" id="brush" min="3" max="40" value="10" style="width:90px"></label>
+      </div>
+      <div style="margin-top:10px">
+        <canvas id="stage"></canvas>
+      </div>
+      <div class="status">
+        <div class="stat"><b>Estado</b><span id="state">Parado</span></div>
+        <div class="stat"><b>Tempo</b><span id="tTime">0,0 s</span></div>
+        <div class="stat"><b>Posição</b><span id="tPos">—</span></div>
+        <div class="stat"><b>Dist. ao destino</b><span id="tDist">—</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Gráficos</h2>
+      <div class="plots">
+        <figure><figcaption>V — velocidade linear (cm/s)</figcaption><canvas id="pV" width="520" height="190"></canvas></figure>
+        <figure><figcaption>W — velocidade angular (rad/s)</figcaption><canvas id="pW" width="520" height="190"></canvas></figure>
+        <figure><figcaption>Distância ao destino (cm)</figcaption><canvas id="pD" width="520" height="190"></canvas></figure>
+        <figure><figcaption>Menor leitura dos sonares (cm)</figcaption><canvas id="pS" width="520" height="190"></canvas></figure>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA DIREITA -->
+  <div>
+    <div class="card">
+      <h2>Parâmetros</h2>
+      <div class="sliders">
+        <label for="vmax">V<sub>max</sub></label><input type="range" id="vmax" min="5" max="120" value="50"><output id="vmaxO"></output>
+        <label for="wmax">W<sub>max</sub></label><input type="range" id="wmax" min="0.2" max="3" step="0.1" value="1.5"><output id="wmaxO"></output>
+        <label for="dts">Amostragem</label><input type="range" id="dts" min="0.02" max="0.3" step="0.01" value="0.1"><output id="dtsO"></output>
+        <label for="smax">Alcance sonar</label><input type="range" id="smax" min="100" max="500" step="10" value="400"><output id="smaxO"></output>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label>x₀ <input type="number" id="x0"></label>
+        <label>y₀ <input type="number" id="y0"></label>
+        <label>θ₀ (°) <input type="number" id="t0"></label>
+      </div>
+      <div class="row">
+        <label>x<sub>des</sub> <input type="number" id="xd"></label>
+        <label>y<sub>des</sub> <input type="number" id="yd"></label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Sonares (cm) — 1 a 8 frente, 9 a 16 trás</h2>
+      <div class="sonars" id="sonars"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Controlador — controle_e_navegacao</h2>
+      <textarea id="code" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="btnApply">Aplicar controlador</button>
+        <button id="btnRestore">Restaurar exemplo</button>
+      </div>
+      <div id="err"></div>
+      <details style="margin-top:6px">
+        <summary>Variáveis disponíveis</summary>
+        <p><code>Pos</code> = [x, y, θ] (cm, cm, rad) &nbsp; <code>Pdes</code> = [x, y] destino (cm)<br>
+        <code>v_sensor</code> = 16 leituras (cm) &nbsp; <code>angs</code> = 16 ângulos dos sonares (rad)<br>
+        <code>Vmax</code> (cm/s), <code>Wmax</code> (rad/s) &nbsp; <code>tempo</code> = vetor de instantes (s)<br>
+        <code>tamos</code> = período de amostragem (s) &nbsp; <code>i</code> = nº da chamada<br>
+        <code>ocupado(x,y)</code> = true se a célula do mapa (cm) tem obstáculo<br>
+        <code>mem</code> = objeto que persiste entre chamadas (memória do controlador)<br>
+        Devolva <code>[V, W]</code>. θ cresce no sentido anti-horário, eixo x para a frente do robô.</p>
+      </details>
+    </div>
+  </div>
+</div>
+<footer>Material de Stephanie Kamarry · IFS / LABIC. Sonar: 3 raios por feixe (±7,5°), leitura mínima de 12 cm.</footer>
+
+<script>
+"use strict";
+/* ============================== CONSTANTES ============================== */
+const R = 16.5;                 // raio do robô (cm) — diâmetro 33 cm
+const SONAR_MIN = 12;           // leitura confiável a partir de 12 cm
+const DEG = Math.PI/180;
+// ordem dos sonares do Pioneer: 1..8 frente (esq→dir), 9..16 trás (dir→esq)
+const ANGS = [90,50,30,10,-10,-30,-50,-90,-90,-130,-150,-170,170,150,130,90].map(a=>a*DEG);
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+/* ============================== MAPA ============================== */
+let W=500, H=500, occ=new Uint8Array(W*H), mapDirty=true;
+const mapCv = document.createElement('canvas');
+
+function newMap(w,h){ W=w; H=h; occ=new Uint8Array(w*h); mapDirty=true; }
+function rect(x0,y0,x1,y1,v=1){
+  for(let y=Math.max(0,Math.floor(y0)); y<Math.min(H,Math.ceil(y1)); y++)
+    for(let x=Math.max(0,Math.floor(x0)); x<Math.min(W,Math.ceil(x1)); x++) occ[y*W+x]=v;
+}
+function disc(cx,cy,r,v=1){
+  for(let y=Math.max(0,Math.floor(cy-r)); y<Math.min(H,Math.ceil(cy+r)); y++)
+    for(let x=Math.max(0,Math.floor(cx-r)); x<Math.min(W,Math.ceil(cx+r)); x++)
+      if((x+.5-cx)**2+(y+.5-cy)**2<=r*r) occ[y*W+x]=v;
+}
+function border(t=4){ rect(0,0,W,t); rect(0,H-t,W,H); rect(0,0,t,H); rect(W-t,0,W,H); }
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+const PRESETS = {
+  lab: { nome:'Laboratório', start:[50,250,0], goal:[450,420], build(){
+    newMap(500,500); border();
+    rect(240,4,256,200); rect(240,300,256,496);          // parede com porta (y 200–300)
+    rect(60,100,160,130); rect(60,370,160,400);          // bancadas
+    disc(130,320,20);
+    disc(380,150,25); rect(350,330,430,360); rect(420,200,440,260);
+  }},
+  vazio: { nome:'Vazio', start:[100,100,45*DEG], goal:[400,400], build(){ newMap(500,500); border(); }},
+  corredor: { nome:'Corredor', start:[40,250,0], goal:[460,250], build(){
+    newMap(500,500); border();
+    rect(4,180,496,190); rect(4,310,496,320);
+    rect(150,190,170,235); rect(300,265,320,310); disc(420,250,18);
+  }},
+  armadilha: { nome:'Armadilha em U', start:[80,250,0], goal:[450,250], build(){
+    newMap(500,500); border();
+    rect(300,150,320,350); rect(200,150,320,170); rect(200,330,320,350);
+  }},
+  bagunca: { nome:'Bagunça (obstáculos aleatórios)', start:[40,40,45*DEG], goal:[460,460], build(){
+    newMap(500,500); border(); const r=rng(7);
+    for(let k=0;k<22;k++){
+      const x=40+r()*420, y=40+r()*420, rad=12+r()*18;
+      if(Math.hypot(x-40,y-40)<70 || Math.hypot(x-460,y-460)<70) continue;
+      disc(x,y,rad);
+    }
+  }}
+};
+
+function isOcc(x,y){
+  const xi=Math.floor(x), yi=Math.floor(y);
+  if(xi<0||yi<0||xi>=W||yi>=H) return 1;
+  return occ[yi*W+xi];
+}
+function rebuildMapImage(){
+  mapCv.width=W; mapCv.height=H;
+  const c=mapCv.getContext('2d'), img=c.createImageData(W,H), d=img.data;
+  for(let y=0;y<H;y++){
+    const row=(H-1-y)*W*4;                       // y para cima
+    for(let x=0;x<W;x++){
+      const o=row+x*4, v=occ[y*W+x]?40:250;
+      d[o]=v; d[o+1]=v; d[o+2]=v===40?46:246; d[o+3]=255;
+    }
+  }
+  c.putImageData(img,0,0); mapDirty=false;
+}
+
+/* ============================== ESTADO DA SIMULAÇÃO ============================== */
+const P = {                 // parâmetros
+  Vmax:50, Wmax:1.5, tamos:0.1, smax:400
+};
+let pose=[50,250,0], start=[50,250,0], goal=[450,420];
+let vs=new Array(16).fill(P.smax), rays=[];
+let running=false, status='stop', t=0, iter=0, mem={};
+let trail=[], hist={t:[],V:[],W:[],d:[],s:[]};
+let lastV=0, lastW=0, acc=0, lastTs=null;
+
+function sense(){
+  rays=[];
+  for(let k=0;k<16;k++){
+    const a=pose[2]+ANGS[k];
+    const ox=pose[0]+R*Math.cos(a), oy=pose[1]+R*Math.sin(a);
+    let best=P.smax, hx=ox+Math.cos(a)*P.smax, hy=oy+Math.sin(a)*P.smax;
+    for(const off of [-7.5*DEG,0,7.5*DEG]){
+      const dx=Math.cos(a+off), dy=Math.sin(a+off);
+      for(let s=0;s<best;s+=1){
+        if(isOcc(ox+dx*s,oy+dy*s)){ best=s; hx=ox+dx*s; hy=oy+dy*s; break; }
+      }
+    }
+    vs[k]=Math.max(SONAR_MIN,best);
+    rays.push([ox,oy,hx,hy]);
+  }
+}
+function collides(x,y){
+  if(isOcc(x,y)) return true;
+  for(let k=0;k<24;k++){ const a=k*Math.PI/12; if(isOcc(x+R*Math.cos(a),y+R*Math.sin(a))) return true; }
+  return false;
+}
+
+/* ============================== CONTROLADOR ============================== */
+const DEFAULT_CODE =
+`// Controle de posição final + desvio simples de obstáculos
+// (o desvio reduz a velocidade perto de obstáculos)
+
+const d = Math.hypot(Pdes[0]-Pos[0], Pdes[1]-Pos[1]);       // distância ao destino
+const theta_d = Math.atan2(Pdes[1]-Pos[1], Pdes[0]-Pos[0]);  // ângulo do destino
+const theta_e = wrap(Pos[2] - theta_d);                      // erro de orientação
+
+// obstáculo mais próximo entre os sonares da frente (1 a 8)
+let d_obs_min = Infinity, idc = 0;
+for(let k=0;k<8;k++){ if(v_sensor[k] < d_obs_min){ d_obs_min = v_sensor[k]; idc = k+1; } }
+const theta_obs = angs[idc-1];                    // ângulo do sonar mais próximo
+const theta_e_obs = wrap(-(theta_obs + Math.PI));
+
+// 1) controle simples até o destino
+const Kv = 0.01, Kw = 1.5;
+let V1 =  Vmax * Math.tanh(Kv * d);
+let W1 = -Wmax * Math.tanh(Kw * theta_e);
+
+// 2) evitar obstáculo simples
+let V2 = V1, W2 = W1;
+if(d_obs_min < 100 && d > 100){
+  W2 = -Wmax * Math.tanh(Kw * theta_e_obs);          // gira para longe do obstáculo
+  V2 = V1 * Math.max(0.1, (d_obs_min - 25) / 75);    // e reduz a velocidade perto dele
+  W1 = W2; V1 = V2;
+}
+
+// velocidades enviadas ao robô
+let V = (V1 + V2) / 2;
+let W = (W1 + W2) / 2;
+if(d < 5){ V = 0; W = 0; }
+
+return [V, W];`;
+
+let ctrlFn=null, usingFallback=false;
+function defaultCtrl(s){
+  const {Pos,Pdes,v_sensor,angs,Vmax,Wmax}=s;
+  const d=Math.hypot(Pdes[0]-Pos[0],Pdes[1]-Pos[1]);
+  const td=Math.atan2(Pdes[1]-Pos[1],Pdes[0]-Pos[0]), te=wrap(Pos[2]-td);
+  let dm=Infinity, idc=0; for(let k=0;k<8;k++) if(v_sensor[k]<dm){dm=v_sensor[k];idc=k+1;}
+  const teo=wrap(-(angs[idc-1]+Math.PI)), Kv=.01, Kw=1.5;
+  let V1=Vmax*Math.tanh(Kv*d), W1=-Wmax*Math.tanh(Kw*te), V2=V1, W2=W1;
+  if(dm<100&&d>100){ W2=-Wmax*Math.tanh(Kw*teo); V2=V1*Math.max(.1,(dm-25)/75); W1=W2; V1=V2; }
+  let V=(V1+V2)/2, W=(W1+W2)/2; if(d<5){V=0;W=0;} return [V,W];
+}
+const errEl=document.getElementById('err');
+function setMsg(msg,cls){ errEl.textContent=msg; errEl.className=cls||''; }
+
+function compile(){
+  const src=document.getElementById('code').value;
+  try{
+    const f=new Function('s','mem','wrap',
+      'const {Pos,Pdes,v_sensor,angs,Vmax,Wmax,tempo,tamos,i,ocupado}=s;\n'+src);
+    // teste de fumaça
+    const r=f({Pos:[0,0,0],Pdes:[100,0],v_sensor:new Array(16).fill(400),angs:ANGS,Vmax:50,Wmax:1.5,tempo:[0],tamos:.1,i:1,ocupado:()=>false},{},wrap);
+    if(!Array.isArray(r)||r.length<2||!isFinite(r[0])||!isFinite(r[1])) throw new Error('o controlador deve devolver [V, W] com números finitos.');
+    ctrlFn=(s)=>f(s,mem,wrap); usingFallback=false;
+    setMsg('Controlador aplicado.','ok'); return true;
+  }catch(e){
+    if(e instanceof EvalError || /unsafe-eval|Content Security/i.test(String(e.message))){
+      ctrlFn=defaultCtrl; usingFallback=true;
+      setMsg('Este navegador bloqueia código editável; usando o controlador de exemplo embutido.','warn');
+    } else {
+      ctrlFn=defaultCtrl; usingFallback=true;
+      setMsg('Erro no controlador: '+e.message+' — usando o exemplo até corrigir.','bad');
+    }
+    return false;
+  }
+}
+
+/* ============================== PASSO DE SIMULAÇÃO ============================== */
+function stepSim(){
+  const dt=P.tamos;
+  sense();
+  iter++;
+  const tempo=hist.t.length?hist.t:[0];
+  let out;
+  try{
+    out=ctrlFn({Pos:[pose[0],pose[1],pose[2]],Pdes:[goal[0],goal[1]],v_sensor:vs.slice(),angs:ANGS.slice(),
+      Vmax:P.Vmax,Wmax:P.Wmax,tempo:tempo,tamos:dt,i:iter,ocupado:(x,y)=>!!isOcc(x,y)});
+  }catch(e){ setMsg('Erro em tempo de execução: '+e.message,'bad'); status='error'; running=false; syncRun(); return; }
+  let V=+out[0], Wv=+out[1];
+  if(!isFinite(V)||!isFinite(Wv)){ V=0; Wv=0; }
+  V=Math.max(-P.Vmax,Math.min(P.Vmax,V)); Wv=Math.max(-P.Wmax,Math.min(P.Wmax,Wv));
+  // cinemática de robô diferencial (monociclo)
+  const th=pose[2]+Wv*dt/2;
+  const nx=pose[0]+V*Math.cos(th)*dt, ny=pose[1]+V*Math.sin(th)*dt, nt=wrap(pose[2]+Wv*dt);
+  lastV=V; lastW=Wv;
+  if(collides(nx,ny)){ status='crash'; running=false; syncRun(); }
+  else { pose=[nx,ny,nt]; t+=dt; }
+  trail.push([pose[0],pose[1]]);
+  const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
+  hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(Math.min(...vs));
+  if(hist.t.length>4000){ for(const k in hist) hist[k].shift(); }
+  if(status!=='crash' && d<5){ status='arrived'; running=false; syncRun(); }
+}
+
+/* ============================== DESENHO ============================== */
+const cv=document.getElementById('stage'), ctx=cv.getContext('2d');
+function fitCanvas(){ if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } }
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function draw(){
+  if(mapDirty) rebuildMapImage();
+  fitCanvas();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.drawImage(mapCv,0,0);
+  ctx.setTransform(1,0,0,-1,0,H);               // coordenadas matemáticas (y para cima, cm)
+  // trajetória
+  if(trail.length>1){
+    ctx.strokeStyle='#e07b00'; ctx.lineWidth=1.8; ctx.beginPath();
+    ctx.moveTo(trail[0][0],trail[0][1]); for(let k=1;k<trail.length;k++) ctx.lineTo(trail[k][0],trail[k][1]); ctx.stroke();
+  }
+  // posição inicial (fantasma)
+  ctx.strokeStyle='rgba(31,111,235,.45)'; ctx.lineWidth=1.2; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.arc(start[0],start[1],R,0,7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(start[0],start[1]); ctx.lineTo(start[0]+R*Math.cos(start[2]),start[1]+R*Math.sin(start[2])); ctx.stroke();
+  // destino
+  ctx.strokeStyle='#c62f3b'; ctx.fillStyle='rgba(198,47,59,.15)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(goal[0],goal[1],8,0,7); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(goal[0]-13,goal[1]); ctx.lineTo(goal[0]+13,goal[1]); ctx.moveTo(goal[0],goal[1]-13); ctx.lineTo(goal[0],goal[1]+13); ctx.stroke();
+  // feixes dos sonares
+  if(rays.length){
+    for(let k=0;k<16;k++){
+      const r=rays[k]; const hit=vs[k]<P.smax-1;
+      ctx.strokeStyle=hit?'rgba(198,47,59,.55)':'rgba(31,111,235,.28)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(r[0],r[1]); ctx.lineTo(r[2],r[3]); ctx.stroke();
+      if(hit){ ctx.fillStyle='rgba(198,47,59,.9)'; ctx.beginPath(); ctx.arc(r[2],r[3],2,0,7); ctx.fill(); }
+    }
+  }
+  // robô
+  ctx.fillStyle=status==='crash'?'rgba(198,47,59,.55)':'rgba(31,111,235,.30)';
+  ctx.strokeStyle=status==='crash'?'#c62f3b':'#1f6feb'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(pose[0],pose[1],R,0,7); ctx.fill(); ctx.stroke();
+  ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(pose[0],pose[1]);
+  ctx.lineTo(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2])); ctx.stroke();
+  ctx.fillStyle='#1f6feb'; ctx.beginPath(); ctx.arc(pose[0]+R*Math.cos(pose[2]),pose[1]+R*Math.sin(pose[2]),3,0,7); ctx.fill();
+  ctx.setTransform(1,0,0,1,0,0);
+}
+
+function plot(id,series,colors){
+  const c=document.getElementById(id), g=c.getContext('2d'), w=c.width, h=c.height;
+  g.clearRect(0,0,w,h);
+  const L=46,Rr=8,T=8,B=20, pw=w-L-Rr, ph=h-T-B, xs=hist.t;
+  const ink=css('--muted'), line=css('--line');
+  let lo=0, hi=0; for(const s of series) for(const v of s){ if(v<lo)lo=v; if(v>hi)hi=v; }
+  if(hi-lo<1e-6){ hi=lo+1; }
+  const pad=(hi-lo)*0.06; hi+=pad; if(lo<0) lo-=pad;
+  const x0=xs.length?xs[0]:0, x1=xs.length?Math.max(xs[xs.length-1],x0+1):1;
+  const X=v=>L+(v-x0)/(x1-x0)*pw, Y=v=>T+(1-(v-lo)/(hi-lo))*ph;
+  g.font='16px system-ui,sans-serif'; g.fillStyle=ink; g.strokeStyle=line; g.lineWidth=1;
+  for(let k=0;k<=3;k++){ const v=lo+(hi-lo)*k/3, y=Y(v); g.beginPath(); g.moveTo(L,y); g.lineTo(w-Rr,y); g.stroke();
+    g.textAlign='right'; g.fillText(Math.abs(v)<10?v.toFixed(1):v.toFixed(0),L-6,y+5); }
+  g.textAlign='center'; g.fillText(x0.toFixed(0)+' s',L,h-4); g.fillText(x1.toFixed(0)+' s',w-Rr-6,h-4);
+  series.forEach((s,si)=>{
+    if(s.length<2) return;
+    g.strokeStyle=colors[si]; g.lineWidth=2; g.beginPath();
+    const step=Math.max(1,Math.floor(s.length/700));
+    for(let k=0;k<s.length;k+=step){ const x=X(xs[k]), y=Y(s[k]); k===0?g.moveTo(x,y):g.lineTo(x,y); }
+    g.stroke();
+  });
+}
+function drawPlots(){
+  plot('pV',[hist.V],['#1f6feb']); plot('pW',[hist.W],['#8e44ad']);
+  plot('pD',[hist.d],['#c62f3b']); plot('pS',[hist.s],['#1a7f4b']);
+}
+
+const sonarEl=document.getElementById('sonars');
+for(let k=0;k<16;k++){ const e=document.createElement('div'); e.className='sn'; e.innerHTML='<i>S'+(k+1)+'</i><span>—</span>'; sonarEl.appendChild(e); }
+function updateInfo(){
+  const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
+  const fmt=(v,n=1)=>v.toFixed(n).replace('.',',');
+  const st=document.getElementById('state');
+  const names={stop:'Parado',run:'Rodando',arrived:'Chegou ao destino',crash:'Colisão',error:'Erro no controlador'};
+  st.textContent=running?'Rodando':names[status]||'Parado';
+  st.className=running?'run':status==='arrived'?'ok':(status==='crash'||status==='error')?'bad':'';
+  document.getElementById('tTime').textContent=fmt(t)+' s';
+  document.getElementById('tPos').textContent='('+fmt(pose[0],0)+'; '+fmt(pose[1],0)+') '+fmt(pose[2]/DEG,0)+'°';
+  document.getElementById('tDist').textContent=fmt(d,0)+' cm';
+  [...sonarEl.children].forEach((e,k)=>{
+    const v=vs[k], near=Math.max(0,Math.min(1,1-(v-SONAR_MIN)/200));
+    e.lastChild.textContent=iter?Math.round(v):'—';
+    e.style.background=iter?`color-mix(in srgb, var(--bad) ${Math.round(near*45)}%, transparent)`:'';
+  });
+}
+
+/* ============================== LOOP ============================== */
+function frame(ts){
+  if(lastTs===null) lastTs=ts;
+  const real=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
+  if(running){
+    acc+=real*parseFloat(document.getElementById('selSpeed').value);
+    let n=0;
+    while(acc>=P.tamos && running && n<400){ stepSim(); acc-=P.tamos; n++; }
+    if(!running) acc=0;
+  }
+  draw(); drawPlots(); updateInfo();
+  requestAnimationFrame(frame);
+}
+
+/* ============================== CONTROLES ============================== */
+const $=id=>document.getElementById(id);
+function syncRun(){ $('btnRun').textContent=running?'⏸ Pausar':'▶ Iniciar'; }
+function resetSim(){
+  running=false; status='stop'; pose=start.slice(); t=0; iter=0; mem={}; acc=0;
+  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[]}; lastV=lastW=0;
+  vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
+  syncRun(); syncInputs();
+}
+function syncInputs(){
+  $('x0').value=Math.round(start[0]); $('y0').value=Math.round(start[1]); $('t0').value=Math.round(start[2]/DEG);
+  $('xd').value=Math.round(goal[0]); $('yd').value=Math.round(goal[1]);
+}
+function loadPreset(key){
+  const p=PRESETS[key]; p.build(); start=p.start.slice(); goal=p.goal.slice(); resetSim();
+}
+$('btnRun').onclick=()=>{
+  if(status==='arrived'||status==='crash'||status==='error'){ resetSim(); }
+  if(!running){ if(!iter) compile(); running=true; status='run'; } else { running=false; status='stop'; }
+  syncRun();
+};
+$('btnReset').onclick=()=>resetSim();
+$('btnApply').onclick=()=>{ mem={}; compile(); };
+$('btnRestore').onclick=()=>{ $('code').value=DEFAULT_CODE; mem={}; compile(); };
+$('code').addEventListener('keydown',e=>{
+  if(e.key==='Tab'){ e.preventDefault(); const a=e.target, s=a.selectionStart;
+    a.value=a.value.slice(0,s)+'  '+a.value.slice(a.selectionEnd); a.selectionStart=a.selectionEnd=s+2; }
+});
+const sel=$('selMap'); for(const k in PRESETS){ const o=document.createElement('option'); o.value=k; o.textContent=PRESETS[k].nome; sel.appendChild(o); }
+sel.onchange=()=>loadPreset(sel.value);
+
+function bindSlider(id,key,fmt){ const el=$(id), o=$(id+'O');
+  const upd=()=>{ P[key]=parseFloat(el.value); o.textContent=fmt(P[key]); };
+  el.oninput=upd; upd(); }
+bindSlider('vmax','Vmax',v=>v.toFixed(0)+' cm/s');
+bindSlider('wmax','Wmax',v=>v.toFixed(1).replace('.',',')+' rad/s');
+bindSlider('dts','tamos',v=>v.toFixed(2).replace('.',',')+' s');
+bindSlider('smax','smax',v=>v.toFixed(0)+' cm');
+
+for(const id of ['x0','y0','t0']) $(id).onchange=()=>{
+  start=[+$('x0').value,+$('y0').value,wrap(+$('t0').value*DEG)]; resetSim(); };
+for(const id of ['xd','yd']) $(id).onchange=()=>{ goal=[+$('xd').value,+$('yd').value]; syncInputs(); };
+
+// interação com o mapa
+let dragging=false;
+const mode=()=>document.querySelector('input[name=mode]:checked').value;
+function toMap(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*W, H-(e.clientY-r.top)/r.height*H]; }
+function paintAt(x,y,v){ disc(x,y,parseFloat($('brush').value),v); mapDirty=true; }
+cv.addEventListener('pointerdown',e=>{
+  cv.setPointerCapture(e.pointerId); dragging=true;
+  const [x,y]=toMap(e), m=mode();
+  if(m==='goal'){ goal=[x,y]; syncInputs(); }
+  else if(m==='start'){ start=[x,y,start[2]]; resetSim(); }
+  else if(m==='paint') paintAt(x,y,e.button===2?0:1);
+  else paintAt(x,y,0);
+});
+cv.addEventListener('pointermove',e=>{
+  if(!dragging) return; const [x,y]=toMap(e), m=mode();
+  if(m==='goal'){ goal=[x,y]; syncInputs(); }
+  else if(m==='start'){ const a=Math.atan2(y-start[1],x-start[0]); if(Math.hypot(x-start[0],y-start[1])>6){ start[2]=a; resetSim(); } }
+  else if(m==='paint') paintAt(x,y,1); else paintAt(x,y,0);
+});
+cv.addEventListener('pointerup',()=>{ dragging=false; });
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+
+// importar imagem de mapa (branco = livre; demais cores = obstáculo; 1 pixel = 1 cm)
+$('fileMap').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image(); const url=URL.createObjectURL(f);
+  img.onload=()=>{
+    let w=img.width,h=img.height; const k=Math.min(1,1400/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+    g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.drawImage(img,0,0,w,h);
+    const d=g.getImageData(0,0,w,h).data; newMap(w,h);
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const o=((h-1-y)*w+x)*4; occ[y*w+x]=(d[o]+d[o+1]+d[o+2])/3<200?1:0; }
+    start=[Math.min(w-30,40),Math.min(h-30,40),0]; goal=[Math.max(30,w-40),Math.max(30,h-40)];
+    URL.revokeObjectURL(url); resetSim();
+  };
+  img.src=url;
+};
+
+/* ============================== INÍCIO ============================== */
+$('code').value=DEFAULT_CODE;
+loadPreset('lab');
+compile(); setMsg('');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
