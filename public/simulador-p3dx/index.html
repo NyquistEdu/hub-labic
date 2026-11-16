@@ -177,6 +177,12 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <label for="wmax">W<sub>max</sub></label><input type="range" id="wmax" min="0.2" max="3" step="0.1" value="1.5"><output id="wmaxO"></output>
         <label for="dts">Amostragem</label><input type="range" id="dts" min="0.02" max="0.3" step="0.01" value="0.1"><output id="dtsO"></output>
         <label for="smax">Alcance sonar</label><input type="range" id="smax" min="100" max="500" step="10" value="400"><output id="smaxO"></output>
+        <label for="nodo" title="Erro aleatório na odometria: o código recebe uma pose estimada que vai se afastando da real">Ruído odometria</label><input type="range" id="nodo" min="0" max="20" step="1" value="0"><output id="nodoO"></output>
+        <label for="nson" title="Erro aleatório proporcional à distância medida por cada sonar">Ruído sonar</label><input type="range" id="nson" min="0" max="10" step="0.5" value="0"><output id="nsonO"></output>
+        <label for="nfal" title="Chance de um sonar não receber o eco e devolver o alcance máximo">Falha de eco</label><input type="range" id="nfal" min="0" max="20" step="1" value="0"><output id="nfalO"></output>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label title="Mesma semente = mesmo ruído a cada execução">Semente do ruído <input type="number" id="seed" value="1" min="0" step="1" style="width:80px"></label>
       </div>
       <div class="row" style="margin-top:10px">
         <label>x₀ <input type="number" id="x0"></label>
@@ -326,12 +332,18 @@ function aplicaTema(th,salvar){
 
 /* ============================== ESTADO DA SIMULAÇÃO ============================== */
 const P = {                 // parâmetros
-  Vmax:50, Wmax:1.5, tamos:0.1, smax:400
+  Vmax:50, Wmax:1.5, tamos:0.1, smax:400, nodo:0, nson:0, nfal:0
 };
 let pose=[50,250,0], start=[50,250,0], goal=[450,420];
 let vs=new Array(16).fill(P.smax), rays=[];
 let running=false, status='stop', t=0, iter=0, mem={};
-let trail=[], hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[]};
+let odom=[50,250,0], odomTrail=[], idleN=0;
+let rngS=1;
+function rngReset(){ const e=document.getElementById('seed'); rngS=(parseInt(e&&e.value,10)||0)>>>0; }
+function rnd(){ rngS=(rngS+0x6D2B79F5)|0; let q=Math.imul(rngS^(rngS>>>15),1|rngS); q=(q+Math.imul(q^(q>>>7),61|q))^q; return ((q^(q>>>14))>>>0)/4294967296; }
+function gauss(){ let u=0; while(!u) u=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*rnd()); }
+let vsTrue=new Array(16).fill(400);
+let trail=[], hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]};
 let lastV=0, lastW=0, acc=0, lastTs=null;
 let pathLen=0, minSonar=Infinity, mapName='Laboratório';
 let marcas={pontos:[],tam:4,linha:[]};
@@ -348,7 +360,11 @@ function sense(){
         if(isOcc(ox+dx*s,oy+dy*s)){ best=s; hx=ox+dx*s; hy=oy+dy*s; break; }
       }
     }
-    vs[k]=Math.max(SONAR_MIN,best);
+    const real=Math.max(SONAR_MIN,best); vsTrue[k]=real;
+    let lido=real;
+    if(P.nfal>0 && rnd()<P.nfal/100) lido=P.smax;                                   // eco perdido
+    else if(P.nson>0) lido=Math.min(P.smax,Math.max(SONAR_MIN,real*(1+gauss()*P.nson/100)));
+    vs[k]=lido;
     rays.push([ox,oy,hx,hy]);
   }
 }
@@ -508,7 +524,7 @@ function stepSim(){
   const tempo=hist.t.length?hist.t:[0];
   let out;
   try{
-    out=ctrlFn({Pos:[pose[0],pose[1],pose[2]],Pdes:[goal[0],goal[1]],v_sensor:vs.slice(),angs:ANGS.slice(),
+    out=ctrlFn({Pos:[odom[0],odom[1],odom[2]],Pdes:[goal[0],goal[1]],v_sensor:vs.slice(),angs:ANGS.slice(),
       Vmax:P.Vmax,Wmax:P.Wmax,tempo:tempo,tamos:dt,i:iter,ocupado:(x,y)=>!!isOcc(x,y)});
   }catch(e){ setMsg('Erro em tempo de execução:\n'+pyErr(e),'bad'); status='error'; running=false; syncRun(); return; }
   let V=+out[0], Wv=+out[1];
@@ -519,14 +535,24 @@ function stepSim(){
   const nx=pose[0]+V*Math.cos(th)*dt, ny=pose[1]+V*Math.sin(th)*dt, nt=wrap(pose[2]+Wv*dt);
   lastV=V; lastW=Wv;
   if(collides(nx,ny)){ status='crash'; running=false; syncRun(); }
-  else { pathLen+=Math.hypot(nx-pose[0],ny-pose[1]); pose=[nx,ny,nt]; t+=dt; }
-  trail.push([pose[0],pose[1]]);
+  else {
+    pathLen+=Math.hypot(nx-pose[0],ny-pose[1]); pose=[nx,ny,nt]; t+=dt;
+    // odometria: integra V e W medidos com erro (igual à pose real quando o ruído é 0)
+    const sg=P.nodo/100, Vm=V*(1+gauss()*sg), Wm=Wv*(1+gauss()*sg);
+    const tho=odom[2]+Wm*dt/2;
+    odom=[odom[0]+Vm*Math.cos(tho)*dt, odom[1]+Vm*Math.sin(tho)*dt, wrap(odom[2]+Wm*dt+gauss()*sg*0.03)];
+  }
+  trail.push([pose[0],pose[1]]); odomTrail.push([odom[0],odom[1]]);
   const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
-  const smin=Math.min(...vs); minSonar=Math.min(minSonar,smin);
+  const smin=Math.min(...vs); minSonar=Math.min(minSonar,Math.min(...vsTrue));
   hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(smin);
-  hist.x.push(pose[0]); hist.y.push(pose[1]); hist.th.push(pose[2]); hist.sn.push(vs.slice());
+  hist.x.push(pose[0]); hist.y.push(pose[1]); hist.th.push(pose[2]); hist.sn.push(vs.slice()); hist.xo.push(odom[0]); hist.yo.push(odom[1]); hist.tho.push(odom[2]);
   if(hist.t.length>20000){ for(const k in hist) hist[k].shift(); }
   if(status!=='crash' && d<5){ status='arrived'; running=false; syncRun(); }
+  else if(status==='run' && P.nodo>0){      // com ruído o código pode parar longe do destino real
+    idleN = (V===0&&Wv===0)? idleN+1 : 0;
+    if(idleN>=20){ status='stopped'; running=false; syncRun(); }
+  }
 }
 
 /* ============================== DESENHO ============================== */
@@ -540,6 +566,10 @@ function drawScene(c,th,mostraSonares){
   if(trail.length>1){
     c.strokeStyle=ink; c.lineWidth=2; c.beginPath();
     c.moveTo(trail[0][0],trail[0][1]); for(let k=1;k<trail.length;k++) c.lineTo(trail[k][0],trail[k][1]); c.stroke();
+  }
+  if(P.nodo>0 && odomTrail.length>1){
+    c.strokeStyle=K(.55,th); c.lineWidth=1.5; c.setLineDash([2,4]); c.beginPath();
+    c.moveTo(odomTrail[0][0],odomTrail[0][1]); for(let k=1;k<odomTrail.length;k++) c.lineTo(odomTrail[k][0],odomTrail[k][1]); c.stroke(); c.setLineDash([]);
   }
   // marcas feitas pelo código do aluno
   if(marcas.pontos.length){
@@ -616,9 +646,9 @@ function updateInfo(){
   const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
   const fmt=(v,n=1)=>v.toFixed(n).replace('.',',');
   const st=document.getElementById('state');
-  const names={stop:'Parado',run:'Rodando',arrived:'Chegou ao destino',crash:'Colisão',error:'Erro no controlador'};
+  const names={stop:'Parado',run:'Rodando',arrived:'Chegou ao destino',crash:'Colisão',error:'Erro no controlador',stopped:'Parou longe do destino'};
   st.textContent=running?'Rodando':names[status]||'Parado';
-  st.className=running?'run':status==='arrived'?'ok':(status==='crash'||status==='error')?'bad':'';
+  st.className=running?'run':status==='arrived'?'ok':(status==='crash'||status==='error'||status==='stopped')?'bad':'';
   document.getElementById('tTime').textContent=fmt(t)+' s';
   document.getElementById('tPos').textContent='('+fmt(pose[0],0)+'; '+fmt(pose[1],0)+') '+fmt(pose[2]/DEG,0)+'°';
   document.getElementById('tDist').textContent=fmt(d,0)+' cm';
@@ -649,8 +679,8 @@ function frame(ts){
 const $=id=>document.getElementById(id);
 function syncRun(){ const b=$('btnRun'); b.disabled=(pyState==='loading'); b.textContent=pyState==='loading'?'⏳ Carregando Python…':running?'⏸ Pausar':'▶ Iniciar'; }
 function resetSim(){
-  running=false; status='stop'; pose=start.slice(); t=0; iter=0; resetMem(); acc=0;
-  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[]}; lastV=lastW=0;
+  running=false; status='stop'; pose=start.slice(); odom=start.slice(); odomTrail=[[pose[0],pose[1]]]; idleN=0; rngReset(); t=0; iter=0; resetMem(); acc=0;
+  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]}; lastV=lastW=0;
   pathLen=0; minSonar=Infinity; marcas={pontos:[],tam:4,linha:[]}; limpaSaida();
   vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
   syncRun(); syncInputs();
@@ -663,7 +693,7 @@ function loadPreset(key){
   const p=PRESETS[key]; p.build(); mapName=p.nome; start=p.start.slice(); goal=p.goal.slice(); resetSim();
 }
 $('btnRun').onclick=()=>{
-  if(status==='arrived'||status==='crash'||status==='error'){ resetSim(); }
+  if(status==='arrived'||status==='crash'||status==='error'||status==='stopped'){ resetSim(); }
   if(!running){ if(!iter) compile(); running=true; status='run'; } else { running=false; status='stop'; }
   syncRun();
 };
@@ -695,6 +725,10 @@ bindSlider('vmax','Vmax',v=>v.toFixed(0)+' cm/s');
 bindSlider('wmax','Wmax',v=>v.toFixed(1).replace('.',',')+' rad/s');
 bindSlider('dts','tamos',v=>v.toFixed(2).replace('.',',')+' s');
 bindSlider('smax','smax',v=>v.toFixed(0)+' cm');
+bindSlider('nodo','nodo',v=>v===0?'desligado':v.toFixed(0)+' %');
+bindSlider('nson','nson',v=>v===0?'desligado':v.toFixed(1).replace('.',',')+' %');
+bindSlider('nfal','nfal',v=>v===0?'desligado':v.toFixed(0)+' %');
+$('seed').onchange=()=>{ resetSim(); };
 
 for(const id of ['x0','y0','t0']) $(id).onchange=()=>{
   start=[+$('x0').value,+$('y0').value,wrap(+$('t0').value*DEG)]; resetSim(); };
@@ -748,13 +782,15 @@ function resultadoTexto(){
   if(status==='arrived') return 'Chegou ao destino';
   if(status==='crash') return 'Colisão';
   if(status==='error') return 'Erro no controlador';
+  if(status==='stopped') return 'Parou a '+Math.round(Math.hypot(goal[0]-pose[0],goal[1]-pose[1]))+' cm do destino';
   return running?'Em andamento':'Interrompido';
 }
 function exportarCsv(){
   const cab=['t','x','y','theta','V','W','dist_destino','sonar_min'];
   for(let k=1;k<=16;k++) cab.push('s'+k);
+  cab.push('x_odom','y_odom','theta_odom');
   const f=v=>typeof v==='number'?String(+v.toFixed(4)):v;
-  const linhas=hist.t.map((tt,i)=>[tt,hist.x[i],hist.y[i],hist.th[i],hist.V[i],hist.W[i],hist.d[i],hist.s[i],...hist.sn[i]].map(f).join(','));
+  const linhas=hist.t.map((tt,i)=>[tt,hist.x[i],hist.y[i],hist.th[i],hist.V[i],hist.W[i],hist.d[i],hist.s[i],...hist.sn[i],hist.xo[i],hist.yo[i],hist.tho[i]].map(f).join(','));
   baixar('p3dx_dados_'+carimbo()+'.csv',new Blob([cab.join(',')+'\n'+linhas.join('\n')+'\n'],{type:'text/csv'}));
 }
 function exportarPng(){
@@ -771,7 +807,7 @@ function exportarPng(){
   g.fillStyle='#000'; g.font=sans(24,600);
   const dfinal=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
   const m1=[['Resultado',resultadoTexto()],['Tempo',t.toFixed(1)+' s'],['Trajeto percorrido',pathLen.toFixed(0)+' cm'],['Distância final ao destino',dfinal.toFixed(0)+' cm'],['Menor leitura de sonar',isFinite(minSonar)?minSonar.toFixed(0)+' cm':'—']];
-  const m2=[['Vmax',P.Vmax+' cm/s'],['Wmax',P.Wmax+' rad/s'],['Amostragem',P.tamos+' s'],['Alcance do sonar',P.smax+' cm'],['Posição inicial',`(${start[0].toFixed(0)}, ${start[1].toFixed(0)}) ${(start[2]/DEG).toFixed(0)}°`],['Destino',`(${goal[0].toFixed(0)}, ${goal[1].toFixed(0)})`]];
+  const m2=[['Vmax',P.Vmax+' cm/s'],['Wmax',P.Wmax+' rad/s'],['Amostragem',P.tamos+' s'],['Alcance do sonar',P.smax+' cm'],['Ruído odometria',P.nodo?P.nodo+' %':'desligado'],['Ruído sonar',P.nson?String(P.nson).replace('.',',')+' %':'desligado'],['Falha de eco',P.nfal?P.nfal+' %':'desligado'],['Posição inicial',`(${start[0].toFixed(0)}, ${start[1].toFixed(0)}) ${(start[2]/DEG).toFixed(0)}°`],['Destino',`(${goal[0].toFixed(0)}, ${goal[1].toFixed(0)})`]];
   let y0=pad+122; const col=Math.floor((Wc-2*pad)/3);
   m1.forEach((r,i)=>{ const x=pad+(i%3)*col, y=y0+Math.floor(i/3)*34; g.font=sans(20); g.fillStyle='#5c5c58'; g.fillText(r[0]+': ',x,y); const w=g.measureText(r[0]+': ').width; g.font=sans(22,600); g.fillStyle='#000'; g.fillText(r[1],x+w,y); });
   y0+=34*2;
