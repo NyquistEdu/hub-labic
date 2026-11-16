@@ -51,12 +51,13 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .plots figcaption{font-size:11px;color:var(--muted);margin-bottom:2px}
 .plots canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
 textarea{width:100%;min-height:290px;resize:vertical;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px;tab-size:2;white-space:pre}
-#err{font-size:12.5px;margin-top:6px;min-height:18px}
+#err{font-size:12.5px;margin-top:6px;min-height:18px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace}
 #err.bad{color:var(--bad)} #err.ok{color:var(--ok)} #err.warn{color:var(--warn)}
 details{font-size:12.5px;color:var(--muted)} details summary{cursor:pointer;color:var(--ink)}
 details code{background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 footer{padding:0 20px 18px;color:var(--muted);font-size:12px}
 </style>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 </head>
 <body>
 <header>
@@ -138,7 +139,7 @@ footer{padding:0 20px 18px;color:var(--muted);font-size:12px}
     </div>
 
     <div class="card" style="margin-top:14px">
-      <h2>Controlador — controle_e_navegacao</h2>
+      <h2>Controlador em Python — controle_e_navegacao</h2>
       <textarea id="code" spellcheck="false"></textarea>
       <div class="row" style="margin-top:8px">
         <button class="primary" id="btnApply">Aplicar controlador</button>
@@ -147,13 +148,12 @@ footer{padding:0 20px 18px;color:var(--muted);font-size:12px}
       <div id="err"></div>
       <details style="margin-top:6px">
         <summary>Variáveis disponíveis</summary>
-        <p><code>Pos</code> = [x, y, θ] (cm, cm, rad) &nbsp; <code>Pdes</code> = [x, y] destino (cm)<br>
-        <code>v_sensor</code> = 16 leituras (cm) &nbsp; <code>angs</code> = 16 ângulos dos sonares (rad)<br>
-        <code>Vmax</code> (cm/s), <code>Wmax</code> (rad/s) &nbsp; <code>tempo</code> = vetor de instantes (s)<br>
-        <code>tamos</code> = período de amostragem (s) &nbsp; <code>i</code> = nº da chamada<br>
-        <code>ocupado(x,y)</code> = true se a célula do mapa (cm) tem obstáculo<br>
-        <code>mem</code> = objeto que persiste entre chamadas (memória do controlador)<br>
-        Devolva <code>[V, W]</code>. θ cresce no sentido anti-horário, eixo x para a frente do robô.</p>
+        <p>A função recebe: <code>Pos</code> = [x, y, θ] (cm, cm, rad) · <code>Pdes</code> = [x, y] destino (cm)<br>
+        <code>v_sensor</code> = lista com as 16 leituras (cm) · <code>angs</code> = lista com os 16 ângulos dos sonares (rad)<br>
+        <code>Vmax</code> (cm/s) · <code>Wmax</code> (rad/s) · <code>tempo</code> = últimos instantes (s) · <code>tamos</code> = período de amostragem (s)<br>
+        <code>i</code> = nº da chamada · <code>mem</code> = dicionário que persiste entre chamadas<br>
+        Disponíveis também: <code>math</code>, <code>numpy</code> (importe com <code>import numpy as np</code>), <code>ocupado(x, y)</code> e <code>normaliza_angulo(a)</code>.<br>
+        Devolva <code>V, W</code>. θ cresce no sentido anti-horário, eixo x para a frente do robô.</p>
       </details>
     </div>
   </div>
@@ -268,40 +268,100 @@ function collides(x,y){
 
 /* ============================== CONTROLADOR ============================== */
 const DEFAULT_CODE =
-`// Controle de posição final + desvio simples de obstáculos
-// (o desvio reduz a velocidade perto de obstáculos)
+`# Controle de posição final + desvio simples de obstáculos.
+# Escreva sua estratégia dentro da função e devolva V, W.
+#
+# Entradas:
+#   Pos = [x, y, theta]      posição (cm) e orientação (rad) do robô
+#   Pdes = [x, y]            destino (cm)
+#   v_sensor                 lista com as 16 leituras dos sonares (cm)
+#   angs                     lista com os 16 ângulos dos sonares (rad)
+#   Vmax, Wmax               limites de velocidade linear (cm/s) e angular (rad/s)
+#   tempo, tamos             últimos instantes (s) e período de amostragem (s)
+#   i, mem                   nº da chamada e dicionário que persiste entre chamadas
+# Disponíveis: math, ocupado(x, y), normaliza_angulo(a)
 
-const d = Math.hypot(Pdes[0]-Pos[0], Pdes[1]-Pos[1]);       // distância ao destino
-const theta_d = Math.atan2(Pdes[1]-Pos[1], Pdes[0]-Pos[0]);  // ângulo do destino
-const theta_e = wrap(Pos[2] - theta_d);                      // erro de orientação
+def controle_e_navegacao(Pos, Pdes, v_sensor, angs, Vmax, Wmax, tempo, tamos, i, mem):
+    d = math.hypot(Pdes[0] - Pos[0], Pdes[1] - Pos[1])         # distância ao destino
+    theta_d = math.atan2(Pdes[1] - Pos[1], Pdes[0] - Pos[0])   # ângulo do destino
+    theta_e = normaliza_angulo(Pos[2] - theta_d)               # erro de orientação
 
-// obstáculo mais próximo entre os sonares da frente (1 a 8)
-let d_obs_min = Infinity, idc = 0;
-for(let k=0;k<8;k++){ if(v_sensor[k] < d_obs_min){ d_obs_min = v_sensor[k]; idc = k+1; } }
-const theta_obs = angs[idc-1];                    // ângulo do sonar mais próximo
-const theta_e_obs = wrap(-(theta_obs + Math.PI));
+    # obstáculo mais próximo entre os sonares da frente (índices 0 a 7)
+    frente = v_sensor[0:8]
+    d_obs_min = min(frente)
+    idc = frente.index(d_obs_min)
+    theta_obs = angs[idc]
+    theta_e_obs = normaliza_angulo(-(theta_obs + math.pi))
 
-// 1) controle simples até o destino
-const Kv = 0.01, Kw = 1.5;
-let V1 =  Vmax * Math.tanh(Kv * d);
-let W1 = -Wmax * Math.tanh(Kw * theta_e);
+    # 1) controle simples até o destino
+    Kv, Kw = 0.01, 1.5
+    V1 = Vmax * math.tanh(Kv * d)
+    W1 = -Wmax * math.tanh(Kw * theta_e)
 
-// 2) evitar obstáculo simples
-let V2 = V1, W2 = W1;
-if(d_obs_min < 100 && d > 100){
-  W2 = -Wmax * Math.tanh(Kw * theta_e_obs);          // gira para longe do obstáculo
-  V2 = V1 * Math.max(0.1, (d_obs_min - 25) / 75);    // e reduz a velocidade perto dele
-  W1 = W2; V1 = V2;
+    # 2) evitar obstáculo: gira para longe dele e reduz a velocidade
+    V2, W2 = V1, W1
+    if d_obs_min < 100 and d > 100:
+        W2 = -Wmax * math.tanh(Kw * theta_e_obs)
+        V2 = V1 * max(0.1, (d_obs_min - 25) / 75)
+        W1, V1 = W2, V2
+
+    # velocidades enviadas ao robô
+    V = (V1 + V2) / 2
+    W = (W1 + W2) / 2
+    if d < 5:
+        V, W = 0, 0
+    return V, W
+`;
+
+const errEl=document.getElementById('err');
+function setMsg(msg,cls){ errEl.textContent=msg; errEl.className=cls||''; }
+
+/* ---- Python no navegador (Pyodide) ---- */
+const PRELUDE = `
+import json, math
+_mem = {}
+def normaliza_angulo(a):
+    return math.atan2(math.sin(a), math.cos(a))
+def _p3dx_call(payload):
+    d = json.loads(payload)
+    r = controle_e_navegacao(d["Pos"], d["Pdes"], d["v_sensor"], d["angs"], d["Vmax"], d["Wmax"], d["tempo"], d["tamos"], d["i"], _mem)
+    try:
+        V, W = r
+    except Exception:
+        raise ValueError("a função deve devolver dois valores: return V, W")
+    V = float(V); W = float(W)
+    if not (math.isfinite(V) and math.isfinite(W)):
+        raise ValueError("V e W precisam ser números finitos")
+    return json.dumps([V, W])
+`;
+let py=null, pyCallFn=null, pyState='loading';
+function pyErr(e){
+  const lines=String((e&&e.message)||e).trim().split('\n').filter(l=>l.trim());
+  let ln=null;
+  for(const l of lines){ const m=l.match(/File "<exec>", line (\d+)(?:, in (\w+))?/); if(m && m[2]!=='_p3dx_call') ln=m[1]; }
+  return (ln?'Linha '+ln+': ':'')+lines[lines.length-1].trim();
 }
+function callPy(s){
+  return JSON.parse(pyCallFn(JSON.stringify({Pos:s.Pos,Pdes:s.Pdes,v_sensor:s.v_sensor,angs:s.angs,
+    Vmax:s.Vmax,Wmax:s.Wmax,tempo:s.tempo.slice(-50),tamos:s.tamos,i:s.i})));
+}
+async function initPy(){
+  setMsg('Carregando Python… (só na primeira vez, pode levar alguns segundos)','warn'); syncRun();
+  try{
+    py=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/'});
+    await py.loadPackage('numpy');
+    py.runPython(PRELUDE);
+    py.globals.set('ocupado',(x,y)=>!!isOcc(x,y));
+    pyCallFn=py.globals.get('_p3dx_call');
+    pyState='ready'; syncRun(); compile();
+  }catch(e){
+    pyState='failed'; ctrlFn=defaultCtrl; usingFallback=true; syncRun();
+    setMsg('Não foi possível carregar o Python neste navegador (verifique a conexão). Usando o controlador de exemplo embutido.','warn');
+  }
+}
+function resetMem(){ if(pyState==='ready') py.runPython('_mem.clear()'); }
 
-// velocidades enviadas ao robô
-let V = (V1 + V2) / 2;
-let W = (W1 + W2) / 2;
-if(d < 5){ V = 0; W = 0; }
-
-return [V, W];`;
-
-let ctrlFn=null, usingFallback=false;
+let ctrlFn=defaultCtrl, usingFallback=true;
 function defaultCtrl(s){
   const {Pos,Pdes,v_sensor,angs,Vmax,Wmax}=s;
   const d=Math.hypot(Pdes[0]-Pos[0],Pdes[1]-Pos[1]);
@@ -312,27 +372,20 @@ function defaultCtrl(s){
   if(dm<100&&d>100){ W2=-Wmax*Math.tanh(Kw*teo); V2=V1*Math.max(.1,(dm-25)/75); W1=W2; V1=V2; }
   let V=(V1+V2)/2, W=(W1+W2)/2; if(d<5){V=0;W=0;} return [V,W];
 }
-const errEl=document.getElementById('err');
-function setMsg(msg,cls){ errEl.textContent=msg; errEl.className=cls||''; }
 
 function compile(){
-  const src=document.getElementById('code').value;
+  if(pyState==='loading'){ setMsg('Carregando Python…','warn'); return false; }
+  if(pyState!=='ready'){ ctrlFn=defaultCtrl; usingFallback=true; return false; }
   try{
-    const f=new Function('s','mem','wrap',
-      'const {Pos,Pdes,v_sensor,angs,Vmax,Wmax,tempo,tamos,i,ocupado}=s;\n'+src);
-    // teste de fumaça
-    const r=f({Pos:[0,0,0],Pdes:[100,0],v_sensor:new Array(16).fill(400),angs:ANGS,Vmax:50,Wmax:1.5,tempo:[0],tamos:.1,i:1,ocupado:()=>false},{},wrap);
-    if(!Array.isArray(r)||r.length<2||!isFinite(r[0])||!isFinite(r[1])) throw new Error('o controlador deve devolver [V, W] com números finitos.');
-    ctrlFn=(s)=>f(s,mem,wrap); usingFallback=false;
+    py.runPython("globals().pop('controle_e_navegacao', None)");
+    py.runPython(document.getElementById('code').value);
+    callPy({Pos:[0,0,0],Pdes:[100,0],v_sensor:new Array(16).fill(400),angs:ANGS,Vmax:50,Wmax:1.5,tempo:[0],tamos:.1,i:1}); // teste
+    py.runPython('_mem.clear()');
+    ctrlFn=callPy; usingFallback=false;
     setMsg('Controlador aplicado.','ok'); return true;
   }catch(e){
-    if(e instanceof EvalError || /unsafe-eval|Content Security/i.test(String(e.message))){
-      ctrlFn=defaultCtrl; usingFallback=true;
-      setMsg('Este navegador bloqueia código editável; usando o controlador de exemplo embutido.','warn');
-    } else {
-      ctrlFn=defaultCtrl; usingFallback=true;
-      setMsg('Erro no controlador: '+e.message+' — usando o exemplo até corrigir.','bad');
-    }
+    ctrlFn=defaultCtrl; usingFallback=true;
+    setMsg('Erro no código Python:\n'+pyErr(e)+'\n\nUsando o exemplo até você corrigir.','bad');
     return false;
   }
 }
@@ -347,7 +400,7 @@ function stepSim(){
   try{
     out=ctrlFn({Pos:[pose[0],pose[1],pose[2]],Pdes:[goal[0],goal[1]],v_sensor:vs.slice(),angs:ANGS.slice(),
       Vmax:P.Vmax,Wmax:P.Wmax,tempo:tempo,tamos:dt,i:iter,ocupado:(x,y)=>!!isOcc(x,y)});
-  }catch(e){ setMsg('Erro em tempo de execução: '+e.message,'bad'); status='error'; running=false; syncRun(); return; }
+  }catch(e){ setMsg('Erro em tempo de execução:\n'+pyErr(e),'bad'); status='error'; running=false; syncRun(); return; }
   let V=+out[0], Wv=+out[1];
   if(!isFinite(V)||!isFinite(Wv)){ V=0; Wv=0; }
   V=Math.max(-P.Vmax,Math.min(P.Vmax,V)); Wv=Math.max(-P.Wmax,Math.min(P.Wmax,Wv));
@@ -469,9 +522,9 @@ function frame(ts){
 
 /* ============================== CONTROLES ============================== */
 const $=id=>document.getElementById(id);
-function syncRun(){ $('btnRun').textContent=running?'⏸ Pausar':'▶ Iniciar'; }
+function syncRun(){ const b=$('btnRun'); b.disabled=(pyState==='loading'); b.textContent=pyState==='loading'?'⏳ Carregando Python…':running?'⏸ Pausar':'▶ Iniciar'; }
 function resetSim(){
-  running=false; status='stop'; pose=start.slice(); t=0; iter=0; mem={}; acc=0;
+  running=false; status='stop'; pose=start.slice(); t=0; iter=0; resetMem(); acc=0;
   trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[]}; lastV=lastW=0;
   vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
   syncRun(); syncInputs();
@@ -489,11 +542,11 @@ $('btnRun').onclick=()=>{
   syncRun();
 };
 $('btnReset').onclick=()=>resetSim();
-$('btnApply').onclick=()=>{ mem={}; compile(); };
-$('btnRestore').onclick=()=>{ $('code').value=DEFAULT_CODE; mem={}; compile(); };
+$('btnApply').onclick=()=>{ compile(); };
+$('btnRestore').onclick=()=>{ $('code').value=DEFAULT_CODE; compile(); };
 $('code').addEventListener('keydown',e=>{
   if(e.key==='Tab'){ e.preventDefault(); const a=e.target, s=a.selectionStart;
-    a.value=a.value.slice(0,s)+'  '+a.value.slice(a.selectionEnd); a.selectionStart=a.selectionEnd=s+2; }
+    a.value=a.value.slice(0,s)+'    '+a.value.slice(a.selectionEnd); a.selectionStart=a.selectionEnd=s+4; }
 });
 const sel=$('selMap'); for(const k in PRESETS){ const o=document.createElement('option'); o.value=k; o.textContent=PRESETS[k].nome; sel.appendChild(o); }
 sel.onchange=()=>loadPreset(sel.value);
@@ -551,7 +604,7 @@ $('fileMap').onchange=e=>{
 /* ============================== INÍCIO ============================== */
 $('code').value=DEFAULT_CODE;
 loadPreset('lab');
-compile(); setMsg('');
+syncRun(); initPy();
 requestAnimationFrame(frame);
 </script>
 </body>
