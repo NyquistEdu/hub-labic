@@ -506,6 +506,7 @@ function compile(){
     py.globals.set('MAPA_LARGURA',W); py.globals.set('MAPA_ALTURA',H);
     py.runPython("globals().pop('controle_e_navegacao', None)");
     py.runPython(document.getElementById('code').value);
+    py.runPython('_mem.clear()');   // o teste abaixo não pode herdar o mem de uma execução anterior
     callPy({Pos:[0,0,0],Pdes:[100,0],v_sensor:new Array(16).fill(400),angs:ANGS,Vmax:50,Wmax:1.5,tempo:[0],tamos:.1,i:1}); // teste
     py.runPython('_mem.clear()'); limpaSaida(); marcas={pontos:[],tam:4,linha:[]};
     ctrlFn=callPy; usingFallback=false;
