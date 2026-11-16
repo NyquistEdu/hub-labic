@@ -153,7 +153,8 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <div class="stat"><b>Posição</b><span id="tPos">—</span></div>
         <div class="stat"><b>Dist. ao destino</b><span id="tDist">—</span></div>
         <div class="stat"><b>Trajeto percorrido</b><span id="tPath">0 cm</span></div>
-        <div class="stat"><b>Menor leitura de sonar</b><span id="tSon">—</span></div>
+        <div class="stat"><b>Menor sonar (real)</b><span id="tSon">—</span></div>
+        <div class="stat"><b>Menor sonar (lido)</b><span id="tSonN">—</span></div>
       </div>
     </div>
 
@@ -163,7 +164,7 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <figure><figcaption>V — velocidade linear (cm/s)</figcaption><canvas id="pV" width="520" height="190"></canvas></figure>
         <figure><figcaption>W — velocidade angular (rad/s)</figcaption><canvas id="pW" width="520" height="190"></canvas></figure>
         <figure><figcaption>Distância ao destino (cm)</figcaption><canvas id="pD" width="520" height="190"></canvas></figure>
-        <figure><figcaption>Menor leitura dos sonares (cm)</figcaption><canvas id="pS" width="520" height="190"></canvas></figure>
+        <figure><figcaption>Menor leitura dos sonares (cm) — real (preto) e lida (cinza)</figcaption><canvas id="pS" width="520" height="190"></canvas></figure>
       </div>
     </div>
   </div>
@@ -343,9 +344,9 @@ function rngReset(){ const e=document.getElementById('seed'); rngS=(parseInt(e&&
 function rnd(){ rngS=(rngS+0x6D2B79F5)|0; let q=Math.imul(rngS^(rngS>>>15),1|rngS); q=(q+Math.imul(q^(q>>>7),61|q))^q; return ((q^(q>>>14))>>>0)/4294967296; }
 function gauss(){ let u=0; while(!u) u=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*rnd()); }
 let vsTrue=new Array(16).fill(400);
-let trail=[], hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]};
+let trail=[], hist={t:[],V:[],W:[],d:[],s:[],sr:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]};
 let lastV=0, lastW=0, acc=0, lastTs=null;
-let pathLen=0, minSonar=Infinity, mapName='Laboratório';
+let pathLen=0, minSonar=Infinity, minSonarN=Infinity, mapName='Laboratório';
 let marcas={pontos:[],tam:4,linha:[]};
 
 function sense(){
@@ -544,8 +545,8 @@ function stepSim(){
   }
   trail.push([pose[0],pose[1]]); odomTrail.push([odom[0],odom[1]]);
   const d=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
-  const smin=Math.min(...vs); minSonar=Math.min(minSonar,Math.min(...vsTrue));
-  hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(smin);
+  const smin=Math.min(...vs); minSonar=Math.min(minSonar,Math.min(...vsTrue)); minSonarN=Math.min(minSonarN,smin);
+  hist.t.push(+t.toFixed(3)); hist.V.push(V); hist.W.push(Wv); hist.d.push(d); hist.s.push(smin); hist.sr.push(Math.min(...vsTrue));
   hist.x.push(pose[0]); hist.y.push(pose[1]); hist.th.push(pose[2]); hist.sn.push(vs.slice()); hist.xo.push(odom[0]); hist.yo.push(odom[1]); hist.tho.push(odom[2]);
   if(hist.t.length>20000){ for(const k in hist) hist[k].shift(); }
   if(status!=='crash' && d<5){ status='arrived'; running=false; syncRun(); }
@@ -635,9 +636,9 @@ function plotTo(c,series,colors,th,xs){
     g.stroke();
   });
 }
-const PLOTS=[['pV','V',"V — velocidade linear (cm/s)"],['pW','W',"W — velocidade angular (rad/s)"],['pD','d',"Distância ao destino (cm)"],['pS','s',"Menor leitura dos sonares (cm)"]];
+const PLOTS=[['pV','V',"V — velocidade linear (cm/s)"],['pW','W',"W — velocidade angular (rad/s)"],['pD','d',"Distância ao destino (cm)"],['pS',['sr','s'],"Menor leitura dos sonares (cm) — real e lida"]];
 function drawPlots(){
-  for(const [id,key] of PLOTS) plotTo(document.getElementById(id),[hist[key]],[COR[TEMA].inkHex],TEMA,hist.t);
+  for(const [id,key] of PLOTS) { const ks=[].concat(key); plotTo(document.getElementById(id),ks.map(k=>hist[k]),ks.length>1?[COR[TEMA].inkHex,COR[TEMA].grafite]:[COR[TEMA].inkHex],TEMA,hist.t); }
 }
 
 const sonarEl=document.getElementById('sonars');
@@ -654,6 +655,7 @@ function updateInfo(){
   document.getElementById('tDist').textContent=fmt(d,0)+' cm';
   document.getElementById('tPath').textContent=fmt(pathLen,0)+' cm';
   document.getElementById('tSon').textContent=isFinite(minSonar)?fmt(minSonar,0)+' cm':'—';
+  document.getElementById('tSonN').textContent=isFinite(minSonarN)?fmt(minSonarN,0)+' cm':'—';
   [...sonarEl.children].forEach((e,k)=>{
     const v=vs[k], near=Math.max(0,Math.min(1,1-(v-SONAR_MIN)/200));
     e.lastChild.textContent=iter?Math.round(v):'—';
@@ -680,8 +682,8 @@ const $=id=>document.getElementById(id);
 function syncRun(){ const b=$('btnRun'); b.disabled=(pyState==='loading'); b.textContent=pyState==='loading'?'⏳ Carregando Python…':running?'⏸ Pausar':'▶ Iniciar'; }
 function resetSim(){
   running=false; status='stop'; pose=start.slice(); odom=start.slice(); odomTrail=[[pose[0],pose[1]]]; idleN=0; rngReset(); t=0; iter=0; resetMem(); acc=0;
-  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]}; lastV=lastW=0;
-  pathLen=0; minSonar=Infinity; marcas={pontos:[],tam:4,linha:[]}; limpaSaida();
+  trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],sr:[],x:[],y:[],th:[],sn:[],xo:[],yo:[],tho:[]}; lastV=lastW=0;
+  pathLen=0; minSonar=Infinity; minSonarN=Infinity; marcas={pontos:[],tam:4,linha:[]}; limpaSaida();
   vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
   syncRun(); syncInputs();
 }
@@ -788,9 +790,9 @@ function resultadoTexto(){
 function exportarCsv(){
   const cab=['t','x','y','theta','V','W','dist_destino','sonar_min'];
   for(let k=1;k<=16;k++) cab.push('s'+k);
-  cab.push('x_odom','y_odom','theta_odom');
+  cab.push('x_odom','y_odom','theta_odom','sonar_min_real');
   const f=v=>typeof v==='number'?String(+v.toFixed(4)):v;
-  const linhas=hist.t.map((tt,i)=>[tt,hist.x[i],hist.y[i],hist.th[i],hist.V[i],hist.W[i],hist.d[i],hist.s[i],...hist.sn[i],hist.xo[i],hist.yo[i],hist.tho[i]].map(f).join(','));
+  const linhas=hist.t.map((tt,i)=>[tt,hist.x[i],hist.y[i],hist.th[i],hist.V[i],hist.W[i],hist.d[i],hist.s[i],...hist.sn[i],hist.xo[i],hist.yo[i],hist.tho[i],hist.sr[i]].map(f).join(','));
   baixar('p3dx_dados_'+carimbo()+'.csv',new Blob([cab.join(',')+'\n'+linhas.join('\n')+'\n'],{type:'text/csv'}));
 }
 function exportarPng(){
@@ -806,7 +808,7 @@ function exportarPng(){
   g.font=sans(22); g.fillStyle='#5c5c58'; g.fillText(new Date().toLocaleString('pt-BR')+'  ·  Mapa: '+mapName,pad,pad+80);
   g.fillStyle='#000'; g.font=sans(24,600);
   const dfinal=Math.hypot(goal[0]-pose[0],goal[1]-pose[1]);
-  const m1=[['Resultado',resultadoTexto()],['Tempo',t.toFixed(1)+' s'],['Trajeto percorrido',pathLen.toFixed(0)+' cm'],['Distância final ao destino',dfinal.toFixed(0)+' cm'],['Menor leitura de sonar',isFinite(minSonar)?minSonar.toFixed(0)+' cm':'—']];
+  const m1=[['Resultado',resultadoTexto()],['Tempo',t.toFixed(1)+' s'],['Trajeto percorrido',pathLen.toFixed(0)+' cm'],['Distância final ao destino',dfinal.toFixed(0)+' cm'],['Menor sonar (real)',isFinite(minSonar)?minSonar.toFixed(0)+' cm':'—'],['Menor sonar (lido)',isFinite(minSonarN)?minSonarN.toFixed(0)+' cm':'—']];
   const m2=[['Vmax',P.Vmax+' cm/s'],['Wmax',P.Wmax+' rad/s'],['Amostragem',P.tamos+' s'],['Alcance do sonar',P.smax+' cm'],['Ruído odometria',P.nodo?P.nodo+' %':'desligado'],['Ruído sonar',P.nson?String(P.nson).replace('.',',')+' %':'desligado'],['Falha de eco',P.nfal?P.nfal+' %':'desligado'],['Posição inicial',`(${start[0].toFixed(0)}, ${start[1].toFixed(0)}) ${(start[2]/DEG).toFixed(0)}°`],['Destino',`(${goal[0].toFixed(0)}, ${goal[1].toFixed(0)})`]];
   let y0=pad+122; const col=Math.floor((Wc-2*pad)/3);
   m1.forEach((r,i)=>{ const x=pad+(i%3)*col, y=y0+Math.floor(i/3)*34; g.font=sans(20); g.fillStyle='#5c5c58'; g.fillText(r[0]+': ',x,y); const w=g.measureText(r[0]+': ').width; g.font=sans(22,600); g.fillStyle='#000'; g.fillText(r[1],x+w,y); });
@@ -822,7 +824,7 @@ function exportarPng(){
   PLOTS.forEach(([id,key,tit],i)=>{
     const x=pad+(i%2)*(pw+30), y=py0+Math.floor(i/2)*(ph+44);
     g.font=sans(20,600); g.fillStyle='#000'; g.fillText(tit,x,y+20);
-    const c=document.createElement('canvas'); c.width=520; c.height=190; plotTo(c,[hist[key]],['#000'],th,hist.t);
+    const c=document.createElement('canvas'); c.width=520; c.height=190; { const ks=[].concat(key); plotTo(c,ks.map(k=>hist[k]),ks.length>1?['#000','#8a8a85']:['#000'],th,hist.t); }
     g.drawImage(c,x,y+30,pw,ph); g.strokeStyle='#000'; g.lineWidth=2; g.strokeRect(x,y+30,pw,ph);
   });
   e.toBlob(b=>baixar('p3dx_relatorio_'+carimbo()+'.png',b),'image/png');
