@@ -158,7 +158,7 @@ footer{padding:0 20px 18px;color:var(--muted);font-size:12px}
     </div>
   </div>
 </div>
-<footer>Réplica web do simulador P3DX v3.2 (MATLAB) — material de Stephanie Kamarry · IFS / LABIC. Sonar: 3 raios por feixe (±7,5°), leitura mínima de 12 cm.</footer>
+<footer>Material de Stephanie Kamarry · IFS / LABIC. Sonar: 3 raios por feixe (±7,5°), leitura mínima de 12 cm.</footer>
 
 <script>
 "use strict";
@@ -269,8 +269,7 @@ function collides(x,y){
 /* ============================== CONTROLADOR ============================== */
 const DEFAULT_CODE =
 `// Controle de posição final + desvio simples de obstáculos
-// (baseado no exemplo controle_e_navegacao.m — v3.2; o desvio foi ajustado
-//  para reduzir a velocidade perto de obstáculos)
+// (o desvio reduz a velocidade perto de obstáculos)
 
 const d = Math.hypot(Pdes[0]-Pos[0], Pdes[1]-Pos[1]);       // distância ao destino
 const theta_d = Math.atan2(Pdes[1]-Pos[1], Pdes[0]-Pos[0]);  // ângulo do destino
