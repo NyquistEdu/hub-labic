@@ -83,6 +83,7 @@ input[type=range]{accent-color:var(--tinta);width:100%}
 .plots figcaption{font-size:.8rem;font-weight:600;margin-bottom:.2rem}
 .plots canvas{width:100%;height:auto;display:block;border:2px solid var(--tinta);border-radius:12px;background:var(--papel)}
 textarea{width:100%;min-height:300px;resize:vertical;font:13px/1.5 var(--mono);background:var(--nevoa);color:var(--tinta);border:2px solid var(--tinta);border-radius:12px;padding:.7rem;tab-size:4;white-space:pre}
+#saida{margin:0;min-height:3rem;max-height:240px;overflow:auto;font:12.5px/1.45 var(--mono);background:var(--nevoa);border:2px solid var(--tinta);border-radius:12px;padding:.5rem .7rem;white-space:pre-wrap}
 #err{font-size:.85rem;margin-top:.6rem;min-height:1.2rem;white-space:pre-wrap;font-family:var(--mono)}
 #err.bad{border:2px solid var(--tinta);border-radius:12px;padding:.5rem .7rem;background:var(--nevoa);font-weight:600}
 #err.ok,#err.warn{color:var(--grafite)}
@@ -207,10 +208,17 @@ details code{background:var(--nevoa);border:1px solid var(--linha);border-radius
         <code>v_sensor</code> = lista com as 16 leituras (cm) · <code>angs</code> = lista com os 16 ângulos dos sonares (rad)<br>
         <code>Vmax</code> (cm/s) · <code>Wmax</code> (rad/s) · <code>tempo</code> = últimos instantes (s) · <code>tamos</code> = período de amostragem (s)<br>
         <code>i</code> = nº da chamada · <code>mem</code> = dicionário que persiste entre chamadas<br>
-        Disponíveis também: <code>math</code>, <code>numpy</code> (importe com <code>import numpy as np</code>), <code>ocupado(x, y)</code> e <code>normaliza_angulo(a)</code>.<br>
+        Disponíveis também: <code>MAPA_LARGURA</code> e <code>MAPA_ALTURA</code> (cm), <code>math</code>, <code>numpy</code> (importe com <code>import numpy as np</code>), <code>ocupado(x, y)</code> e <code>normaliza_angulo(a)</code>.<br>
         Para desenhar no mapa: <code>marcar_pontos(lista, tamanho=4)</code>, <code>marcar_linha(lista)</code> e <code>limpar_marcas()</code> (listas de pares [x, y] em cm).<br>
         Devolva <code>V, W</code>. θ cresce no sentido anti-horário, eixo x para a frente do robô.</p>
       </details>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Saída do programa</h2>
+      <pre id="saida" aria-live="polite"></pre>
+      <div class="row" style="margin-top:8px"><button id="btnLimpaSaida">Limpar saída</button></div>
+      <details style="margin-top:6px"><summary>Como usar</summary><p>Tudo o que o seu código mandar com <code>print(...)</code> aparece aqui. Como a função roda a cada passo, imprima só de vez em quando, por exemplo <code>if i % 20 == 0: print(...)</code>.</p></details>
     </div>
   </div>
 </div>
@@ -421,6 +429,12 @@ def marcar_linha(pontos):
 def limpar_marcas():
     _js_limpar()
 `;
+let saidaLinhas=[];
+function escreve(txt){
+  saidaLinhas.push(...String(txt).split('\n')); if(saidaLinhas.length>300) saidaLinhas=saidaLinhas.slice(-300);
+  const e=document.getElementById('saida'); if(e){ e.textContent=saidaLinhas.join('\n'); e.scrollTop=e.scrollHeight; }
+}
+function limpaSaida(){ saidaLinhas=[]; const e=document.getElementById('saida'); if(e) e.textContent=''; }
 let py=null, pyCallFn=null, pyState='loading';
 function pyErr(e){
   const lines=String((e&&e.message)||e).trim().split('\n').filter(l=>l.trim());
@@ -437,8 +451,10 @@ async function initPy(){
   try{
     py=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/'});
     await py.loadPackage('numpy');
+    py.setStdout({batched:escreve}); py.setStderr({batched:escreve});
     py.runPython(PRELUDE);
     py.globals.set('ocupado',(x,y)=>!!isOcc(x,y));
+    py.globals.set('MAPA_LARGURA',W); py.globals.set('MAPA_ALTURA',H);
     py.globals.set('_js_pontos',(j,tam)=>{ marcas.pontos=JSON.parse(j); marcas.tam=tam; });
     py.globals.set('_js_linha',(j)=>{ marcas.linha=JSON.parse(j); });
     py.globals.set('_js_limpar',()=>{ marcas={pontos:[],tam:4,linha:[]}; });
@@ -467,10 +483,11 @@ function compile(){
   if(pyState==='loading'){ setMsg('Carregando Python…','warn'); return false; }
   if(pyState!=='ready'){ ctrlFn=defaultCtrl; usingFallback=true; return false; }
   try{
+    py.globals.set('MAPA_LARGURA',W); py.globals.set('MAPA_ALTURA',H);
     py.runPython("globals().pop('controle_e_navegacao', None)");
     py.runPython(document.getElementById('code').value);
     callPy({Pos:[0,0,0],Pdes:[100,0],v_sensor:new Array(16).fill(400),angs:ANGS,Vmax:50,Wmax:1.5,tempo:[0],tamos:.1,i:1}); // teste
-    py.runPython('_mem.clear()');
+    py.runPython('_mem.clear()'); limpaSaida(); marcas={pontos:[],tam:4,linha:[]};
     ctrlFn=callPy; usingFallback=false;
     setMsg('Controlador aplicado.','ok'); return true;
   }catch(e){
@@ -631,7 +648,7 @@ function syncRun(){ const b=$('btnRun'); b.disabled=(pyState==='loading'); b.tex
 function resetSim(){
   running=false; status='stop'; pose=start.slice(); t=0; iter=0; resetMem(); acc=0;
   trail=[[pose[0],pose[1]]]; hist={t:[],V:[],W:[],d:[],s:[],x:[],y:[],th:[],sn:[]}; lastV=lastW=0;
-  pathLen=0; minSonar=Infinity; marcas={pontos:[],tam:4,linha:[]};
+  pathLen=0; minSonar=Infinity; marcas={pontos:[],tam:4,linha:[]}; limpaSaida();
   vs=new Array(16).fill(P.smax); rays=[]; sense(); iter=0;
   syncRun(); syncInputs();
 }
@@ -762,6 +779,7 @@ function exportarPng(){
 }
 document.getElementById('btnPng').onclick=exportarPng;
 document.getElementById('btnCsv').onclick=exportarCsv;
+document.getElementById('btnLimpaSaida').onclick=limpaSaida;
 document.getElementById('btnTema').onclick=()=>aplicaTema(TEMA==='escuro'?'claro':'escuro',true);
 
 /* ============================== INÍCIO ============================== */
