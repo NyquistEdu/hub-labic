@@ -104,7 +104,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
   <div class="wrap">
     <h1>Painel de Acompanhamento dos Desafios Tecnológicos</h1>
     <p>Programa Bolsa Futuro Digital – Capacita 04 · Fase 2 · IFS Campus Aracaju e Lagarto</p>
-    <p>Coordenação: Profª. Stephanie Kamarry, Dra. · LABIC-IFS</p>
+    <p>Coordenação: Profª. Stephanie Kamarry, Dra. e Prof. José Augusto Andrade Filho, Dr.</p>
     <div class="stats" id="stats"></div>
   </div>
 </header>
@@ -112,7 +112,6 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
 <nav class="tabs" aria-label="Seções">
   <div class="wrap" role="tablist">
     <button role="tab" data-tab="relatorios" aria-selected="true">Relatórios por desafio</button>
-    <button role="tab" data-tab="linha-do-tempo" aria-selected="false">Linha do tempo</button>
     <button role="tab" data-tab="esclarecimentos" aria-selected="false">Pontos para conferência</button>
   </div>
 </nav>
@@ -143,25 +142,12 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
       <span><span class="badge b-ver">Em verificação</span> conferindo o registro do envio</span>
     </div>
   </section>
-
-  <section class="panel" id="p-linha-do-tempo">
-    <h2>Linha do tempo das comunicações</h2>
-    <p class="lead">Registro cronológico dos envios do IFS e das mensagens do CEPEDI, com data, hora e destinatários.</p>
-    <div class="filters" id="tlfilters" role="group" aria-label="Filtrar eventos">
-      <button class="chip-btn" data-k="todos" aria-pressed="true">Todos</button>
-      <button class="chip-btn" data-k="ifs" aria-pressed="false">Envios do IFS</button>
-      <button class="chip-btn" data-k="cepedi" aria-pressed="false">Mensagens do CEPEDI</button>
-      <button class="chip-btn" data-k="whats" aria-pressed="false">WhatsApp</button>
-    </div>
-    <div class="tl" id="tl"></div>
-  </section>
-
   <section class="panel" id="p-esclarecimentos">
     <h2>Pontos para conferência</h2>
     <p class="lead">Itens que pedimos ao CEPEDI que confira, com base nos registros desta página.</p>
     <div class="card">
       <h3>1. Meses 01 e 02 enviados dentro do prazo</h3>
-      <p>Os relatórios de maio (mês 01) e de junho (mês 02) dos dois polos foram enviados entre 29/05 e 31/07/2026, dentro do prazo final de 31/07/2026. Os e-mails de envio estão na linha do tempo.</p>
+      <p>Os relatórios de maio (mês 01) e de junho (mês 02) dos dois polos foram enviados entre 29/05 e 31/07/2026, dentro do prazo final de 31/07/2026.</p>
     </div>
     <div class="card">
       <h3>2. EasyRide aparece duas vezes na lista de 16/11</h3>
@@ -242,72 +228,6 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
       m2:{s:"arquivo", data:"24/07/2026", ev:"e4", pdf:"relatorios/mes02-lag-accesssim-g1.pdf"}, m3:{s:"verificacao"}}
   ];
 
-  /* kind: ifs | cepedi | whats */
-  var E = [
-    {id:"e1", k:"ifs", dt:"29/05/2026", hr:"08:24", titulo:"Relatórios do mês 01 (maio) – polo Lagarto",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto, Agnaldo Freire, Jorge Lima", cc:"Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios de maio de cada desafio do polo Lagarto, por links de acesso.",
-      lista:["Ada","Caixa Mágica","EasyRide","Sons e Palavras","AquaFeed","LABIC","AccessSim"]},
-    {id:"e2", k:"ifs", dt:"05/06/2026", hr:"15:55", titulo:"Relatórios do mês 01 (maio) – polo Aracaju",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto, Agnaldo Freire, Jorge Lima", cc:"Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios de maio dos desafios do polo Aracaju (assunto: \"Relatórios Fase 02 - Polo Aracaju\"), 6 anexos.",
-      lista:["AccessSim","Sons e Palavras","Caixa Mágica","LABIC G2","EasyRide G2 AJU","AquaFeed G2"],
-      note:"Os 6 PDFs estão disponíveis na aba Relatórios. O relatório da Ada de maio foi enviado no e-mail de 29/05."},
-    {id:"e3", k:"cepedi", dt:"05/06/2026", hr:"20:00", titulo:"CEPEDI apresenta dois pontos sobre os relatórios de maio",
-      de:"Aprigio Augusto (CEPEDI)", para:"Polos Aracaju e Lagarto, Augusto, Agnaldo, Jorge",
-      txt:"Assunto: \"Problemas detectados nos relatórios do mês de maio\". Um aluno do AquaFeed G2 Aju com 12 horas apontadas, sem Termo de Outorga assinado segundo o setor financeiro do CEPEDI; e uma aluna do Caixa Mágica G1 LAG com zero hora em maio.",
-      note:"A mensagem chegou 4 horas e 5 minutos depois do envio dos relatórios de Aracaju (05/06, 15:55)."},
-    {id:"e4", k:"ifs", dt:"24/07/2026", hr:"17:12", titulo:"Relatórios do mês 02 (junho) – polo Lagarto",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto, Agnaldo Freire, Jorge Lima", cc:"Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios de junho de cada desafio do polo Lagarto, 7 anexos (9 MB), com os documentos assinados."},
-    {id:"e5", k:"ifs", dt:"31/07/2026", hr:"09:43", titulo:"Relatórios do mês 02 (junho) – polo Aracaju",
-      de:"Stephanie Kamarry (IFS)", para:"Agnaldo Freire, Aprigio Augusto, Jorge Lima", cc:"Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios de junho de cada desafio do polo Aracaju, 7 anexos (6 MB).",
-      note:"Enviado no dia 31/07/2026, data do prazo final."},
-    {id:"e6", k:"cepedi", dt:"07/09/2026", hr:"00:01", titulo:"CEPEDI responde sobre os relatórios de junho do Lagarto",
-      de:"Aprigio Augusto (CEPEDI)", para:"Stephanie Kamarry", cc:"Jorge Lima, Jose Augusto Andrade Filho",
-      txt:"Agradece as informações e aponta três itens no polo Lagarto: acumulado de horas de um aluno do AquaFeed G1 LAG; acumulado e carga horária de uma aluna do Caixa Mágica G1 LAG; acumulado e grafia de um nome no EasyRide.",
-      gap:"45 dias após o envio de 24/07"},
-    {id:"e7", k:"ifs", dt:"07/09/2026", hr:"", aprox:true, titulo:"IFS responde ponto a ponto",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto", cc:"",
-      txt:"Assunto: \"Relatórios - Fase 02 - Mês 02 - Polo Lagarto\". AquaFeed G1 LAG: acumulado de um aluno estava errado e o relatório corrigido foi anexado. Caixa Mágica G1 LAG: acumulado verificado e correto; a aluna com carga zerada executou tarefa apenas no terceiro mês. EasyRide: acumulado verificado e correto; o nome foi grafado corretamente no segundo relatório.",
-      note:"Data e hora exatas serão inseridas ao conferir o e-mail."},
-    {id:"e8", k:"ifs", dt:"08/09/2026", hr:"09:19", titulo:"Relatórios do mês 03 (julho) – polo Lagarto",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto, Agnaldo Freire, Jorge Lima", cc:"Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios de julho de cada desafio do polo Lagarto, 5 anexos (6 MB).",
-      lista:["Relatório ADA – Julho","Relatório – Julho – 29 – Lag…","Relatório – AquaFeed – G1…","(demais anexos a conferir)"]},
-    {id:"e9", k:"whats", dt:"31/10/2026", hr:"", titulo:"Formulário do desafio Ada preenchido",
-      de:"IFS", para:"Formulário do CEPEDI",
-      txt:"Preenchimento do formulário de informações do desafio Ada no último dia do prazo, conforme informado ao CEPEDI por WhatsApp em 04/11.",
-      note:"Comprovante de resposta do formulário a anexar."},
-    {id:"e10", k:"cepedi", dt:"03/11/2026", hr:"19:58", titulo:"CEPEDI pede esclarecimentos sobre o mês 03 do AquaFeed G1 LAG",
-      de:"Aprigio Augusto (CEPEDI)", para:"Stephanie Kamarry", cc:"Agnaldo Freire, Jorge Lima, Jose Augusto Andrade Filho",
-      txt:"Aponta um aluno que consta nos meses 1 e 2 e não consta no mês 3, sem informação de abandono, e divergência entre o total de horas e o informado antes para três alunos.",
-      gap:"56 dias após o envio de 08/09"},
-    {id:"e11", k:"cepedi", dt:"04/11/2026", hr:"11:12", titulo:"Cobrança de formulário: Ada e LABIC G2 AJU",
-      de:"Jorge Lima (CEPEDI)", para:"Coordenador de Aracaju", cc:"Aprigio Augusto, equipe de capacitação",
-      txt:"Assunto: \"URGENTE — Preenchimento das informações pendentes dos desafios tecnológicos\". Solicita o preenchimento do formulário dos desafios Projeto Ada e LABIC G2 AJU. Encaminhado ao IFS às 12:57."},
-    {id:"e12", k:"whats", dt:"04/11/2026", hr:"13:41", titulo:"IFS responde por WhatsApp em 30 minutos",
-      de:"Stephanie Kamarry (IFS)", para:"Jorge Lima (CEPEDI)",
-      txt:"Informa que os formulários dos dois desafios foram preenchidos (Ada em 31/10) e que todos os desafios de Aracaju e Lagarto estavam preenchidos."},
-    {id:"e13", k:"whats", dt:"05/11/2026", hr:"16:14", titulo:"CEPEDI confirma que o formulário estava preenchido",
-      de:"Jorge Lima (CEPEDI)", para:"Stephanie Kamarry (IFS)",
-      txt:"Confirma que as informações dos desafios foram preenchidas e que houve um engano, pela inclusão inicial de um aluno que depois foi desligado."},
-    {id:"e14", k:"ifs", dt:"06/11/2026", hr:"09:25", titulo:"Correção do mês 03 do AquaFeed G1 LAG",
-      de:"Stephanie Kamarry (IFS)", para:"Aprigio Augusto", cc:"Agnaldo Freire, Jorge Lima, Jose Augusto Andrade Filho",
-      txt:"Envio dos relatórios corrigidos (3 anexos), conforme as observações e o Edital do Bolsa Futuro Digital de 2025, com abertura para novos ajustes."},
-    {id:"e15", k:"cepedi", dt:"06/11/2026", hr:"16:08", titulo:"CEPEDI: \"Informações validadas\"",
-      de:"Aprigio Augusto (CEPEDI)", para:"Stephanie Kamarry", cc:"Agnaldo Freire, Jorge Lima, Jose Augusto Andrade Filho",
-      txt:"Assunto: \"Relatórios - Fase 02 - Mês 03 - Polo Lagarto\". Agradece o envio e informa que as informações foram validadas.",
-      gap:"6 horas e 43 minutos após a correção"},
-    {id:"e16", k:"cepedi", dt:"16/11/2026", hr:"20:31", titulo:"Mensagem \"URGENTE – Situação dos desafios\"",
-      de:"Aprigio Augusto (CEPEDI)", para:"Coordenadores dos polos",
-      txt:"Apresenta a situação dos desafios dos meses 01, 02 e 03 e informa que os certificados serão emitidos para quem comprovar a carga horária mínima do edital.",
-      note:"Ver os pontos 2 e 3 na aba \"Pontos para conferência\"."}
-  ];
-
-  var EV = {}; E.forEach(function(e){EV[e.id]=e;});
-
   /* ---------- estatísticas ---------- */
   var total = G.length*3, arq=0, reg=0;
   G.forEach(function(g){["m1","m2","m3"].forEach(function(m){
@@ -316,8 +236,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
   var st = [
     [G.length,"grupos (desafios)"],
     [reg+" de "+total,"envios registrados por e-mail"],
-    [arq+" de "+total,"PDFs para baixar nesta página"],
-    [E.length,"registros na linha do tempo"]
+    [arq+" de "+total,"PDFs para baixar nesta página"]
   ];
   document.getElementById("stats").innerHTML = st.map(function(x){
     return '<div class="stat"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>';
@@ -366,36 +285,6 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
     renderGrid(b.getAttribute("data-polo"));
   });
 
-  /* ---------- linha do tempo ---------- */
-  var tag={ifs:"Envio do IFS",cepedi:"CEPEDI",whats:"WhatsApp / formulário"};
-  var order = E.slice().sort(function(a,b){
-    function key(e){var p=e.dt.split("/");return p[2]+p[1]+p[0]+(e.hr||(e.aprox?"23:59":"00:00")).replace(":","");}
-    return key(a)<key(b)?-1:(key(a)>key(b)?1:0);
-  });
-  function renderTL(k){
-    var h='';
-    order.forEach(function(e){
-      if(k!=="todos" && e.k!==k) return;
-      h+='<article class="ev k-'+e.k+'" id="ev-'+e.id+'">';
-      h+='<div class="when">'+e.dt+(e.hr?' · '+e.hr:(e.aprox?' · data/hora a conferir':''))+'<span class="tag">'+tag[e.k]+'</span></div>';
-      h+='<h3>'+e.titulo+'</h3>';
-      h+='<p class="meta">De: '+e.de+' · Para: '+e.para+(e.cc?' · Cc: '+e.cc:'')+'</p>';
-      h+='<p>'+e.txt+'</p>';
-      if(e.lista){h+='<ul>'+e.lista.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';}
-      if(e.note){h+='<div class="note">'+e.note+'</div>';}
-      if(e.gap){h+='<div class="note">Intervalo: '+e.gap+'.</div>';}
-      h+='</article>';
-    });
-    document.getElementById("tl").innerHTML=h;
-  }
-  renderTL("todos");
-  document.getElementById("tlfilters").addEventListener("click",function(e){
-    var b=e.target.closest("button[data-k]"); if(!b)return;
-    [].forEach.call(this.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false");});
-    b.setAttribute("aria-pressed","true");
-    renderTL(b.getAttribute("data-k"));
-  });
-
   /* ---------- download ---------- */
   function baixar(btn){
     var msg=btn.parentNode.querySelector(".dlmsg");
@@ -420,37 +309,25 @@ footer{border-top:1px solid var(--line);padding:18px 16px;color:var(--muted);fon
   }
 
   /* ---------- abas ---------- */
-  function show(tab, scrollTo){
-    ["relatorios","linha-do-tempo","esclarecimentos"].forEach(function(t){
+  function show(tab){
+    ["relatorios","esclarecimentos"].forEach(function(t){
       document.getElementById("p-"+t).classList.toggle("on", t===tab);
     });
     [].forEach.call(document.querySelectorAll("nav.tabs button"),function(b){
       b.setAttribute("aria-selected", b.getAttribute("data-tab")===tab ? "true":"false");
     });
     try{ if(location.hash!=="#"+tab) history.replaceState(null,"","#"+tab); }catch(_){}
-    if(scrollTo){
-      var el=document.getElementById("ev-"+scrollTo);
-      if(el){
-        el.scrollIntoView({behavior:"smooth",block:"center"});
-        el.classList.add("flash"); setTimeout(function(){el.classList.remove("flash");},2200);
-      }
-    } else { window.scrollTo(0,0); }
+    window.scrollTo(0,0);
   }
   document.querySelector("nav.tabs").addEventListener("click",function(e){
     var b=e.target.closest("button[data-tab]"); if(b) show(b.getAttribute("data-tab"));
   });
   document.getElementById("gridbody").addEventListener("click",function(e){
     var d=e.target.closest("button.dl");
-    if(d){ baixar(d); return; }
-    var b=e.target.closest("button[data-ev]"); if(!b)return;
-    var id=b.getAttribute("data-ev");
-    // garante que o filtro da linha do tempo mostre todos
-    [].forEach.call(document.querySelectorAll("#tlfilters button"),function(x){x.setAttribute("aria-pressed",x.getAttribute("data-k")==="todos"?"true":"false");});
-    renderTL("todos");
-    show("linha-do-tempo", id);
+    if(d){ baixar(d); }
   });
   var h=(location.hash||"").replace("#","");
-  if(h==="linha-do-tempo"||h==="esclarecimentos") show(h);
+  if(h==="esclarecimentos") show(h);
 })();
 </script>
 </body>
