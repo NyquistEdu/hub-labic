@@ -137,6 +137,12 @@ td.jc{font-family:var(--mono);font-weight:600;white-space:nowrap}
 .senha .row input{flex:1;min-width:160px}
 .senha .msg{margin:.5rem 0 0;font-weight:600;font-size:.9rem}
 
+.metodo{display:flex;flex-wrap:wrap;gap:.5rem;margin:.2rem 0 .8rem}
+.metodo .chip:has(input:checked){background:var(--tinta);color:var(--papel)}
+.metodo .chip:has(input:checked) input{accent-color:var(--papel)}
+table.dh select{width:auto;min-width:74px;padding:.3rem .4rem;font-weight:600}
+#tabFrames{min-width:620px}
+.estado{margin:.6rem 0 0;font-weight:600;font-size:.92rem}
 .pose{font-family:var(--mono);font-size:.88rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px 8px;font-variant-numeric:tabular-nums}
 .pose span{padding:2px 6px;text-align:right;background:var(--nevoa);border-radius:8px}
 .pose span.p{border:1.5px solid var(--tinta);background:var(--papel);font-weight:600}
@@ -174,7 +180,8 @@ td.jc{font-family:var(--mono);font-weight:600;white-space:nowrap}
       <div class="chips">
         <label class="chip" id="chipAlvo"><input type="checkbox" id="tgAlvo" checked> Robô alvo (tracejado)</label>
         <label class="chip"><input type="checkbox" id="tgMeu" checked> Meu robô</label>
-        <label class="chip"><input type="checkbox" id="tgEixos" checked> Meus eixos {i}</label>
+        <label class="chip"><input type="checkbox" id="tgEixos" checked> <span id="rotEixos">Meus eixos {i}</span></label>
+        <label class="chip" id="chipFramesEsc"><input type="checkbox" id="tgFramesEsc" checked> Frames que escolhi</label>
         <label class="chip" id="chipEixosAlvo"><input type="checkbox" id="tgEixosAlvo"> Eixos do alvo (exige senha)</label>
         <button class="chip" id="btnCam" type="button">Redefinir câmera</button>
       </div>
@@ -203,6 +210,12 @@ td.jc{font-family:var(--mono);font-weight:600;white-space:nowrap}
           <select id="selRobo"></select>
         </div>
         <p class="enunciado" id="enunciado">Carregando…</p>
+        <div class="campo"><label id="metodoRot">Como resolver</label>
+          <div class="metodo" role="radiogroup" aria-labelledby="metodoRot">
+            <label class="chip"><input type="radio" name="metodo" id="metTab" value="tabela" checked> Preencher a tabela e ver os frames</label>
+            <label class="chip"><input type="radio" name="metodo" id="metFra" value="frames"> Escolher os frames primeiro</label>
+          </div>
+        </div>
         <button class="peq" id="btnDica" type="button">Ver dica</button>
         <p class="dicabox" id="dicaBox" hidden></p>
       </div>
@@ -219,8 +232,17 @@ td.jc{font-family:var(--mono);font-weight:600;white-space:nowrap}
       </div>
     </section>
 
+    <section class="card" id="cardFrames" aria-label="Frames" hidden>
+      <h2>1. Posicione os frames</h2>
+      <p class="nota" style="margin-top:0">Com todas as juntas em q = 0 (já zerei para você). O frame {0} é a base e fica fixo. Para cada frame, dê a origem em metros no sistema {0} e as direções de xᵢ e zᵢ. O yᵢ sai pela regra da mão direita. Regras do DH: zᵢ₋₁ fica sobre o eixo da junta i, e xᵢ é perpendicular a zᵢ₋₁ e o corta.</p>
+      <div class="rolagem"><table class="dh" id="tabFrames"></table></div>
+      <p class="estado" id="estadoFrames" role="status" aria-live="polite"></p>
+      <div class="acoes"><button class="primary" id="btnVerFrames" type="button">Verificar frames</button></div>
+      <div class="resultado" id="resFrames" hidden role="status" aria-live="polite"></div>
+    </section>
+
     <section class="card" aria-label="Tabela DH">
-      <h2>Tabela DH (convenção clássica)</h2>
+      <h2 id="tituloTab">Tabela DH (convenção clássica)</h2>
       <div class="rolagem"><table class="dh" id="tabDH"></table></div>
       <p class="nota">Matriz de cada elo: T = Rz(θ) · Tz(d) · Tx(a) · Rx(α). Na coluna da variável de junta, preencha só a parte constante: o <b>q</b> é somado automaticamente. Aceita vírgula ou ponto.</p>
       <div class="acoes" id="acoesEx">
@@ -281,6 +303,7 @@ function parseNum(s){const v=Number(String(s).trim().replace(',','.'));return Nu
 
 /* ---------- estado ---------- */
 const S={modo:'ex',robos:[],robo:null,q:[],tabela:[],tiposLivre:[],mostraAlvo:true,mostraMeu:true,mostraEixos:true,mostraEixosAlvo:false,
+  metodo:'tabela',frames:[],derivada:null,mostraFramesEsc:true,coer:undefined,
   tentativas:0,resultado:null,gab:null,gabAberto:false,dica:false,senha:null,alvo:null,alvoErro:null,
   cam:{tgt:[.25,0,.3],dist:3.2},az:-0.85,el:0.42,zoom:1,ocupado:false};
 const cv=$('vista'),ctx=cv.getContext('2d');
@@ -361,10 +384,106 @@ function trancar(){
 }
 $('btnTrancar').addEventListener('click',trancar);$('btnTrancarL').addEventListener('click',trancar);
 
+/* ---------- método "escolher os frames primeiro" ---------- */
+const DIRS=[['+x',[1,0,0],'+x₀'],['-x',[-1,0,0],'−x₀'],['+y',[0,1,0],'+y₀'],['-y',[0,-1,0],'−y₀'],['+z',[0,0,1],'+z₀'],['-z',[0,0,-1],'−z₀']];
+const dirDe=k=>DIRS.find(d=>d[0]===k)[1];
+const angd=(a,b)=>Math.abs((((a-b)%360)+540)%360-180);
+const arr6=v=>Math.round(v*1e6)/1e6;
+const framesPadrao=n=>Array.from({length:n},()=>({ox:'0',oy:'0',oz:'0',x:'+x',z:'+z'}));
+function matFrame(f){
+  const x=dirDe(f.x),z=dirDe(f.z),y=cross(z,x),O=[parseNum(f.ox),parseNum(f.oy),parseNum(f.oz)];
+  return {T:[x[0],y[0],z[0],O[0], x[1],y[1],z[1],O[1], x[2],y[2],z[2],O[2], 0,0,0,1],x,z};
+}
+function invRig(T){
+  const R=[T[0],T[4],T[8], T[1],T[5],T[9], T[2],T[6],T[10]],p=[T[3],T[7],T[11]];
+  const q=[-(R[0]*p[0]+R[1]*p[1]+R[2]*p[2]),-(R[3]*p[0]+R[4]*p[1]+R[5]*p[2]),-(R[6]*p[0]+R[7]*p[1]+R[8]*p[2])];
+  return [R[0],R[1],R[2],q[0], R[3],R[4],R[5],q[1], R[6],R[7],R[8],q[2], 0,0,0,1];
+}
+/* Lê a tabela DH a partir dos frames escolhidos (q = 0). Confere as duas regras do DH. */
+function derivaFrames(){
+  const rows=[],Ts=[];let prev=I4();
+  for(let i=0;i<S.frames.length;i++){
+    const f=S.frames[i],m=matFrame(f);
+    if(Math.abs(dot(m.x,m.z))>1e-6)return {ok:false,i:i+1,motivo:`x${sub(i+1)} e z${sub(i+1)} precisam ser perpendiculares. Escolha direções de eixos diferentes.`,Ts};
+    Ts.push(m.T);
+    const M=mul(invRig(prev),m.T);
+    if(Math.abs(M[8])>1e-3)return {ok:false,i:i+1,motivo:`x${sub(i+1)} precisa ser perpendicular a z${sub(i)}. Ele não pode ter componente ao longo do eixo da junta ${i+1}.`,Ts};
+    const th=Math.atan2(M[4],M[0]),ct=Math.cos(th),st=Math.sin(th);
+    if(Math.abs(-M[3]*st+M[7]*ct)>1e-3)return {ok:false,i:i+1,motivo:`x${sub(i+1)} precisa cortar o eixo z${sub(i)}. Mova a origem do frame ${i+1} para a reta da normal comum.`,Ts};
+    rows.push({a:arr6(M[3]*ct+M[7]*st),al:arr6(Math.atan2(M[9],M[10])/D2R),d:arr6(M[11]),th:arr6(th/D2R)});
+    prev=m.T;
+  }
+  return {ok:true,rows,Ts};
+}
+function atualizaDerivada(){
+  S.derivada=derivaFrames();
+  const el=$('estadoFrames');
+  el.textContent=S.derivada.ok?'✓ Os frames seguem as regras do DH: cada x é perpendicular ao z anterior e o corta.':`✕ Frame ${S.derivada.i}: ${S.derivada.motivo}`;
+}
+/* frames escolhidos: acompanham q quando seguem o DH; senão ficam parados em q = 0 */
+function cenaFrames(){
+  const P=[],L=[];if(!S.derivada)return {P,L};
+  const pos=T=>[T[3],T[7],T[11]],col=(T,c)=>[T[c],T[4+c],T[8+c]];
+  if(S.derivada.ok){
+    fk(S.derivada.rows,tipos(),S.q).slice(1).forEach((T,i)=>eixos(P,L,i+1,pos(T),col(T,0),col(T,1),col(T,2),'frames'));
+  }else{
+    S.frames.forEach((f,i)=>{const m=matFrame(f);if(Math.abs(dot(m.x,m.z))>1e-6)return;const T=m.T;eixos(P,L,i+1,pos(T),col(T,0),col(T,1),col(T,2),'frames');});
+  }
+  return {P,L};
+}
+function renderFrames(){
+  const n=S.frames.length;
+  let h='<thead><tr><th>Frame</th><th>origem x (m)</th><th>origem y (m)</th><th>origem z (m)</th><th>eixo xᵢ</th><th>eixo zᵢ</th></tr></thead><tbody>';
+  S.frames.forEach((f,i)=>{
+    h+=`<tr><td class="jc">{${i+1}}${i===n-1?'<span class="tp">ferramenta</span>':''}</td>`;
+    ['ox','oy','oz'].forEach(k=>{h+=`<td><div class="cel"><input data-fi="${i}" data-fk="${k}" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="origem ${k[1]} do frame ${i+1}" value="${f[k]}"></div></td>`;});
+    ['x','z'].forEach(k=>{h+=`<td><select data-fi="${i}" data-fk="${k}" aria-label="eixo ${k} do frame ${i+1}">${DIRS.map(d=>`<option value="${d[0]}"${f[k]===d[0]?' selected':''}>${d[2]}</option>`).join('')}</select></td>`;});
+    h+='</tr>';
+  });
+  $('tabFrames').innerHTML=h+'</tbody>';
+  const muda=(el)=>{S.frames[+el.dataset.fi][el.dataset.fk]=el.value;S.framesRes=null;$('resFrames').hidden=true;atualizaDerivada();redesenha();};
+  $('tabFrames').querySelectorAll('input').forEach(el=>{el.addEventListener('input',()=>muda(el));el.addEventListener('focus',()=>el.select());});
+  $('tabFrames').querySelectorAll('select').forEach(el=>el.addEventListener('change',()=>muda(el)));
+  atualizaDerivada();
+}
+async function verificarFrames(){
+  const box=$('resFrames');
+  if(!S.derivada.ok){box.hidden=false;box.className='resultado wrong';box.innerHTML=`<div class="cab"><span class="ic" aria-hidden="true">✕</span>Frames fora do DH</div><p>Frame ${S.derivada.i}: ${S.derivada.motivo}</p>`;return;}
+  $('btnVerFrames').disabled=true;
+  try{
+    const r=await api('/testar',{robo:S.robo.id,tabela:S.derivada.rows,q:S.q.slice()});
+    const info={
+      ok:['✓','Frames corretos','Seus frames levam exatamente ao robô alvo. Agora leia a tabela DH deles e preencha abaixo.'],
+      equiv:['≈','Frames válidos e equivalentes','Seus frames seguem o DH e levam o efetuador à mesma pose do alvo, com uma escolha de eixos diferente da referência. Agora leia a tabela DH deles e preencha abaixo.'],
+      partial:['!','Posição certa, orientação diferente','A posição do efetuador coincide, mas a orientação do frame final difere. Revise as direções de x e z do último frame.'],
+      wrong:['✕','Ainda não','Esses frames não levam ao robô alvo. Confira os eixos das juntas (z) e as posições das origens com o robô alvo em q = 0.']
+    }[r.veredito];
+    box.className='resultado '+r.veredito;box.hidden=false;
+    box.innerHTML=`<div class="cab"><span class="ic" aria-hidden="true">${info[0]}</span>${info[1]}</div><p>${info[2]}</p>`;
+  }catch(e){box.hidden=false;box.className='resultado wrong';box.textContent=e.message;}
+  finally{$('btnVerFrames').disabled=false;}
+}
+function coerencia(){
+  if(S.metodo!=='frames')return undefined;
+  if(!S.derivada||!S.derivada.ok)return null;
+  const rows=linhasAluno(),ref=S.derivada.rows,dif=[];
+  rows.forEach((r,i)=>{const d=[];
+    if(Math.abs(r.a-ref[i].a)>.005)d.push('a');if(angd(r.al,ref[i].al)>.5)d.push('α');
+    if(Math.abs(r.d-ref[i].d)>.005)d.push('d');if(angd(r.th,ref[i].th)>.5)d.push('θ');
+    if(d.length)dif.push(`linha ${i+1} (${d.join(', ')})`);});
+  return dif;
+}
+function defineMetodo(m){
+  S.metodo=m;S.resultado=null;S.coer=undefined;$('resFrames').hidden=true;
+  if(m==='frames'){S.q=tipos().map(()=>0);S.frames=framesPadrao(S.robo.tipos.length);}
+  renderTudo();pedirAlvo();
+}
+
 /* ---------- navegação entre exercícios ---------- */
 function carregaRobo(id){
   S.robo=S.robos.find(r=>r.id===id);
-  S.q=S.robo.q0.slice();S.tabela=zeros(S.robo.tipos.length);
+  S.q=S.metodo==='frames'?S.robo.tipos.split('').map(()=>0):S.robo.q0.slice();S.tabela=zeros(S.robo.tipos.length);
+  S.frames=framesPadrao(S.robo.tipos.length);S.coer=undefined;$('resFrames').hidden=true;
   S.resultado=null;S.tentativas=0;S.gab=null;S.gabAberto=false;S.dica=false;S.alvo=null;S.alvoErro=null;
   S.cam={tgt:S.robo.alvo,dist:S.robo.dist};S.az=-0.85;S.el=0.42;S.zoom=1;
   renderTudo();pedirAlvo();
@@ -385,6 +504,11 @@ function renderTudo(){
   $('painelEx').hidden=!ex;$('painelLivre').hidden=ex;
   $('acoesEx').hidden=!ex;$('acoesLivre').hidden=ex;
   $('chipAlvo').style.display=ex?'':'none';$('chipEixosAlvo').style.display=ex?'':'none';
+  const fr=ex&&S.metodo==='frames';
+  $('cardFrames').hidden=!fr;$('chipFramesEsc').style.display=fr?'':'none';
+  $('rotEixos').textContent=fr?'Eixos da minha tabela':'Meus eixos {i}';
+  $('tituloTab').textContent=fr?'2. Leia a tabela DH dos seus frames':'Tabela DH (convenção clássica)';
+  if(fr)renderFrames();
   if(ex&&S.robo){
     $('enunciado').textContent=S.robo.enunciado;
     $('dicaBox').hidden=!S.dica;$('dicaBox').textContent=S.robo.dica;
@@ -469,6 +593,7 @@ function renderResultado(){
       <dt>Efetuador do seu robô</dt><dd>${r.posAluno.map(v=>fmt(v)).join('  ')} m</dd>
       <dt>Erro de posição agora</dt><dd>${fmt(r.erroAtual*1000,1)} mm</dd>
       <dt>Pior erro em 10 configurações</dt><dd>${fmt(r.erroMax*1000,1)} mm</dd></dl>
+      ${S.coer===undefined?'':`<p><b>Frames × tabela:</b> ${S.coer===null?'seus frames ainda não seguem o DH, então não deu para comparar a tabela com eles.':(S.coer.length?'sua tabela difere do que sai dos seus frames em '+S.coer.join('; ')+'.':'✓ sua tabela é coerente com os frames que você escolheu.')}</p>`}
       <p class="nota">Tolerância: 5 mm nos comprimentos e 0,5° nos ângulos. Ângulos são comparados módulo 360°.</p>`;
   }
   if(S.modo==='ex'&&S.gabAberto&&S.gab){
@@ -484,7 +609,7 @@ async function testar(){
   S.ocupado=true;$('btnTestar').disabled=true;
   try{
     S.resultado=await api('/testar',{robo:S.robo.id,tabela:linhasAluno(),q:S.q.slice()});
-    S.tentativas++;renderTabela();renderResultado();redesenha();
+    S.tentativas++;S.coer=coerencia();renderTabela();renderResultado();redesenha();
     $('resultado').scrollIntoView({block:'nearest',behavior:'smooth'});
   }catch(e){
     S.resultado=null;renderResultado();
@@ -542,13 +667,13 @@ function cenaAluno(rows,tp,q,comEixos){
   }
   const Tn=T[n],On=pos(Tn),yn=[Tn[1],Tn[5],Tn[9]],zn=[Tn[2],Tn[6],Tn[10]],f1=vadd(On,vsc(yn,.04)),f2=vsub(On,vsc(yn,.04));
   P.push({k:'cyl',A:f1,B:f2,r:.009,role:'tool',own:'mine'},{k:'cyl',A:f1,B:vadd(f1,vsc(zn,.07)),r:.009,role:'tool',own:'mine'},{k:'cyl',A:f2,B:vadd(f2,vsc(zn,.07)),r:.009,role:'tool',own:'mine'});
-  if(comEixos)for(let i=1;i<=n;i++)eixos(P,L,i,pos(T[i]),[T[i][0],T[i][4],T[i][8]],[T[i][1],T[i][5],T[i][9]],[T[i][2],T[i][6],T[i][10]],'mine');
+  if(comEixos)for(let i=1;i<=n;i++)eixos(P,L,i,pos(T[i]),[T[i][0],T[i][4],T[i][8]],[T[i][1],T[i][5],T[i][9]],[T[i][2],T[i][6],T[i][10]],'mine',!(S.modo==='ex'&&S.metodo==='frames'));
   return {P,L};
 }
-function eixos(P,L,i,O,x,y,z,own){
+function eixos(P,L,i,O,x,y,z,own,rotulo){
   [[x,'x',0],[y,'y',1],[z,'z',2]].forEach(([v,nm,a])=>{
-    P.push({k:'line',A:O,B:vadd(O,vsc(v,.11)),axis:a,own,w:2.2});
-    L.push({p:vadd(O,vsc(v,.135)),text:nm+i+(own==='target'?'′':''),axis:a,own});
+    P.push({k:'line',A:O,B:vadd(O,vsc(v,own==='frames'?.14:.11)),axis:a,own,w:own==='frames'?4:2.2});
+    if(rotulo!==false)L.push({p:vadd(O,vsc(v,own==='frames'?.17:.135)),text:nm+i+(own==='target'?'′':''),axis:a,own});
   });
 }
 function cenaAlvo(){
@@ -575,6 +700,7 @@ function desenha(){
   for(let a=0;a<3;a++){prims.push({k:'line',A:[0,0,0],B:vsc(bx[a],.2),axis:a,own:'base',w:2.4});rot.push({p:vsc(bx[a],.235),text:nm[a],axis:a,own:'base'});}
   if(S.modo==='ex'&&S.mostraAlvo){const s=cenaAlvo();prims.push(...s.P);rot.push(...s.L);}
   if(S.mostraMeu&&S.tabela.length){const s=cenaAluno(linhasAluno(),tipos(),S.q,S.mostraEixos);prims.push(...s.P);rot.push(...s.L);}
+  if(S.modo==='ex'&&S.metodo==='frames'&&S.mostraFramesEsc&&S.derivada){const s=cenaFrames();prims.push(...s.P);rot.push(...s.L);}
   for(const p of prims){const a=cam.proj(p.A),b=cam.proj(p.B);p.depth=(a[2]+b[2])/2;}
   prims.sort((a,b)=>b.depth-a.depth);
   for(const p of prims){
@@ -631,6 +757,9 @@ function ligaControles(){
     });
     $('selPreset').value='';
   });
+  document.querySelectorAll('input[name="metodo"]').forEach(r=>r.addEventListener('change',()=>{if(r.checked)defineMetodo(r.value);}));
+  $('btnVerFrames').addEventListener('click',verificarFrames);
+  $('tgFramesEsc').addEventListener('change',e=>{S.mostraFramesEsc=e.target.checked;redesenha();});
   $('abaEx').addEventListener('click',()=>defineModo('ex'));
   $('abaLivre').addEventListener('click',()=>defineModo('livre'));
   $('btnDica').addEventListener('click',()=>{S.dica=!S.dica;renderTudo();});
