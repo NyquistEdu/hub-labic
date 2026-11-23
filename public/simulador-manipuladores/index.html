@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador de Manipuladores — Parâmetros DH</title>
+<link rel="icon" href="/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#000; --papel:#fff; --nevoa:#f3f3f1; --linha:#dcdcd8; --grafite:#5c5c58; --azul:#2f6fe0;
+  --eixo-x:#d1432f; --eixo-y:#2f9e57; --eixo-z:#2f6fe0;
+  --display:"Big Shoulders Display","Arial Narrow",sans-serif;
+  --sans:"Instrument Sans",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html[data-tema="escuro"]{--tinta:#fff;--papel:#000;--nevoa:#1a1a19;--linha:#3a3a38;--grafite:#a8a8a2;--azul:#6aa0ff;--eixo-x:#ef6b57;--eixo-y:#4cc77f;--eixo-z:#6aa0ff;color-scheme:dark}
+html[data-tema="escuro"] .marca img{background:#fff;border-radius:12px;padding:3px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--papel);color:var(--tinta);font:16px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid var(--azul);outline-offset:3px;border-radius:4px}
+h1,h2{font-family:var(--display);font-weight:800;text-transform:uppercase;line-height:1.02;letter-spacing:.005em;margin:0}
+.contorno{max-width:80rem;margin-inline:auto;padding-inline:1.25rem}
+@media (min-width:768px){.contorno{padding-inline:2.5rem}}
+
+.topo{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--papel) 95%,transparent);backdrop-filter:blur(6px);border-bottom:2.5px solid var(--tinta)}
+.topo .contorno{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.6rem}
+.marca{display:flex;align-items:center;gap:.75rem;color:inherit;text-decoration:none;min-width:0}
+.marca img{width:52px;height:52px;flex:none}
+.marca span{line-height:1.2;font-size:.9rem}
+.marca strong{display:block}
+.marca small{color:var(--grafite);font-size:.9rem}
+@media (max-width:640px){.marca span{display:none}}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.topo .row{flex-wrap:nowrap}
+
+.intro{padding-block:2rem 1rem}
+.intro h1{font-size:clamp(2.4rem,6vw,4rem);margin-top:.7rem}
+.intro p{max-width:64ch;color:var(--grafite);margin:.6rem 0 0}
+.etiqueta{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--tinta);border-radius:999px;padding:.15rem .7rem;font-size:.85rem;font-weight:600;background:var(--papel)}
+.etiqueta>i{width:10px;height:10px;border-radius:999px;background:var(--azul);display:inline-block}
+.mods{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.mod{border:2px solid var(--tinta);border-radius:999px;padding:.2rem .8rem;font-size:.85rem;font-weight:600}
+.mod.on{background:var(--tinta);color:var(--papel)}
+.mod.off{border-style:dashed;color:var(--grafite);border-color:var(--grafite)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:20px;padding-block:1rem 3rem;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.card{background:var(--papel);border:2.5px solid var(--tinta);border-radius:20px;padding:16px}
+.card h2{font-size:1.45rem;margin:0 0 .7rem}
+
+button{font:inherit;font-weight:600;line-height:1.2;border:2.5px solid var(--tinta);background:var(--papel);color:var(--tinta);padding:.5rem 1.1rem;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+button:hover{background:var(--tinta);color:var(--papel)}
+button.primary{background:var(--tinta);color:var(--papel)}
+button.primary:hover{background:var(--papel);color:var(--tinta)}
+button.peq{padding:.25rem .8rem;font-size:.88rem}
+button:disabled{opacity:.5;cursor:not-allowed}
+.botao{display:inline-flex;font-weight:600;line-height:1.2;border:2.5px solid var(--tinta);background:var(--papel);color:var(--tinta);padding:.5rem 1.1rem;border-radius:999px;text-decoration:none;transition:background .15s,color .15s}
+.botao:hover{background:var(--tinta);color:var(--papel)}
+select,input[type=text],input[type=password]{font:inherit;border:2px solid var(--tinta);background:var(--papel);color:var(--tinta);border-radius:12px;padding:.35rem .6rem}
+select{width:100%}
+label{font-size:.9rem;font-weight:500}
+
+/* palco 3D */
+.palco{position:relative;padding:0;overflow:hidden}
+canvas#vista{display:block;width:100%;height:clamp(360px,58vh,640px);touch-action:none;cursor:grab;background:var(--papel)}
+canvas#vista:active{cursor:grabbing}
+.legenda{position:absolute;top:12px;left:14px;display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:500;pointer-events:none}
+.legenda i{display:inline-block;width:24px;height:0;border-top:4px solid var(--tinta);vertical-align:middle;margin-right:6px;border-radius:2px}
+.legenda i.g{border-top:4px dashed var(--grafite)}
+.dica-cam{position:absolute;top:12px;right:14px;font-size:.78rem;color:var(--grafite);pointer-events:none}
+.aviso-alvo{position:absolute;left:14px;right:14px;top:62px;font-size:.85rem;font-weight:600;border:2px dashed var(--tinta);border-radius:12px;padding:.3rem .7rem;background:var(--papel)}
+.chips{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--tinta);border-radius:999px;padding:.15rem .75rem;font-size:.82rem;font-weight:600;background:var(--papel);cursor:pointer;user-select:none}
+.chip input{margin:0;accent-color:var(--tinta)}
+button.chip{padding:.15rem .75rem;border-width:2px}
+
+/* juntas */
+.juntas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem 1.4rem}
+.jr{display:grid;grid-template-columns:auto 1fr auto;gap:2px .7rem;align-items:center}
+.jr .jn{font-family:var(--mono);font-weight:600}
+.jr .jt{color:var(--grafite);font-size:.8rem;margin-left:.3rem}
+.jr input[type=range]{width:100%;accent-color:var(--tinta)}
+.jr output{font-family:var(--mono);font-size:.88rem;font-weight:600;min-width:74px;text-align:right;font-variant-numeric:tabular-nums}
+.nota{font-size:.85rem;color:var(--grafite);margin:.6rem 0 0}
+.nota b{color:var(--tinta)}
+
+/* painel direito */
+.abas{display:inline-flex;border:2.5px solid var(--tinta);border-radius:999px;overflow:hidden;margin-bottom:.9rem}
+.abas button{border:0;border-radius:0;padding:.4rem 1.1rem}
+.abas button[aria-selected="true"]{background:var(--tinta);color:var(--papel)}
+.campo{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.7rem}
+.campo label{color:var(--grafite);font-size:.82rem}
+.enunciado{margin:0 0 .6rem;text-wrap:pretty}
+.dicabox{margin:.7rem 0 0;padding:.5rem .8rem;border:2px dashed var(--tinta);border-radius:14px;font-size:.92rem}
+
+.rolagem{overflow-x:auto}
+table.dh{border-collapse:separate;border-spacing:0 6px;width:100%;min-width:440px}
+table.dh th{font-size:.85rem;font-weight:600;color:var(--grafite);text-align:left;padding:0 4px 2px}
+table.dh td{padding:0 4px;vertical-align:middle}
+td.jc{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.tp{display:inline-block;margin-left:6px;font-family:var(--sans);font-size:.7rem;font-weight:600;padding:0 .5rem;border-radius:999px;border:1.5px solid var(--grafite);color:var(--grafite)}
+.cel{display:flex;align-items:center;gap:4px;border:2px solid var(--tinta);border-radius:12px;padding:0 .55rem;background:var(--papel);min-height:38px}
+.cel:focus-within{outline:3px solid var(--azul);outline-offset:1px}
+.cel input{border:0;background:transparent;color:inherit;width:100%;min-width:44px;font-family:var(--mono);font-size:.95rem;padding:.4rem 0;outline:none;font-variant-numeric:tabular-nums}
+.cel .qv{font-family:var(--mono);font-size:.7rem;color:var(--grafite);white-space:nowrap;font-weight:600}
+.cel.var{background:var(--nevoa)}
+.cel.ok{border-width:3px;background:var(--nevoa)}
+.cel.ok::after{content:"✓";font-weight:700}
+.cel.bad{border-style:dashed;border-width:3px}
+.cel.bad::after{content:"✕";font-weight:700}
+.cel.alt{border-style:dotted;border-width:3px}
+.cel.alt::after{content:"≈";font-weight:700}
+
+.acoes{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.9rem;align-items:center}
+.tent{margin-left:auto;font-size:.82rem;color:var(--grafite)}
+.resultado{margin-top:.9rem;border:2.5px solid var(--tinta);border-left-width:9px;border-radius:16px;padding:.7rem 1rem}
+.resultado.wrong{border-style:dashed;border-left-style:dashed}
+.resultado.equiv,.resultado.partial{border-style:dotted;border-left-style:dotted}
+.resultado .cab{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.5rem;line-height:1.1}
+.resultado .ic{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--tinta);color:var(--papel);font-family:var(--sans);font-size:.95rem;font-weight:700}
+.resultado p{margin:.4rem 0;text-wrap:pretty}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:.5rem 0 0;font-size:.88rem}
+.stats dt{color:var(--grafite)}
+.stats dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.gab{margin-top:.9rem;font-size:.9rem}
+.gab table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:.88rem}
+.gab th,.gab td{border-bottom:1.5px solid var(--linha);padding:3px 6px;text-align:right}
+.gab th:first-child,.gab td:first-child{text-align:left}
+.gab h3{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.15rem;margin:0 0 .3rem}
+.senha{margin-top:.9rem;border:2.5px solid var(--tinta);border-radius:16px;padding:.7rem 1rem;background:var(--nevoa)}
+.senha p{margin:0 0 .5rem;font-size:.92rem}
+.senha .row input{flex:1;min-width:160px}
+.senha .msg{margin:.5rem 0 0;font-weight:600;font-size:.9rem}
+
+.pose{font-family:var(--mono);font-size:.88rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px 8px;font-variant-numeric:tabular-nums}
+.pose span{padding:2px 6px;text-align:right;background:var(--nevoa);border-radius:8px}
+.pose span.p{border:1.5px solid var(--tinta);background:var(--papel);font-weight:600}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="contorno">
+    <a class="marca" href="/" aria-label="LABIC, página inicial">
+      <img src="/img/logo-labic-miolo.png" alt="" width="52" height="52">
+      <span><strong>Laboratório de Inovação e Criatividade</strong><small>IFS Campus Lagarto</small></span>
+    </a>
+    <div class="row"><button type="button" id="btnTema" aria-pressed="false">☾ Tema escuro</button><a class="botao" href="/">← Voltar ao site</a></div>
+  </div>
+</header>
+
+<section class="contorno intro">
+  <span class="etiqueta"><i></i>Robótica de Manipuladores</span>
+  <h1>Simulador de manipuladores</h1>
+  <p>Monte a tabela de Denavit-Hartenberg de cada configuração clássica, veja o seu robô sobre o robô alvo e confira se acertou.</p>
+  <div class="mods" aria-label="Módulos">
+    <span class="mod on">Parâmetros DH</span>
+    <span class="mod off">Cinemática inversa · em breve</span>
+    <span class="mod off">Jacobiano · em breve</span>
+  </div>
+</section>
+
+<main class="contorno layout">
+  <div class="col">
+    <section class="card palco" aria-label="Visualização 3D">
+      <canvas id="vista" aria-label="Robô em 3D. Arraste para girar, role para aproximar."></canvas>
+      <div class="legenda" id="legenda"></div>
+      <div class="dica-cam">arraste: girar · rolagem: zoom</div>
+      <div class="aviso-alvo" id="avisoAlvo" hidden></div>
+      <div class="chips">
+        <label class="chip" id="chipAlvo"><input type="checkbox" id="tgAlvo" checked> Robô alvo (tracejado)</label>
+        <label class="chip"><input type="checkbox" id="tgMeu" checked> Meu robô</label>
+        <label class="chip"><input type="checkbox" id="tgEixos" checked> Meus eixos {i}</label>
+        <label class="chip" id="chipEixosAlvo"><input type="checkbox" id="tgEixosAlvo"> Eixos do alvo (exige senha)</label>
+        <button class="chip" id="btnCam" type="button">Redefinir câmera</button>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Juntas">
+      <h2>Mover as juntas</h2>
+      <div class="juntas" id="juntas"></div>
+      <div class="acoes">
+        <button class="peq" id="btnZero" type="button">Zerar juntas</button>
+        <button class="peq" id="btnAleat" type="button">Configuração aleatória</button>
+      </div>
+      <p class="nota">O robô alvo e o seu recebem os mesmos valores de q. Se a tabela estiver errada, os dois se separam quando você move as juntas.</p>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card" aria-label="Exercício">
+      <div class="abas" role="tablist">
+        <button role="tab" id="abaEx" aria-selected="true">Exercício</button>
+        <button role="tab" id="abaLivre" aria-selected="false">Laboratório livre</button>
+      </div>
+      <div id="painelEx">
+        <div class="campo">
+          <label for="selRobo">Configuração clássica</label>
+          <select id="selRobo"></select>
+        </div>
+        <p class="enunciado" id="enunciado">Carregando…</p>
+        <button class="peq" id="btnDica" type="button">Ver dica</button>
+        <p class="dicabox" id="dicaBox" hidden></p>
+      </div>
+      <div id="painelLivre" hidden>
+        <p class="enunciado">Monte qualquer cadeia cinemática: escolha o tipo de cada junta e preencha a tabela. Os eixos de cada frame aparecem no robô.</p>
+        <div class="campo">
+          <label for="selPreset">Carregar uma configuração clássica na tabela (exige senha do professor)</label>
+          <select id="selPreset"></select>
+        </div>
+        <div class="row">
+          <button class="peq" id="btnAdd" type="button">Adicionar junta</button>
+          <button class="peq" id="btnDel" type="button">Remover última</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Tabela DH">
+      <h2>Tabela DH (convenção clássica)</h2>
+      <div class="rolagem"><table class="dh" id="tabDH"></table></div>
+      <p class="nota">Matriz de cada elo: T = Rz(θ) · Tz(d) · Tx(a) · Rx(α). Na coluna da variável de junta, preencha só a parte constante: o <b>q</b> é somado automaticamente. Aceita vírgula ou ponto.</p>
+      <div class="acoes" id="acoesEx">
+        <button class="primary" id="btnTestar" type="button">Testar minha tabela</button>
+        <button id="btnLimpar" type="button">Limpar tabela</button>
+        <button id="btnGab" type="button">Ver gabarito</button>
+        <button class="peq" id="btnTrancar" type="button" hidden>Bloquear modo professor</button>
+        <span class="tent" id="tent"></span>
+      </div>
+      <div class="acoes" id="acoesLivre" hidden>
+        <button id="btnLimparL" type="button">Limpar tabela</button>
+        <button class="peq" id="btnTrancarL" type="button" hidden>Bloquear modo professor</button>
+      </div>
+      <div class="senha" id="senhaBox" hidden>
+        <p id="senhaMotivo"></p>
+        <form class="row" id="senhaForm" autocomplete="off">
+          <label for="senhaIn" style="font-weight:600">Senha</label>
+          <input type="password" id="senhaIn" autocomplete="off">
+          <button class="primary peq" type="submit" id="senhaOk">Desbloquear</button>
+          <button class="peq" type="button" id="senhaCancel">Cancelar</button>
+        </form>
+        <p class="msg" id="senhaMsg" role="status" aria-live="polite"></p>
+      </div>
+      <div class="resultado" id="resultado" hidden role="status" aria-live="polite"></div>
+      <div class="gab" id="gab" hidden></div>
+    </section>
+
+    <section class="card" aria-label="Pose do efetuador">
+      <h2>Pose do efetuador</h2>
+      <div class="pose" id="pose"></div>
+      <p class="nota" id="poseNota"></p>
+    </section>
+  </div>
+</main>
+
+<script>
+(function(){
+'use strict';
+const API='/api/simulador-manipuladores';
+const D2R=Math.PI/180;
+const SUB='₀₁₂₃₄₅₆₇₈₉';
+const sub=n=>String(n).split('').map(c=>SUB[c]).join('');
+const fmt=(x,d=3)=>(Math.abs(x)<5e-10?0:x).toFixed(d).replace('.',',');
+const $=id=>document.getElementById(id);
+const CH=['a','al','d','th'];
+
+/* ---------- matemática do robô do aluno (cinemática direta DH clássica) ---------- */
+const I4=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function mul(A,B){const C=new Array(16).fill(0);for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=A[i*4+k]*B[k*4+j];C[i*4+j]=s;}return C;}
+function dhMat(a,al,d,th){const ct=Math.cos(th),st=Math.sin(th),ca=Math.cos(al),sa=Math.sin(al);
+  return [ct,-st*ca,st*sa,a*ct, st,ct*ca,-ct*sa,a*st, 0,sa,ca,d, 0,0,0,1];}
+function fk(rows,tipos,q){const T=[I4()];
+  for(let i=0;i<rows.length;i++){const r=rows[i];
+    const th=(r.th+(tipos[i]==='R'?q[i]:0))*D2R,d=r.d+(tipos[i]==='P'?q[i]:0);
+    T.push(mul(T[i],dhMat(r.a,r.al*D2R,d,th)));}
+  return T;}
+function parseNum(s){const v=Number(String(s).trim().replace(',','.'));return Number.isFinite(v)?v:0;}
+
+/* ---------- estado ---------- */
+const S={modo:'ex',robos:[],robo:null,q:[],tabela:[],tiposLivre:[],mostraAlvo:true,mostraMeu:true,mostraEixos:true,mostraEixosAlvo:false,
+  tentativas:0,resultado:null,gab:null,gabAberto:false,dica:false,senha:null,alvo:null,alvoErro:null,
+  cam:{tgt:[.25,0,.3],dist:3.2},az:-0.85,el:0.42,zoom:1,ocupado:false};
+const cv=$('vista'),ctx=cv.getContext('2d');
+let sujo=true;const redesenha=()=>{sujo=true;};
+const tipos=()=>S.modo==='ex'?(S.robo?S.robo.tipos.split(''):[]):S.tiposLivre;
+const faixas=()=>S.modo==='ex'?(S.robo?S.robo.qr:[]):tipos().map(t=>t==='R'?[-180,180]:[0,.5]);
+const linhasAluno=()=>S.tabela.map(r=>({a:parseNum(r.a),al:parseNum(r.al),d:parseNum(r.d),th:parseNum(r.th)}));
+const zeros=n=>Array.from({length:n},()=>({a:'0',al:'0',d:'0',th:'0'}));
+const daLinhas=rows=>rows.map(r=>({a:String(r.a).replace('.',','),al:String(r.al),d:String(r.d).replace('.',','),th:String(r.th)}));
+
+/* ---------- rede ---------- */
+async function api(caminho,corpo){
+  let r;
+  try{r=await fetch(API+caminho,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)});}
+  catch(e){throw new Error('Sem conexão com o servidor. Tente de novo.');}
+  let j=null;try{j=await r.json();}catch(e){}
+  if(!r.ok)throw Object.assign(new Error((j&&j.erro)||'Erro no servidor.'),{status:r.status});
+  return j;
+}
+
+/* ---------- robô alvo (desenhado pelo servidor) ---------- */
+let alvoOcupado=false,alvoPend=false;
+function pedirAlvo(){
+  if(S.modo!=='ex'||!S.robo)return;
+  if(alvoOcupado){alvoPend=true;return;}
+  alvoOcupado=true;
+  const corpo={robo:S.robo.id,q:S.q.slice()};
+  if(S.mostraEixosAlvo&&S.senha){corpo.eixos=true;corpo.senha=S.senha;}
+  api('/alvo',corpo).then(r=>{
+    if(S.robo&&r.robo===S.robo.id){S.alvo=r;S.alvoErro=null;}
+  }).catch(e=>{
+    S.alvoErro=e.message;
+    if(e.status===401){S.senha=null;S.mostraEixosAlvo=false;$('tgEixosAlvo').checked=false;atualizaTrava();}
+  }).finally(()=>{
+    alvoOcupado=false;avisoAlvo();redesenha();
+    if(alvoPend){alvoPend=false;pedirAlvo();}
+  });
+}
+function avisoAlvo(){
+  const el=$('avisoAlvo');
+  if(S.modo==='ex'&&S.alvoErro){el.hidden=false;el.textContent='Robô alvo indisponível: '+S.alvoErro;}else el.hidden=true;
+}
+
+/* ---------- senha do professor (verificada no servidor) ---------- */
+let aoDesbloquear=null;
+function pedirSenha(motivo,cb){
+  if(S.senha){cb();return;}
+  aoDesbloquear=cb;
+  $('senhaMotivo').textContent=motivo;$('senhaMsg').textContent='';$('senhaIn').value='';
+  $('senhaBox').hidden=false;$('senhaIn').focus();
+}
+function fechaSenha(){$('senhaBox').hidden=true;aoDesbloquear=null;$('senhaIn').value='';$('senhaMsg').textContent='';}
+function atualizaTrava(){
+  const t=!!S.senha;
+  $('btnTrancar').hidden=!t;$('btnTrancarL').hidden=!t;
+  $('btnGab').textContent=S.gabAberto?'Esconder gabarito':'Ver gabarito';
+}
+$('senhaForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const senha=$('senhaIn').value;if(!senha)return;
+  const id=S.robo?S.robo.id:S.robos[0].id;
+  $('senhaOk').disabled=true;$('senhaMsg').textContent='Conferindo…';
+  try{
+    await api('/gabarito',{robo:id,senha});
+    S.senha=senha;const cb=aoDesbloquear;fechaSenha();atualizaTrava();if(cb)cb();
+  }catch(err){
+    $('senhaMsg').textContent=err.status===401?'Senha incorreta.':err.message;
+    $('senhaIn').select();
+  }finally{$('senhaOk').disabled=false;}
+});
+$('senhaCancel').addEventListener('click',()=>{
+  fechaSenha();
+  if(!S.senha&&S.mostraEixosAlvo===false)$('tgEixosAlvo').checked=false;
+});
+function trancar(){
+  S.senha=null;S.gab=null;S.gabAberto=false;S.mostraEixosAlvo=false;$('tgEixosAlvo').checked=false;
+  atualizaTrava();renderResultado();pedirAlvo();redesenha();
+}
+$('btnTrancar').addEventListener('click',trancar);$('btnTrancarL').addEventListener('click',trancar);
+
+/* ---------- navegação entre exercícios ---------- */
+function carregaRobo(id){
+  S.robo=S.robos.find(r=>r.id===id);
+  S.q=S.robo.q0.slice();S.tabela=zeros(S.robo.tipos.length);
+  S.resultado=null;S.tentativas=0;S.gab=null;S.gabAberto=false;S.dica=false;S.alvo=null;S.alvoErro=null;
+  S.cam={tgt:S.robo.alvo,dist:S.robo.dist};S.az=-0.85;S.el=0.42;S.zoom=1;
+  renderTudo();pedirAlvo();
+}
+function defineModo(m){
+  S.modo=m;S.resultado=null;S.gab=null;S.gabAberto=false;fechaSenha();
+  if(m==='livre'){
+    S.tiposLivre=['R','R','R'];S.tabela=zeros(3);S.q=[0,0,0];
+    S.cam={tgt:[.25,0,.3],dist:3.2};S.az=-0.85;S.el=0.42;S.zoom=1;
+    renderTudo();
+  }else if(S.robo){carregaRobo(S.robo.id);}
+}
+
+/* ---------- painel ---------- */
+function renderTudo(){
+  const ex=S.modo==='ex';
+  $('abaEx').setAttribute('aria-selected',ex);$('abaLivre').setAttribute('aria-selected',!ex);
+  $('painelEx').hidden=!ex;$('painelLivre').hidden=ex;
+  $('acoesEx').hidden=!ex;$('acoesLivre').hidden=ex;
+  $('chipAlvo').style.display=ex?'':'none';$('chipEixosAlvo').style.display=ex?'':'none';
+  if(ex&&S.robo){
+    $('enunciado').textContent=S.robo.enunciado;
+    $('dicaBox').hidden=!S.dica;$('dicaBox').textContent=S.robo.dica;
+    $('btnDica').textContent=S.dica?'Esconder dica':'Ver dica';
+  }
+  $('legenda').innerHTML='<span><i></i>Meu robô</span>'+(ex?'<span><i class="g"></i>Robô alvo</span>':'');
+  atualizaTrava();avisoAlvo();
+  renderTabela();renderJuntas();renderResultado();renderPose();redesenha();
+}
+function renderTabela(){
+  const t=tipos(),ex=S.modo==='ex';
+  let h='<thead><tr><th>Junta</th><th>aᵢ (m)</th><th>αᵢ (°)</th><th>dᵢ (m)</th><th>θᵢ (°)</th></tr></thead><tbody>';
+  S.tabela.forEach((r,i)=>{
+    const R=t[i]==='R';
+    const tp=ex?`<span class="tp">${R?'rotativa':'prismática'}</span>`
+      :`<select class="tsel" data-i="${i}" aria-label="Tipo da junta ${i+1}" style="width:auto;padding:1px 6px;margin-left:6px"><option value="R"${R?' selected':''}>R</option><option value="P"${!R?' selected':''}>P</option></select>`;
+    h+=`<tr><td class="jc">${i+1}${tp}</td>`;
+    CH.forEach((k,ki)=>{
+      const isVar=(k==='th'&&R)||(k==='d'&&!R);
+      let cls='cel'+(isVar?' var':'');
+      if(S.resultado&&ex){
+        const ok=S.resultado.celulas[i][ki],v=S.resultado.veredito;
+        if(v==='ok')cls+=' ok';else if(v==='equiv')cls+=ok?' ok':' alt';else cls+=ok?' ok':' bad';
+      }
+      const nome={a:'a',al:'alfa',d:'d',th:'theta'}[k]+(i+1);
+      h+=`<td><div class="${cls}">${isVar?`<span class="qv">q${sub(i+1)}+</span>`:''}<input data-i="${i}" data-k="${k}" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="${nome}${isVar?' (parte constante, somada a q)':''}" value="${r[k]}"></div></td>`;
+    });
+    h+='</tr>';
+  });
+  $('tabDH').innerHTML=h+'</tbody>';
+  $('tabDH').querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      S.tabela[+inp.dataset.i][inp.dataset.k]=inp.value;
+      if(S.resultado){S.resultado=null;document.querySelectorAll('#tabDH .cel').forEach(c=>c.classList.remove('ok','bad','alt'));renderResultado();}
+      renderPose();redesenha();
+    });
+    inp.addEventListener('focus',()=>inp.select());
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&S.modo==='ex')testar();});
+  });
+  $('tabDH').querySelectorAll('.tsel').forEach(sel=>sel.addEventListener('change',()=>{
+    const i=+sel.dataset.i;S.tiposLivre[i]=sel.value;S.q[i]=0;renderTabela();renderJuntas();renderPose();redesenha();}));
+}
+function renderJuntas(){
+  const t=tipos(),fx=faixas();
+  while(S.q.length<t.length)S.q.push(0);S.q.length=t.length;
+  $('juntas').innerHTML=t.map((tp,i)=>{
+    const R=tp==='R',[lo,hi]=fx[i]||[0,.5];
+    return `<div class="jr"><label for="q${i}"><span class="jn">q${sub(i+1)}</span><span class="jt">${R?'rotativa':'prismática'}</span></label>
+      <input type="range" id="q${i}" data-i="${i}" min="${lo}" max="${hi}" step="${R?1:.005}" value="${S.q[i]}"><output id="qo${i}" for="q${i}"></output></div>`;}).join('');
+  $('juntas').querySelectorAll('input').forEach(s=>{
+    const atu=()=>{const i=+s.dataset.i;S.q[i]=+s.value;$('qo'+i).textContent=tipos()[i]==='R'?fmt(+s.value,0)+' °':fmt(+s.value,3)+' m';};
+    atu();
+    s.addEventListener('input',()=>{atu();renderPose();redesenha();pedirAlvo();});
+  });
+}
+function renderPose(){
+  const rows=linhasAluno(),n=rows.length;
+  if(!n){$('pose').innerHTML='';return;}
+  const T=fk(rows,tipos(),S.q)[n];let h='';
+  for(let i=0;i<3;i++)for(let j=0;j<4;j++)h+=`<span class="${j===3?'p':''}">${fmt(T[i*4+j])}</span>`;
+  h+='<span>0</span><span>0</span><span>0</span><span>1</span>';
+  $('pose').innerHTML=h;
+  $('poseNota').textContent='T⁰ₙ do seu robô. Três primeiras colunas: orientação (x, y, z do frame final). Última coluna: posição em metros.';
+}
+function renderResultado(){
+  const el=$('resultado'),gb=$('gab');
+  $('tent').textContent=S.tentativas?`Tentativas: ${S.tentativas}`:'';
+  if(S.modo!=='ex'||!S.resultado)el.hidden=true;
+  else{
+    const r=S.resultado;
+    const erradas=r.celulas.map((l,i)=>l.every(Boolean)?null:i+1).filter(Boolean);
+    const info={
+      ok:['✓','Tabela correta',`Os ${r.total} parâmetros coincidem com a referência.`],
+      equiv:['≈','Solução equivalente',`${r.total-r.acertos} parâmetro(s) diferem da referência, mas o efetuador chega à mesma pose em todas as configurações testadas. Outra escolha de eixos também é válida (células pontilhadas).`],
+      partial:['!','Posição certa, orientação diferente','A posição do efetuador coincide em todas as configurações testadas, mas a orientação do frame final difere. Revise αₙ e θₙ do último elo e a direção de zₙ.'],
+      wrong:['✕','Ainda não',`${r.total-r.acertos} de ${r.total} parâmetros diferem da referência (linhas ${erradas.join(', ')}). Compare o robô tracejado com o seu e mova as juntas para ver onde se separam.`]
+    }[r.veredito];
+    el.className='resultado '+r.veredito;el.hidden=false;
+    el.innerHTML=`<div class="cab"><span class="ic" aria-hidden="true">${info[0]}</span>${info[1]}</div><p>${info[2]}</p>
+      <dl class="stats"><dt>Parâmetros iguais à referência</dt><dd>${r.acertos} / ${r.total}</dd>
+      <dt>Efetuador do alvo (x, y, z)</dt><dd>${r.posAlvo.map(v=>fmt(v)).join('  ')} m</dd>
+      <dt>Efetuador do seu robô</dt><dd>${r.posAluno.map(v=>fmt(v)).join('  ')} m</dd>
+      <dt>Erro de posição agora</dt><dd>${fmt(r.erroAtual*1000,1)} mm</dd>
+      <dt>Pior erro em 10 configurações</dt><dd>${fmt(r.erroMax*1000,1)} mm</dd></dl>
+      <p class="nota">Tolerância: 5 mm nos comprimentos e 0,5° nos ângulos. Ângulos são comparados módulo 360°.</p>`;
+  }
+  if(S.modo==='ex'&&S.gabAberto&&S.gab){
+    const t=S.gab.tipos.split('');
+    gb.hidden=false;
+    gb.innerHTML='<h3>Gabarito</h3><table><thead><tr><th>Junta</th><th>a (m)</th><th>α (°)</th><th>d (m)</th><th>θ (°)</th></tr></thead><tbody>'+
+      S.gab.linhas.map((r,i)=>`<tr><td>${i+1} ${t[i]}</td><td>${fmt(r.a)}</td><td>${fmt(r.al,0)}</td><td>${(t[i]==='P'?'q+':'')+fmt(r.d)}</td><td>${(t[i]==='R'?'q+':'')+fmt(r.th,0)}</td></tr>`).join('')+'</tbody></table>';
+  }else gb.hidden=true;
+  atualizaTrava();
+}
+async function testar(){
+  if(!S.robo||S.ocupado)return;
+  S.ocupado=true;$('btnTestar').disabled=true;
+  try{
+    S.resultado=await api('/testar',{robo:S.robo.id,tabela:linhasAluno(),q:S.q.slice()});
+    S.tentativas++;renderTabela();renderResultado();redesenha();
+    $('resultado').scrollIntoView({block:'nearest',behavior:'smooth'});
+  }catch(e){
+    S.resultado=null;renderResultado();
+    $('resultado').hidden=false;$('resultado').className='resultado wrong';$('resultado').textContent=e.message;
+  }finally{S.ocupado=false;$('btnTestar').disabled=false;}
+}
+async function carregaGabarito(){
+  try{
+    S.gab=await api('/gabarito',{robo:S.robo.id,senha:S.senha});S.gabAberto=true;renderResultado();
+  }catch(e){
+    if(e.status===401){S.senha=null;atualizaTrava();pedirSenha('A senha não vale mais. Digite de novo.',carregaGabarito);}
+    else{$('resultado').hidden=false;$('resultado').className='resultado wrong';$('resultado').textContent=e.message;}
+  }
+}
+
+/* ---------- câmera e desenho ---------- */
+const vsub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],vadd=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],vsc=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const nrm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];};
+function criaCam(W,H){
+  const tg=S.cam.tgt,dist=S.cam.dist*0.62*S.zoom,ce=Math.cos(S.el);
+  const eye=[tg[0]+dist*ce*Math.cos(S.az),tg[1]+dist*ce*Math.sin(S.az),tg[2]+dist*Math.sin(S.el)];
+  const f=nrm(vsub(tg,eye)),r=nrm(cross(f,[0,0,1])),u=cross(r,f),focal=0.5*Math.min(W,H)/Math.tan(16*D2R);
+  return {proj(p){const v=vsub(p,eye),zc=dot(v,f),s=focal/zc;return [W/2+dot(v,r)*s,H/2-dot(v,u)*s,zc,s];}};
+}
+function casco(pts){
+  pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[];for(const p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  const up=[];for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  lo.pop();up.pop();return lo.concat(up);
+}
+function poli(c,p){c.beginPath();p.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();}
+function cilindro(c,cam,A,B,r,cor,alfa,tracejado,borda,fundo){
+  const ax=vsub(B,A),L=Math.hypot(...ax);if(L<1e-9)return;
+  const n=vsc(ax,1/L),t=Math.abs(n[2])<.9?[0,0,1]:[1,0,0],u=nrm(cross(n,t)),v=cross(n,u),pa=[],pb=[];
+  for(let k=0;k<20;k++){const th=k/20*2*Math.PI,off=vadd(vsc(u,Math.cos(th)*r),vsc(v,Math.sin(th)*r));
+    const a=cam.proj(vadd(A,off)),b=cam.proj(vadd(B,off));if(a[2]<=.05||b[2]<=.05)return;pa.push(a);pb.push(b);}
+  const perto=cam.proj(A)[2]<cam.proj(B)[2]?pa:pb;
+  c.globalAlpha=alfa;c.fillStyle=cor;poli(c,casco(pa.concat(pb)));c.fill();
+  c.strokeStyle=borda;c.lineWidth=tracejado?1.5:1.2;c.globalAlpha=alfa*(tracejado?.9:.55);if(tracejado)c.setLineDash([5,4]);c.stroke();c.setLineDash([]);
+  c.globalAlpha=alfa*.25;c.fillStyle=fundo;poli(c,perto);c.fill();
+  c.globalAlpha=alfa*.5;c.strokeStyle=borda;poli(c,perto);c.stroke();c.globalAlpha=1;
+}
+/* robô do aluno: mesma regra de desenho usada pelo servidor para o alvo */
+function cenaAluno(rows,tp,q,comEixos){
+  const T=fk(rows,tp,q),P=[],L=[],n=rows.length,pos=m=>[m[3],m[7],m[11]];
+  for(let i=0;i<n;i++){
+    const Tp=T[i],O=pos(Tp),z=[Tp[2],Tp[6],Tp[10]],E=pos(T[i+1]),d=rows[i].d+(tp[i]==='P'?q[i]:0),Q=vadd(O,vsc(z,d));
+    if(Math.abs(d)>1e-6)P.push({k:'cyl',A:O,B:Q,r:.018,role:'link',own:'mine'});
+    if(Math.hypot(...vsub(E,Q))>1e-6)P.push({k:'cyl',A:Q,B:E,r:.018,role:'link',own:'mine'});
+    if(tp[i]==='R')P.push({k:'cyl',A:vsub(O,vsc(z,.05)),B:vadd(O,vsc(z,.05)),r:.038,role:'joint',own:'mine'});
+    else P.push({k:'cyl',A:O,B:vadd(O,vsc(z,(d<0?-1:1)*.12)),r:.04,role:'joint',own:'mine'});
+  }
+  const Tn=T[n],On=pos(Tn),yn=[Tn[1],Tn[5],Tn[9]],zn=[Tn[2],Tn[6],Tn[10]],f1=vadd(On,vsc(yn,.04)),f2=vsub(On,vsc(yn,.04));
+  P.push({k:'cyl',A:f1,B:f2,r:.009,role:'tool',own:'mine'},{k:'cyl',A:f1,B:vadd(f1,vsc(zn,.07)),r:.009,role:'tool',own:'mine'},{k:'cyl',A:f2,B:vadd(f2,vsc(zn,.07)),r:.009,role:'tool',own:'mine'});
+  if(comEixos)for(let i=1;i<=n;i++)eixos(P,L,i,pos(T[i]),[T[i][0],T[i][4],T[i][8]],[T[i][1],T[i][5],T[i][9]],[T[i][2],T[i][6],T[i][10]],'mine');
+  return {P,L};
+}
+function eixos(P,L,i,O,x,y,z,own){
+  [[x,'x',0],[y,'y',1],[z,'z',2]].forEach(([v,nm,a])=>{
+    P.push({k:'line',A:O,B:vadd(O,vsc(v,.11)),axis:a,own,w:2.2});
+    L.push({p:vadd(O,vsc(v,.135)),text:nm+i+(own==='target'?'′':''),axis:a,own});
+  });
+}
+function cenaAlvo(){
+  const P=[],L=[];
+  if(!S.alvo)return {P,L};
+  S.alvo.cilindros.forEach(c=>P.push({k:'cyl',A:c.A,B:c.B,r:c.r,role:c.papel,own:'target'}));
+  (S.alvo.eixos||[]).forEach(f=>eixos(P,L,f.i,f.O,f.x,f.y,f.z,'target'));
+  return {P,L};
+}
+function desenha(){
+  sujo=false;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const cs=getComputedStyle(document.documentElement),V=n=>cs.getPropertyValue(n).trim();
+  const col={tinta:V('--tinta'),papel:V('--papel'),graf:V('--grafite'),linha:V('--linha'),ax:[V('--eixo-x'),V('--eixo-y'),V('--eixo-z')]};
+  const cam=criaCam(W,H);
+  c.strokeStyle=col.linha;c.lineWidth=1;
+  for(let g=-1;g<=1.0001;g+=.2)for(const [A,B] of [[[g,-1,0],[g,1,0]],[[-1,g,0],[1,g,0]]]){
+    const a=cam.proj(A),b=cam.proj(B);if(a[2]<=.05||b[2]<=.05)continue;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();}
+  const prims=[],rot=[];
+  prims.push({k:'cyl',A:[0,0,-.04],B:[0,0,0],r:.1,role:'base',own:'base'});
+  const bx=[[1,0,0],[0,1,0],[0,0,1]],nm=['x₀','y₀','z₀'];
+  for(let a=0;a<3;a++){prims.push({k:'line',A:[0,0,0],B:vsc(bx[a],.2),axis:a,own:'base',w:2.4});rot.push({p:vsc(bx[a],.235),text:nm[a],axis:a,own:'base'});}
+  if(S.modo==='ex'&&S.mostraAlvo){const s=cenaAlvo();prims.push(...s.P);rot.push(...s.L);}
+  if(S.mostraMeu&&S.tabela.length){const s=cenaAluno(linhasAluno(),tipos(),S.q,S.mostraEixos);prims.push(...s.P);rot.push(...s.L);}
+  for(const p of prims){const a=cam.proj(p.A),b=cam.proj(p.B);p.depth=(a[2]+b[2])/2;}
+  prims.sort((a,b)=>b.depth-a.depth);
+  for(const p of prims){
+    const fantasma=p.own==='target',alfa=fantasma?.3:1;
+    if(p.k==='cyl'){
+      let cor=fantasma?col.graf:(p.role==='joint'?col.graf:col.tinta);
+      if(p.role==='base')cor=col.graf;
+      cilindro(c,cam,p.A,p.B,p.r,cor,p.role==='base'?.85:alfa,fantasma,fantasma?col.tinta:col.papel,col.papel);
+    }else{
+      const a=cam.proj(p.A),b=cam.proj(p.B);if(a[2]<=.05||b[2]<=.05)continue;
+      c.globalAlpha=fantasma?.65:1;c.strokeStyle=col.ax[p.axis];c.lineWidth=p.w;c.lineCap='round';
+      if(fantasma)c.setLineDash([4,3]);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.setLineDash([]);c.globalAlpha=1;
+    }
+  }
+  c.font='600 11px '+V('--mono');c.textAlign='center';c.textBaseline='middle';
+  for(const l of rot){const p=cam.proj(l.p);if(p[2]<=.05)continue;c.globalAlpha=l.own==='target'?.8:1;c.fillStyle=col.ax[l.axis];c.fillText(l.text,p[0],p[1]);}
+  c.globalAlpha=1;
+}
+(function laco(){if(sujo)desenha();requestAnimationFrame(laco);})();
+new ResizeObserver(redesenha).observe(cv);
+new MutationObserver(redesenha).observe(document.documentElement,{attributes:true,attributeFilter:['data-tema']});
+
+let arrasto=null;
+cv.addEventListener('pointerdown',e=>{arrasto={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{if(!arrasto)return;
+  S.az-=(e.clientX-arrasto.x)*.008;S.el=Math.max(-.2,Math.min(1.45,S.el+(e.clientY-arrasto.y)*.008));arrasto={x:e.clientX,y:e.clientY};redesenha();});
+const fimArrasto=()=>{arrasto=null;};
+cv.addEventListener('pointerup',fimArrasto);cv.addEventListener('pointercancel',fimArrasto);
+cv.addEventListener('wheel',e=>{e.preventDefault();S.zoom=Math.max(.4,Math.min(2.2,S.zoom*Math.exp(e.deltaY*.001)));redesenha();},{passive:false});
+
+/* ---------- tema (só nesta página) ---------- */
+function aplicaTema(t,salvar){
+  document.documentElement.dataset.tema=t;const b=$('btnTema');
+  b.textContent=t==='escuro'?'☀ Tema claro':'☾ Tema escuro';b.setAttribute('aria-pressed',t==='escuro');
+  if(salvar){try{localStorage.setItem('manip-tema',t);}catch(e){}}
+}
+$('btnTema').addEventListener('click',()=>aplicaTema(document.documentElement.dataset.tema==='escuro'?'claro':'escuro',true));
+(function(){let t='claro';try{t=localStorage.getItem('manip-tema')||'claro';}catch(e){}aplicaTema(t==='escuro'?'escuro':'claro',false);})();
+
+/* ---------- controles ---------- */
+function ligaControles(){
+  const grupos={};S.robos.forEach(r=>(grupos[r.grupo]=grupos[r.grupo]||[]).push(r));
+  let h='';for(const g in grupos)h+=`<optgroup label="${g}">`+grupos[g].map(r=>`<option value="${r.id}">${r.nome}</option>`).join('')+'</optgroup>';
+  $('selRobo').innerHTML=h;$('selPreset').innerHTML='<option value="">Escolher…</option>'+h;
+  $('selRobo').addEventListener('change',()=>carregaRobo($('selRobo').value));
+  $('selPreset').addEventListener('change',()=>{
+    const id=$('selPreset').value;if(!id)return;
+    pedirSenha('Carregar uma configuração clássica mostra o gabarito. Digite a senha do professor.',async()=>{
+      try{
+        const g=await api('/gabarito',{robo:id,senha:S.senha});const meta=S.robos.find(r=>r.id===id);
+        S.tiposLivre=g.tipos.split('');S.tabela=daLinhas(g.linhas);S.q=meta.q0.slice();S.cam={tgt:meta.alvo,dist:meta.dist};S.az=-0.85;S.el=.42;S.zoom=1;
+        renderTudo();
+      }catch(e){if(e.status===401){S.senha=null;atualizaTrava();}}
+    });
+    $('selPreset').value='';
+  });
+  $('abaEx').addEventListener('click',()=>defineModo('ex'));
+  $('abaLivre').addEventListener('click',()=>defineModo('livre'));
+  $('btnDica').addEventListener('click',()=>{S.dica=!S.dica;renderTudo();});
+  $('btnTestar').addEventListener('click',testar);
+  const limpar=()=>{S.tabela=zeros(S.tabela.length);S.resultado=null;renderTudo();};
+  $('btnLimpar').addEventListener('click',limpar);$('btnLimparL').addEventListener('click',limpar);
+  $('btnGab').addEventListener('click',()=>{
+    if(S.gabAberto){S.gabAberto=false;renderResultado();return;}
+    pedirSenha('Digite a senha do professor para ver o gabarito.',carregaGabarito);
+  });
+  $('btnZero').addEventListener('click',()=>{S.q=tipos().map(()=>0);renderJuntas();renderPose();redesenha();pedirAlvo();});
+  $('btnAleat').addEventListener('click',()=>{S.q=faixas().map(([lo,hi],i)=>{const v=lo+(hi-lo)*Math.random();return tipos()[i]==='R'?Math.round(v):Math.round(v*200)/200;});renderJuntas();renderPose();redesenha();pedirAlvo();});
+  $('btnCam').addEventListener('click',()=>{S.az=-0.85;S.el=.42;S.zoom=1;redesenha();});
+  $('tgAlvo').addEventListener('change',e=>{S.mostraAlvo=e.target.checked;redesenha();});
+  $('tgMeu').addEventListener('change',e=>{S.mostraMeu=e.target.checked;redesenha();});
+  $('tgEixos').addEventListener('change',e=>{S.mostraEixos=e.target.checked;redesenha();});
+  $('tgEixosAlvo').addEventListener('change',e=>{
+    if(!e.target.checked){S.mostraEixosAlvo=false;pedirAlvo();return;}
+    e.target.checked=false;
+    pedirSenha('Mostrar os eixos do alvo revela o gabarito. Digite a senha do professor.',()=>{
+      S.mostraEixosAlvo=true;$('tgEixosAlvo').checked=true;pedirAlvo();});
+  });
+  $('btnAdd').addEventListener('click',()=>{if(S.tabela.length>=7)return;S.tabela.push({a:'0',al:'0',d:'0',th:'0'});S.tiposLivre.push('R');S.q.push(0);renderTudo();});
+  $('btnDel').addEventListener('click',()=>{if(S.tabela.length<=1)return;S.tabela.pop();S.tiposLivre.pop();S.q.pop();renderTudo();});
+}
+
+/* ---------- início ---------- */
+fetch(API+'/robos').then(r=>r.json()).then(j=>{
+  S.robos=j.robos;ligaControles();carregaRobo(S.robos[0].id);
+}).catch(()=>{$('enunciado').textContent='Não foi possível carregar as configurações. Recarregue a página.';});
+})();
+</script>
+</body>
+</html>
