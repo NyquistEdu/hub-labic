@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { Linha, Robo } from './robos';
 import { acharRobo } from './robos';
 
@@ -51,14 +51,29 @@ export function roboDoCorpo(corpo: Record<string, unknown>): Robo | undefined {
 
 export type ResultadoSenha = 'ok' | 'errada' | 'nao-configurada';
 
-/** A senha do professor vem da variável de ambiente SIMULADOR_GABARITO_SENHA (Vercel). */
+// Hash scrypt da senha do professor (a senha em si não fica no repositório).
+// Para trocar a senha, gere um novo registro "scrypt$sal$hash" e substitua esta linha.
+const SENHA_PADRAO = 'scrypt$5fa864aa45b6493a7a382156980b8e64$8c73e624ed8c7cc3ab6cdd886e7d04b9ba07d591ee93c1e164c1480b41ecfea1';
+
+function iguais(a: Buffer, b: Buffer) {
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** Confere a senha do professor no servidor. Se SIMULADOR_GABARITO_SENHA existir, ela vale no lugar do hash padrão. */
 export function conferirSenha(informada: unknown): ResultadoSenha {
-  const real = process.env.SIMULADOR_GABARITO_SENHA;
-  if (!real) return 'nao-configurada';
-  if (typeof informada !== 'string' || informada.length === 0 || informada.length > 200) return 'errada';
-  const a = createHash('sha256').update(informada).digest();
-  const b = createHash('sha256').update(real).digest();
-  return timingSafeEqual(a, b) ? 'ok' : 'errada';
+  if (typeof informada !== 'string' || informada.length === 0 || informada.length > 200) {
+    return process.env.SIMULADOR_GABARITO_SENHA || SENHA_PADRAO ? 'errada' : 'nao-configurada';
+  }
+  const env = process.env.SIMULADOR_GABARITO_SENHA;
+  if (env) {
+    const a = createHash('sha256').update(informada).digest();
+    const b = createHash('sha256').update(env).digest();
+    return iguais(a, b) ? 'ok' : 'errada';
+  }
+  const [tipo, sal, hash] = SENHA_PADRAO.split('$');
+  if (tipo !== 'scrypt' || !sal || !hash) return 'nao-configurada';
+  const calc = scryptSync(informada, Buffer.from(sal, 'hex'), 32, { N: 16384, r: 8, p: 1 });
+  return iguais(calc, Buffer.from(hash, 'hex')) ? 'ok' : 'errada';
 }
 
 export const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
