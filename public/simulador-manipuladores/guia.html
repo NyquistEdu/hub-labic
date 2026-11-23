@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="/icon.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guia técnico da Bancada DH — LABIC</title>
+<meta name="description" content="Convenção de Denavit-Hartenberg, frames, tabela, correção e robôs da Bancada DH do LABIC.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#000; --papel:#fff; --nevoa:#f3f3f1; --linha:#dcdcd8; --grafite:#5c5c58; --azul:#2f6fe0;
+  --display:"Big Shoulders Display","Arial Narrow",sans-serif;
+  --sans:"Instrument Sans",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --cds-text-primary:var(--tinta); --cds-text-secondary:var(--grafite);
+  --cds-chart-axis:#8a8a85; --cds-chart-grid:var(--linha);
+  --cds-chart-categorical-1:#2f6fe0; --cds-chart-categorical-2:#e0662f;
+}
+html[data-tema="escuro"]{--tinta:#fff;--papel:#000;--nevoa:#1a1a19;--linha:#3a3a38;--grafite:#a8a8a2;--azul:#6aa0ff;color-scheme:dark;
+  --cds-chart-axis:#8a8a85; --cds-chart-categorical-1:#6aa0ff; --cds-chart-categorical-2:#ff9a6a}
+html[data-tema="escuro"] .marca img{background:#fff;border-radius:12px;padding:3px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:5.5rem}
+html,body{margin:0;background:var(--papel);color:var(--tinta);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid var(--azul);outline-offset:3px;border-radius:4px}
+h1,h2{font-family:var(--display);font-weight:800;text-transform:uppercase;line-height:1.02;letter-spacing:.005em;margin:0}
+.contorno{max-width:76rem;margin-inline:auto;padding-inline:1.25rem}
+@media (min-width:768px){.contorno{padding-inline:2.5rem}}
+
+.topo{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--papel) 95%,transparent);backdrop-filter:blur(6px);border-bottom:2.5px solid var(--tinta)}
+.topo .contorno{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.6rem}
+.marca{display:flex;align-items:center;gap:.75rem;color:inherit;text-decoration:none;min-width:0}
+.marca img{width:52px;height:52px;flex:none}
+.marca span{line-height:1.2;font-size:.9rem}
+.marca strong{display:block}
+.marca small{color:var(--grafite);font-size:.9rem}
+@media (max-width:760px){.marca span{display:none}}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:nowrap}
+button,.botao{font:inherit;font-weight:600;line-height:1.2;border:2.5px solid var(--tinta);background:var(--papel);color:var(--tinta);padding:.5rem 1.1rem;border-radius:999px;cursor:pointer;text-decoration:none;display:inline-flex;transition:background .15s,color .15s;white-space:nowrap}
+button:hover,.botao:hover{background:var(--tinta);color:var(--papel)}
+.botao.primary{background:var(--tinta);color:var(--papel)}
+.botao.primary:hover{background:var(--papel);color:var(--tinta)}
+@media (max-width:760px){.topo .botao.extra{display:none}}
+
+.intro{padding-block:2.2rem 1.2rem}
+.intro h1{font-size:clamp(2.4rem,6vw,4rem);margin-top:.7rem}
+.intro p{max-width:62ch;color:var(--grafite);margin:.6rem 0 0}
+.intro .row{margin-top:1rem;flex-wrap:wrap}
+.etiqueta{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--tinta);border-radius:999px;padding:.15rem .7rem;font-size:.85rem;font-weight:600;background:var(--papel)}
+.etiqueta>i{width:10px;height:10px;border-radius:999px;background:var(--azul);display:inline-block}
+
+.guia{display:grid;grid-template-columns:15rem minmax(0,1fr);gap:2.5rem;padding-block:1rem 2rem;align-items:start}
+@media (max-width:980px){.guia{grid-template-columns:1fr;gap:1rem}}
+.toc{position:sticky;top:5.5rem;border:2.5px solid var(--tinta);border-radius:20px;padding:1rem 1.1rem}
+@media (max-width:980px){.toc{position:static}}
+.toc b{display:block;font-family:var(--display);text-transform:uppercase;font-size:1.3rem;font-weight:800;margin-bottom:.4rem}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:.15rem;counter-reset:s}
+.toc a{display:block;padding:.2rem .5rem;border-radius:8px;color:var(--tinta);text-decoration:none;font-size:.92rem;font-weight:500}
+.toc a:hover{background:var(--nevoa)}
+.toc a.ativo{background:var(--tinta);color:var(--papel)}
+
+article{min-width:0;max-width:52rem}
+article h2{font-size:clamp(1.8rem,3.4vw,2.4rem);margin:3rem 0 .8rem;padding-top:1.2rem;border-top:2.5px solid var(--tinta)}
+article h2:first-child{margin-top:0}
+article h3{font-size:1.2rem;font-weight:600;margin:1.8rem 0 .4rem}
+article p,article li{max-width:68ch}
+article p{margin:.7rem 0}
+article ul,article ol{padding-left:1.3rem;margin:.6rem 0}
+article li{margin:.25rem 0}
+article a{color:var(--tinta);text-underline-offset:3px}
+code{font-family:var(--mono);font-size:.88em;background:var(--nevoa);border:1px solid var(--linha);border-radius:6px;padding:.05em .35em}
+pre{background:var(--nevoa);border:2px solid var(--tinta);border-radius:12px;padding:.8rem 1rem;overflow:auto;font:13.5px/1.5 var(--mono)}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+blockquote{margin:.5rem 0;padding:.45rem 1rem;border-left:4px solid var(--azul);background:var(--nevoa);border-radius:0 10px 10px 0;font-family:Georgia,"Times New Roman",serif;font-size:1.08rem}
+blockquote p{margin:0}
+sub{font-size:.72em;line-height:0}
+.tabela{overflow-x:auto;margin:1rem 0;border:2px solid var(--tinta);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:30rem}
+th,td{text-align:left;vertical-align:top;padding:.5rem .75rem;border-bottom:1px solid var(--linha)}
+th{background:var(--nevoa);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--grafite);font-weight:600;border-bottom:2px solid var(--tinta)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+.figura{margin:1.6rem 0;border:2px solid var(--tinta);border-radius:16px;padding:.8rem .8rem .6rem;background:var(--papel)}
+.figura .fig{width:100%;height:auto;display:block;font-family:var(--sans)}
+.figura img{width:100%;height:auto;display:block;border:1px solid var(--linha);border-radius:8px;background:#fff;max-width:34rem;margin-inline:auto}
+.figura figcaption{font-size:.85rem;color:var(--grafite);margin-top:.5rem;font-weight:500}
+@media print{.topo,.toc,.rodape .faixa{display:none}.guia{display:block}.figura{break-inside:avoid}}
+
+.rodape{margin-top:3rem;border-top:2.5px solid var(--tinta)}
+.faixa{display:flex;height:8px}
+.faixa span{flex:1}
+.rodape .contorno{padding-block:1.5rem 2rem}
+.rodape p{margin:.2rem 0;color:var(--grafite);font-size:.9rem}
+.rodape .nome{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:2.2rem;color:var(--tinta);line-height:1}
+.rodape a{color:var(--tinta);text-underline-offset:4px}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="contorno">
+    <a class="marca" href="/" aria-label="LABIC, página inicial">
+      <img src="/img/logo-labic-miolo.png" alt="" width="52" height="52">
+      <span><strong>Laboratório de Inovação e Criatividade</strong><small>IFS Campus Lagarto</small></span>
+    </a>
+    <div class="row"><a class="botao" href="/simulador-manipuladores">← Simulador</a><button type="button" id="btnTema" aria-pressed="false">☾ Tema escuro</button><a class="botao extra" href="/">Voltar ao site</a></div>
+  </div>
+</header>
+<section class="contorno intro">
+  <span class="etiqueta"><i></i>Robótica</span>
+  <h1>Guia técnico da Bancada DH</h1>
+  <p>Como a Bancada de manipuladores funciona por dentro: a convenção de Denavit-Hartenberg, o que a tabela guarda, os dois jeitos de resolver, como a correção decide entre correto, equivalente e errado, e quais robôs existem.</p>
+  <div class="row"><a class="botao primary" href="/simulador-manipuladores">▶ Abrir a Bancada</a></div>
+</section>
+<div class="contorno guia">
+  <nav class="toc" aria-label="Seções do guia"><b>Seções</b><ol><li><a href="#1-visao-geral">1. Visão geral</a></li><li><a href="#2-convencao-dh">2. Convenção DH</a></li><li><a href="#3-tabela-e-q">3. A tabela e a variável q</a></li><li><a href="#4-os-dois-metodos">4. Os dois métodos</a></li><li><a href="#5-correcao">5. Como a correção funciona</a></li><li><a href="#6-robos">6. Os robôs</a></li><li><a href="#7-gabarito">7. Gabarito e eixos do alvo</a></li><li><a href="#8-limitacoes">8. Hipóteses e limitações</a></li></ol></nav>
+  <article>
+<h2 id="1-visao-geral">1. Visão geral</h2>
+<p>A Bancada DH é uma página web em que você monta a tabela de Denavit-Hartenberg (DH) de um manipulador e confere se acertou. O robô alvo aparece tracejado; o seu robô, sólido, é desenhado a partir da tabela que você digita. Os dois recebem os mesmos valores de junta q, e se coincidem em qualquer q, a tabela está certa.</p>
+<p>A referência e a correção ficam no servidor: o navegador recebe só o resultado de cada teste, não a tabela certa. Está em hub-labic.vercel.app/simulador-manipuladores.</p>
+<h2 id="2-convencao-dh">2. Convenção DH</h2>
+<p>A Bancada usa a convenção DH <strong>clássica</strong>. A transformação do frame {i−1} para o frame {i} é o produto de quatro movimentos, nesta ordem:</p>
+<pre><code>A_i = Rz(θ_i) · Tz(d_i) · Tx(a_i) · Rx(α_i)</code></pre>
+<pre><code>        [ cosθ  −sinθ·cosα   sinθ·sinα   a·cosθ ]
+A_i  =  [ sinθ   cosθ·cosα  −cosθ·sinα   a·sinθ ]
+        [  0       sinα         cosα        d    ]
+        [  0        0            0          1    ]</code></pre>
+<p>A pose do efetuador no frame da base é o produto de todas as matrizes: <code>T⁰ₙ = A₁(q₁) · A₂(q₂) ⋯ Aₙ(qₙ)</code>.</p>
+<figure class="figura" id="figura-1"><svg class="fig" viewBox="0 0 760 360" role="img" aria-label="Os quatro parâmetros de Denavit-Hartenberg entre os frames i-1 e i" font-size="13"><defs><marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--cds-chart-axis)"/></marker></defs>
+<text x="24" y="30" font-size="15" font-weight="600" fill="var(--cds-text-primary)">Os quatro parâmetros entre o frame {i−1} e o frame {i}</text>
+<g fill="none" stroke="var(--cds-chart-axis)" stroke-width="1.6"><path d="M120 300V70" marker-end="url(#m1)"/><path d="M120 300H300" marker-end="url(#m1)"/><path d="M420 190V50" marker-end="url(#m1)"/><path d="M420 190H600" marker-end="url(#m1)"/></g>
+<g fill="none" stroke="var(--cds-chart-categorical-1)" stroke-width="2.2"><path d="M120 300V190"/><path d="M120 190H420"/></g>
+<g fill="none" stroke="var(--cds-chart-grid)" stroke-width="1.2" stroke-dasharray="4 4"><path d="M120 190H300"/><path d="M420 190L420 300"/></g>
+<g fill="var(--cds-text-primary)" font-size="12.5"><text x="108" y="64" text-anchor="end">z<tspan font-size="9" dy="3">i−1</tspan></text><text x="306" y="304">x<tspan font-size="9" dy="3">i−1</tspan></text><text x="432" y="56">z<tspan font-size="9" dy="3">i</tspan></text><text x="606" y="194">x<tspan font-size="9" dy="3">i</tspan></text>
+<text x="108" y="250" text-anchor="end" font-weight="600">d<tspan font-size="9" dy="3">i</tspan></text><text x="270" y="180" font-weight="600">a<tspan font-size="9" dy="3">i</tspan></text></g>
+<path d="M170 300A50 50 0 0 0 164 273" fill="none" stroke="var(--cds-chart-axis)" stroke-width="1.4"/>
+<text x="176" y="268" font-size="12" fill="var(--cds-text-primary)" font-weight="600">θ</text>
+<path d="M420 140A50 50 0 0 1 462 190" fill="none" stroke="var(--cds-chart-axis)" stroke-width="1.4"/>
+<text x="446" y="150" font-size="12" fill="var(--cds-text-primary)" font-weight="600">α</text>
+<g><rect x="460" y="230" width="276" height="100" rx="8" fill="none" stroke="var(--cds-chart-axis)" stroke-width="1.25"/>
+<text x="474" y="252" font-size="11.5" fill="var(--cds-text-primary)">θ: giro em torno de z<tspan font-size="9" dy="3">i−1</tspan><tspan dy="-3"> (x<tspan font-size="9" dy="3">i−1</tspan><tspan dy="-3"> → x</tspan><tspan font-size="9" dy="3">i</tspan><tspan dy="-3">)</tspan></tspan></text>
+<text x="474" y="272" font-size="11.5" fill="var(--cds-text-primary)">d: deslocamento ao longo de z<tspan font-size="9" dy="3">i−1</tspan></text>
+<text x="474" y="292" font-size="11.5" fill="var(--cds-text-primary)">a: deslocamento ao longo de x<tspan font-size="9" dy="3">i</tspan></text>
+<text x="474" y="312" font-size="11.5" fill="var(--cds-text-primary)">α: giro em torno de x<tspan font-size="9" dy="3">i</tspan><tspan dy="-3"> (z</tspan><tspan font-size="9" dy="3">i−1</tspan><tspan dy="-3"> → z</tspan><tspan font-size="9" dy="3">i</tspan><tspan dy="-3">)</tspan></tspan></text></g></svg>
+<figcaption>Figura 1 · esquema dos parâmetros a, α, d, θ (desenho esquemático, sem escala)</figcaption></figure>
+<p>Para a matriz valer, os frames precisam obedecer a duas regras:</p>
+<ol><li><p>z<sub>i−1</sub> fica sobre o eixo da junta i;</p></li><li><p>x<sub>i</sub> é perpendicular a z<sub>i−1</sub> e o corta.</p></li></ol>
+<p>Dessas regras sai que a pose de {i} em relação a {i−1} depende de apenas quatro números. y<sub>i</sub> sempre sai da regra da mão direita.</p>
+<h2 id="3-tabela-e-q">3. A tabela e a variável q</h2>
+<p>Cada linha da tabela tem a, α, d, θ. Em junta <strong>rotativa</strong> a variável é θ; em junta <strong>prismática</strong> a variável é d. A tabela guarda só a parte <strong>constante</strong> dos quatro números, e a Bancada soma q automaticamente na coluna da variável. Por isso essas células aparecem com o prefixo q<sub>i</sub>+, e com todas as juntas em q = 0 os valores digitados são os da tabela.</p>
+<p>Exemplo: no cilíndrico (RPP) a junta 1 é rotativa e a coluna θ da linha 1 é a variável; o que você digita ali é o offset (0, se o frame {1} começa alinhado com {0}). Em robôs como o esférico, o offset em θ pode ser diferente de zero (por exemplo, 90°), porque o eixo x do frame {2} não coincide com o x do frame anterior.</p>
+<figure class="figura" id="figura-2"><svg class="fig" viewBox="0 0 760 250" role="img" aria-label="Braço planar RR visto de cima com frames 0, 1 e 2" font-size="13"><defs><marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--cds-chart-axis)"/></marker></defs>
+<text x="24" y="30" font-size="15" font-weight="600" fill="var(--cds-text-primary)">Braço planar RR visto de cima, em q = 0</text>
+<g fill="none" stroke="var(--cds-chart-categorical-1)" stroke-width="5" stroke-linecap="round"><path d="M110 150H420"/><path d="M420 150H670"/></g>
+<g fill="var(--papel)" stroke="var(--cds-chart-axis)" stroke-width="2"><circle cx="110" cy="150" r="10"/><circle cx="420" cy="150" r="10"/><circle cx="670" cy="150" r="7"/></g>
+<g fill="none" stroke="var(--cds-chart-axis)" stroke-width="1.5"><path d="M110 150H160" marker-end="url(#m2)"/><path d="M420 150H470" marker-end="url(#m2)"/></g><g fill="var(--cds-text-secondary)" font-size="11.5"><text x="160" y="140">x<tspan font-size="9" dy="3">0</tspan></text><text x="470" y="140">x<tspan font-size="9" dy="3">1</tspan></text></g>
+<g fill="var(--cds-text-primary)" font-size="12.5"><text x="100" y="186" text-anchor="end">{0}</text><text x="430" y="186">{1}</text><text x="676" y="186">{2}</text>
+<text x="265" y="132" text-anchor="middle">a<tspan font-size="9" dy="3">1</tspan><tspan dy="-3"> = L</tspan><tspan font-size="9" dy="3">1</tspan></text><text x="545" y="132" text-anchor="middle">a<tspan font-size="9" dy="3">2</tspan><tspan dy="-3"> = L</tspan><tspan font-size="9" dy="3">2</tspan></text></g>
+<text x="24" y="230" font-size="11.5" fill="var(--cds-text-secondary)">Os eixos z saem da tela e são todos paralelos: por isso α = 0 e d = 0 nas duas linhas.</text></svg>
+<figcaption>Figura 2 · RR planar: cada frame fica sobre o eixo da junta e x aponta ao longo do elo</figcaption></figure>
+<h2 id="4-os-dois-metodos">4. Os dois métodos</h2>
+<h3>Preencher a tabela e ver os frames</h3>
+<p>Você digita a, α, d, θ e a Bancada desenha os frames que resultam. É útil para ver o que cada número faz: mude θ<sub>1</sub> na tabela e veja o frame {1} girar, mude α e veja o eixo z inclinar.</p>
+<h3>Escolher os frames primeiro</h3>
+<p>É o caminho do papel. Você dá, para cada frame, a origem (em metros, no sistema {0}) e as direções de x<sub>i</sub> e z<sub>i</sub>, com as juntas em q = 0. A Bancada verifica as duas regras do DH em cada frame e avisa qual foi violada. Depois, ela <strong>deriva a tabela</strong> a partir dos seus frames e você confere com a tabela que você leu.</p>
+<p>A derivação usa a transformação relativa entre frames consecutivos, M = (T<sub>i−1</sub>)<sup>−1</sup> · T<sub>i</sub>, e lê os quatro parâmetros nos elementos de M:</p>
+<pre><code>θ = atan2(M[1,0], M[0,0])     α = atan2(M[2,1], M[2,2])
+d = M[2,3]                     a = M[0,3]·cosθ + M[1,3]·sinθ</code></pre>
+<p>As duas regras do DH viram testes numéricos em M: x<sub>i</sub> perpendicular a z<sub>i−1</sub> (|M[2,0]| ≈ 0) e x<sub>i</sub> corta z<sub>i−1</sub> (−M[0,3]·sinθ + M[1,3]·cosθ ≈ 0).</p>
+<h2 id="5-correcao">5. Como a correção funciona</h2>
+<p>O botão <strong>Testar</strong> manda a sua tabela ao servidor, que responde com um veredito e, célula a célula, o que está certo (✓), errado (✕) ou diferente da referência mas válido (≈).</p>
+<div class="tabela"><table><thead><tr><th>Veredito</th><th>Quando</th></tr></thead><tbody>
+<tr><td>Correta</td><td>Todas as células coincidem com a referência: comprimentos (a, d) com tolerância de 5 mm e ângulos (α, θ) com 0,5°, comparados módulo 360°</td></tr>
+<tr><td>Solução equivalente</td><td>A tabela é diferente, mas leva o efetuador à mesma pose da referência em dez configurações de teste de q: o robô é o mesmo, com frames escolhidos de outro jeito</td></tr>
+<tr><td>Posição certa, orientação diferente</td><td>O efetuador chega ao ponto certo nas dez configurações, mas com os eixos girados</td></tr>
+<tr><td>Errada</td><td>Nem a posição coincide</td></tr></tbody></table></div>
+<p>A comparação de pose usa tolerância de 0,01 m na posição e 0,012 nos elementos da matriz de rotação. O robô sólido que você vê na tela é calculado no navegador a partir da sua tabela; o alvo vem do servidor.</p>
+<h2 id="6-robos">6. Os robôs</h2>
+<div class="tabela"><table><thead><tr><th>Robô</th><th>Juntas</th><th>Observação</th></tr></thead><tbody>
+<tr><td>Planar RR</td><td>R R</td><td>2 elos, todos os z paralelos</td></tr>
+<tr><td>Planar RRR</td><td>R R R</td><td>3 elos, todos os z paralelos</td></tr>
+<tr><td>Cartesiano</td><td>P P P</td><td>três prismáticas, z mudam de direção</td></tr>
+<tr><td>Cilíndrico</td><td>R P P</td><td>coluna de altura fixa e alcance radial</td></tr>
+<tr><td>Esférico</td><td>R R P</td><td>inclui deslocamento lateral e offset em θ</td></tr>
+<tr><td>SCARA</td><td>R R P R</td><td>4 graus de liberdade</td></tr>
+<tr><td>Antropomórfico</td><td>R R R</td><td>base, ombro e cotovelo</td></tr>
+<tr><td>6R</td><td>R R R R R R</td><td>braço de 6 juntas</td></tr></tbody></table></div>
+<p>Em todos os robôs, com q = 0 os frames de referência ficam alinhados com os eixos do mundo ({0}). A Bancada mostra o intervalo de cada slider e a pose do efetuador (matriz T⁰ₙ e posição em metros).</p>
+<h2 id="7-gabarito">7. Gabarito e eixos do alvo</h2>
+<p>O gabarito (a tabela de referência) e os eixos dos frames do robô alvo só são liberados com a <strong>senha do professor</strong>. A verificação da senha é feita no servidor; o navegador nunca recebe a tabela de referência antes disso. No Laboratório livre, a senha também libera o carregamento de uma configuração pronta.</p>
+<h2 id="8-limitacoes">8. Hipóteses e limitações</h2>
+<ul><li><p>Os frames de referência dos oito robôs ficam alinhados aos eixos do mundo com q = 0; eixos inclinados em outros ângulos não são cobrados nesta versão.</p></li><li><p>A equivalência é verificada numericamente em dez configurações aleatórias de q; ela não prova que duas tabelas são idênticas em todo o espaço de juntas, só que coincidem nas amostras.</p></li><li><p>A Bancada só trata a convenção DH clássica. Para a convenção modificada (Craig), as matrizes e os parâmetros mudam de lugar.</p></li><li><p>O alvo é desenhado com os dados enviados pelo servidor; um aluno determinado poderia reconstruir valores a partir da geometria, o que é aceito como risco nesta atividade.</p></li><li><p>Não há limites de junta, colisões nem dinâmica: é só cinemática direta.</p></li></ul>
+  </article>
+</div>
+<footer class="rodape">
+  <div class="faixa" aria-hidden="true">
+    <span style="background:#2f6fe0"></span><span style="background:#f59a0c"></span><span style="background:#22c93a"></span><span style="background:#17b8a6"></span>
+    <span style="background:#e5c100"></span><span style="background:#9b4dea"></span><span style="background:#ee3b2b"></span><span style="background:#e45ad2"></span>
+  </div>
+  <div class="contorno">
+    <p class="nome">LABIC</p>
+    <p>Material de Stephanie Kamarry · Laboratório de Inovação e Criatividade, Instituto Federal de Sergipe, Campus Lagarto.</p>
+    <p><a href="/simulador-manipuladores">Abrir o simulador</a> · <a href="/">Conheça o laboratório</a>.</p>
+  </div>
+</footer>
+<script>
+(function(){
+  var b=document.getElementById('btnTema');
+  function aplica(t,salvar){
+    document.documentElement.dataset.tema=t;
+    b.textContent=t==='escuro'?'☀ Tema claro':'☾ Tema escuro'; b.setAttribute('aria-pressed',t==='escuro');
+    if(salvar){ try{ localStorage.setItem('manip-tema',t); }catch(e){} }
+  }
+  var s='claro'; try{ s=localStorage.getItem('manip-tema')||'claro'; }catch(e){}
+  aplica(s==='escuro'?'escuro':'claro',false);
+  b.onclick=function(){ aplica(document.documentElement.dataset.tema==='escuro'?'claro':'escuro',true); };
+  // destaca a seção visível no índice
+  var links=[].slice.call(document.querySelectorAll('.toc a'));
+  var hs=links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function marca(){
+    var atual=0; for(var i=0;i<hs.length;i++){ if(hs[i] && hs[i].getBoundingClientRect().top<140) atual=i; }
+    links.forEach(function(a,i){ a.classList.toggle('ativo',i===atual); });
+  }
+  window.addEventListener('scroll',marca,{passive:true}); marca();
+})();
+</script>
+</body>
+</html>
