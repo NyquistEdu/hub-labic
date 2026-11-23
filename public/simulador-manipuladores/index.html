@@ -632,7 +632,7 @@ const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const nrm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];};
 function criaCam(W,H){
-  const tg=S.cam.tgt,dist=S.cam.dist*0.62*S.zoom,ce=Math.cos(S.el);
+  const tg=S.cam.tgt,dist=S.cam.dist*0.9*S.zoom,ce=Math.cos(S.el);
   const eye=[tg[0]+dist*ce*Math.cos(S.az),tg[1]+dist*ce*Math.sin(S.az),tg[2]+dist*Math.sin(S.el)];
   const f=nrm(vsub(tg,eye)),r=nrm(cross(f,[0,0,1])),u=cross(r,f),focal=0.5*Math.min(W,H)/Math.tan(16*D2R);
   return {proj(p){const v=vsub(p,eye),zc=dot(v,f),s=focal/zc;return [W/2+dot(v,r)*s,H/2-dot(v,u)*s,zc,s];}};
@@ -698,7 +698,7 @@ function desenha(){
   const prims=[],rot=[];
   prims.push({k:'cyl',A:[0,0,-.04],B:[0,0,0],r:.1,role:'base',own:'base'});
   const bx=[[1,0,0],[0,1,0],[0,0,1]],nm=['x₀','y₀','z₀'];
-  if(S.mostraGlobais)for(let a=0;a<3;a++){prims.push({k:'line',A:[0,0,0],B:vsc(bx[a],.4),axis:a,own:'base',w:4});rot.push({p:vsc(bx[a],.45),text:nm[a]+' (mundo)',axis:a,own:'base'});}
+  if(S.mostraGlobais)for(let a=0;a<3;a++){prims.push({k:'line',A:[0,0,0],B:vsc(bx[a],a===2?.55:1),axis:a,own:'base',w:4});rot.push({p:vsc(bx[a],(a===2?.55:1)+.06),text:nm[a]+' (mundo)',axis:a,own:'base'});}
   if(S.modo==='ex'&&S.mostraAlvo){const s=cenaAlvo();prims.push(...s.P);rot.push(...s.L);}
   if(S.mostraMeu&&S.tabela.length){const s=cenaAluno(linhasAluno(),tipos(),S.q,S.mostraEixos);prims.push(...s.P);rot.push(...s.L);}
   if(S.modo==='ex'&&S.metodo==='frames'&&S.mostraFramesEsc&&S.derivada){const s=cenaFrames();prims.push(...s.P);rot.push(...s.L);}
